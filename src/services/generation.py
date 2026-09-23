@@ -22,6 +22,7 @@ from src.domain.project_models import (
     AcceptedMapping,
     ArtifactBundle,
     ArtifactFile,
+    EntityInference,
     ResolvedMapping,
     SchemaProfile,
     SemanticType,
@@ -93,9 +94,16 @@ class TableModel:
 
 class Generator:
     def __init__(
-        self, resolved: ResolvedMapping, profile: SchemaProfile, ontology: Ontology, company_id: str, as_of: date | None
+        self,
+        resolved: ResolvedMapping,
+        profile: SchemaProfile,
+        ontology: Ontology,
+        company_id: str,
+        as_of: date | None,
+        primary_keys: dict[str, list[str]] | None = None,
     ) -> None:
         self.r = resolved
+        self.primary_keys = primary_keys or {}  # table -> source key columns inferred from the data
         self.profile = profile
         self.ont = ontology
         self.company_id = company_id
@@ -268,6 +276,14 @@ class Generator:
         return model
 
     def _pk_fields(self, tm: TableModel) -> list[str]:
+        """Canonical names of the table's key. The key inferred from the data wins over the ontology's
+        id fields (e.g. SAP line items are keyed by document + item number, not item number alone)."""
+        inferred = self.primary_keys.get(tm.table)
+        if inferred:
+            by_source = {c.source: c.name for c in tm.columns if not c.name.endswith("_hash")}
+            if all(col in by_source for col in inferred):
+                return [by_source[col] for col in inferred]
+            return []
         id_fields = self.ont.entities[tm.entity].id_fields
         present = [tm.field_names[f] for f in id_fields if f in tm.field_names]
         return present if len(present) == len(id_fields) else []
@@ -597,7 +613,11 @@ def generate_artifacts(ctx: StepContext) -> StepResult:
         a = by_id.get(approval_id)
         if a is None or a.gate != ReviewGate.MAPPING_REVIEW or not is_valid(a, resolved.mapping_hash):
             raise ApprovalRequired("the mapping approval this bundle depends on is missing, revoked or stale")
-    gen = Generator(resolved, profile, ctx.ontology, ctx.run.company_id, ctx.adapter().spec.as_of)
+    entities = ctx.upstream.get(StepName.ENTITY_INFERENCE)
+    keys = (
+        {c.table: c.primary_key_columns for c in entities.candidates} if isinstance(entities, EntityInference) else {}
+    )
+    gen = Generator(resolved, profile, ctx.ontology, ctx.run.company_id, ctx.adapter().spec.as_of, keys)
     files = gen.build()
     entries = []
     for path, text in files.items():

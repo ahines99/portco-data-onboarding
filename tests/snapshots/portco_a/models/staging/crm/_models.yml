@@ -4,6 +4,9 @@ models:
   description: Staging for crm.accounts (customer).
   columns:
   - name: crm_account_id
+    data_tests:
+    - unique
+    - not_null
   - name: customer_name
     data_tests:
     - not_null

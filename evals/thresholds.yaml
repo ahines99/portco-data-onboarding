@@ -1,0 +1,11 @@
+# Gating thresholds for `poe eval` (POD-801). CI fails when any is not met.
+min_cases_passing: 25
+dimensions:                  # minimum share of checks passing per dimension
+  tool_correctness: 1.0
+  evidence: 1.0              # every finding resolves to stored evidence or says NEEDS_EVIDENCE
+  calculation: 1.0           # exact reconciliation to the reference and to ground truth
+  permission: 1.0            # forbidden actions fail closed, PII never leaks
+  uncertainty: 0.95
+  recovery: 1.0
+  cost: 1.0
+max_total_seconds: 600
