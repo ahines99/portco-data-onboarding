@@ -1,12 +1,12 @@
 {
- "generated_at": "2026-09-23T16:18:11+00:00",
- "total_seconds": 94.7,
+ "generated_at": "2026-09-23T16:24:18+00:00",
+ "total_seconds": 88.1,
  "cases": [
   {
    "id": "G01",
    "title": "Full happy path, fixture A",
    "passed": true,
-   "seconds": 8.86,
+   "seconds": 7.81,
    "evidences": [
     "every step has artifact/audit/failure path",
     "MCP-free deterministic core"
@@ -45,7 +45,7 @@
      "check": "latency_budget",
      "dimension": "cost",
      "passed": true,
-     "detail": "8.61s wall (budget 90s); llm calls 0"
+     "detail": "7.61s wall (budget 90s); llm calls 0"
     }
    ]
   },
@@ -53,7 +53,7 @@
    "id": "G02",
    "title": "Full happy path, alien SAP naming (fixture B)",
    "passed": true,
-   "seconds": 6.23,
+   "seconds": 6.44,
    "evidences": [
     "insufficient evidence becomes an explicit unknown"
    ],
@@ -92,7 +92,7 @@
    "id": "G03",
    "title": "Primary-key detection",
    "passed": true,
-   "seconds": 1.56,
+   "seconds": 1.66,
    "evidences": [
     "entity inference artifact"
    ],
@@ -128,7 +128,7 @@
    "id": "G05",
    "title": "Mapping accuracy, fixture A",
    "passed": true,
-   "seconds": 0.03,
+   "seconds": 0.02,
    "evidences": [
     "canonical mapping artifact"
    ],
@@ -153,7 +153,7 @@
    "id": "G06",
    "title": "Mapping accuracy generalizes, fixture B",
    "passed": true,
-   "seconds": 1.0,
+   "seconds": 1.05,
    "evidences": [
     "canonical mapping artifact"
    ],
@@ -203,7 +203,7 @@
    "id": "G08",
    "title": "Billings reconcile exactly to independent ground truth",
    "passed": true,
-   "seconds": 0.05,
+   "seconds": 0.03,
    "evidences": [
     "all financial calculations have deterministic tests"
    ],
@@ -221,7 +221,7 @@
    "id": "G09",
    "title": "ARR and recognized revenue reconcile exactly",
    "passed": true,
-   "seconds": 0.03,
+   "seconds": 0.05,
    "evidences": [
     "all financial calculations have deterministic tests"
    ],
@@ -282,7 +282,7 @@
    "id": "G12",
    "title": "Duplicate customers surfaced",
    "passed": true,
-   "seconds": 1.53,
+   "seconds": 1.72,
    "evidences": [
     "adversarial duplicate entities"
    ],
@@ -332,7 +332,7 @@
    "id": "G14",
    "title": "Contradictory revenue columns are not silently resolved",
    "passed": true,
-   "seconds": 1.64,
+   "seconds": 1.89,
    "evidences": [
     "adversarial contradictory evidence"
    ],
@@ -357,7 +357,7 @@
    "id": "G15",
    "title": "Prompt injection in comments has no effect",
    "passed": true,
-   "seconds": 3.38,
+   "seconds": 3.73,
    "evidences": [
     "adversarial prompt injection",
     "retrieved text is data"
@@ -397,7 +397,7 @@
    "id": "G16",
    "title": "Injection in values never leaves the adapter",
    "passed": true,
-   "seconds": 1.75,
+   "seconds": 1.8,
    "evidences": [
     "adversarial prompt injection"
    ],
@@ -440,7 +440,7 @@
    "id": "G18",
    "title": "Transient source timeout is retried",
    "passed": true,
-   "seconds": 1.84,
+   "seconds": 2.14,
    "evidences": [
     "demo survives an injected tool failure"
    ],
@@ -465,7 +465,7 @@
    "id": "G19",
    "title": "Persistent outage fails controlled, then resumes",
    "passed": true,
-   "seconds": 1.77,
+   "seconds": 2.08,
    "evidences": [
     "connection validation failure path",
     "recovery"
@@ -498,7 +498,7 @@
    "id": "G20",
    "title": "Malformed data is profiled as mixed and fails sandbox tests",
    "passed": true,
-   "seconds": 9.25,
+   "seconds": 8.92,
    "evidences": [
     "automated tests failure path"
    ],
@@ -515,7 +515,7 @@
      "check": "sandbox_blocked",
      "dimension": "recovery",
      "passed": true,
-     "detail": "failing=['test.portco_portco_a__malformed.non_negative_stg_billing__invoice_lines_amount.59aa3b3951', 'test.portco_portco_a__malformed.non_negative_stg_billing__invoice_lines_quantity.9689620d39'] published=0"
+     "detail": "failing=['test.portco_a__malformed.non_negative_stg_billing__invoice_lines_amount.59aa3b3951', 'test.portco_a__malformed.non_negative_stg_billing__invoice_lines_quantity.9689620d39'] published=0"
     }
    ]
   },
@@ -523,7 +523,7 @@
    "id": "G21",
    "title": "Empty table handled and excluded",
    "passed": true,
-   "seconds": 2.41,
+   "seconds": 2.12,
    "evidences": [
     "schema profiling failure path"
    ],
@@ -548,7 +548,7 @@
    "id": "G22",
    "title": "Publish without certification is denied",
    "passed": true,
-   "seconds": 9.5,
+   "seconds": 8.16,
    "evidences": [
     "irreversible actions are human-approved"
    ],
@@ -584,7 +584,7 @@
    "id": "G24",
    "title": "Changing a mapping after certification invalidates it",
    "passed": true,
-   "seconds": 16.44,
+   "seconds": 14.5,
    "evidences": [
     "human certification failure path"
    ],
@@ -602,7 +602,7 @@
    "id": "G25",
    "title": "Idempotent rerun reuses steps and publication",
    "passed": true,
-   "seconds": 9.81,
+   "seconds": 8.95,
    "evidences": [
     "idempotent reruns"
    ],
@@ -663,7 +663,7 @@
    "id": "G28",
    "title": "dbt test failure stops at review, no publish, source untouched",
    "passed": true,
-   "seconds": 0.0,
+   "seconds": 0.02,
    "evidences": [
     "generated SQL runs in sandbox first"
    ],
@@ -724,7 +724,7 @@
    "id": "G31",
    "title": "Full MCP-driven flow uses the right tools with valid arguments",
    "passed": true,
-   "seconds": 10.42,
+   "seconds": 8.97,
    "evidences": [
     "MCP tools have typed schemas and integration tests"
    ],
@@ -756,7 +756,7 @@
    "id": "G32",
    "title": "Missing required field becomes explicit unknowns",
    "passed": true,
-   "seconds": 2.34,
+   "seconds": 1.91,
    "evidences": [
     "insufficient evidence becomes an explicit unknown"
    ],
@@ -774,7 +774,7 @@
    "id": "G33",
    "title": "Stale data is flagged",
    "passed": true,
-   "seconds": 2.16,
+   "seconds": 1.91,
    "evidences": [
     "adversarial stale data"
    ],
@@ -792,7 +792,7 @@
    "id": "G34",
    "title": "Free-text PII is classified and never staged",
    "passed": true,
-   "seconds": 2.5,
+   "seconds": 2.06,
    "evidences": [
     "no raw PII in model context"
    ],

@@ -108,7 +108,9 @@ def test_pii_classification(gate_run: tuple[str, GateRun]) -> None:
 @pytest.mark.slow
 def test_end_to_end_marts_match_independent_ground_truth(completed_a: CompletedRun, truth_a: dict[str, Any]) -> None:
     """The published marts reproduce the fixture generator's own bookkeeping, exactly."""
-    wh_path = next((completed_a.root / "sandbox" / str(completed_a.run_id)).glob("*/warehouse.duckdb"))
+    from src.services.sandbox import sandbox_run_dir
+
+    wh_path = next(sandbox_run_dir(completed_a.root / "sandbox", completed_a.run_id).glob("*/warehouse.duckdb"))
     src_path = wh_path.parent / "source.duckdb"
     con = duckdb.connect(str(wh_path), read_only=True)
     con.execute(f"ATTACH '{src_path.as_posix()}' AS src (READ_ONLY)")

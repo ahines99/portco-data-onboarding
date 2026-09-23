@@ -561,7 +561,7 @@ class Generator:
         self.build_intermediate()
         self.build_marts()
         self.build_semantic()
-        project_name = f"portco_{_slug(self.company_id)}"
+        project_name = _slug(self.company_id) if _slug(self.company_id)[:1].isalpha() else f"p_{_slug(self.company_id)}"
         as_of_month = date(self.as_of.year, self.as_of.month, 1).isoformat()
         self.files["dbt_project.yml"] = self.env.get_template("dbt_project.yml.j2").render(
             company_id=self.company_id,

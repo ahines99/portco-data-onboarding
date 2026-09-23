@@ -21,6 +21,7 @@ from src.domain.pii_guard import PiiGuard
 from src.fixtures.generate import load_ground_truth
 from src.reporting import render_run_report
 from src.run_metrics import compute_run_metrics
+from src.services.sandbox import sandbox_run_dir
 from src.workflows.primary import PROJECT_STEPS
 
 CheckFn = Callable[[CaseRun, dict[str, Any]], Awaitable[tuple[bool, str]]]
@@ -229,7 +230,7 @@ async def reconciliation_passes(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, s
 @check("metrics_match_truth", "calculation")
 async def metrics_match_truth(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
     truth = _truth(cr)
-    root = cr.service.settings.sandbox_root / str(cr.run_id)
+    root = sandbox_run_dir(cr.service.settings.sandbox_root, cr.run_id)
     wh = next(root.glob("*/warehouse.duckdb"))
     con = duckdb.connect(str(wh), read_only=True)
     con.execute(f"ATTACH '{(wh.parent / 'source.duckdb').as_posix()}' AS src (READ_ONLY)")
@@ -424,7 +425,7 @@ async def sandbox_blocked(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
 async def source_unchanged(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
     spec = ConnectionRegistry(cr.service.settings.fixtures_dir).resolve(cr.run.connection_id)
     digest = hashlib.sha256(open(spec.path, "rb").read()).hexdigest()  # noqa: SIM115
-    root = cr.service.settings.sandbox_root / str(cr.run_id)
+    root = sandbox_run_dir(cr.service.settings.sandbox_root, cr.run_id)
     copies = list(root.glob("*/source.duckdb"))
     return bool(copies), f"sandbox copies={len(copies)}; source sha256 {digest[:12]} untouched (opened read-only)"
 

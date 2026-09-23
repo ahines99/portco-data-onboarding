@@ -12,7 +12,6 @@ No Docker, no API keys. Reports are written to var/demo/.
 
 from __future__ import annotations
 
-import shutil
 import time
 from pathlib import Path
 from typing import Any
@@ -24,6 +23,7 @@ from src.adapters.faults import FaultInjector
 from src.domain.models import Principal, ReviewDecision, Role, RunStatus, StepName
 from src.domain.project_models import ItemDecision, PublishReceipt, TestReport
 from src.fixtures.generate import ensure_fixture
+from src.fsutil import remove_tree
 from src.reporting import render_run_report
 from src.settings import PROJECT_ROOT, Settings
 from src.workflows.facade import OnboardingService
@@ -151,8 +151,9 @@ async def _failure(root: Path, script: dict[str, Any]) -> tuple[bool, str]:
 def run_demo(out: Path) -> int:
     started = time.monotonic()
     root = out.resolve()
-    shutil.rmtree(root, ignore_errors=True)
-    root.mkdir(parents=True)
+    if not remove_tree(root):  # e.g. a file still open from an earlier session: use a fresh directory
+        root = root.with_name(f"{root.name}-{int(time.time())}")
+    root.mkdir(parents=True, exist_ok=True)
     for name in ("portco_a", "portco_a__malformed"):
         ensure_fixture(name, PROJECT_ROOT / "var" / "fixtures")
     script = yaml.safe_load((PROJECT_ROOT / "demo" / "reviews_gate_a.yaml").read_text(encoding="utf-8"))

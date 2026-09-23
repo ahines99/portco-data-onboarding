@@ -22,6 +22,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
 import duckdb
 
@@ -40,6 +41,7 @@ from src.domain.project_models import (
     ReviewItem,
     TestReport,
 )
+from src.fsutil import remove_tree
 from src.services.approvals import effective_decisions
 from src.workflows.contracts import StepContext, StepResult, make_evidence
 
@@ -405,16 +407,22 @@ def reconcile(
 # --------------------------------------------------------------------------- step
 
 
+def sandbox_run_dir(sandbox_root: Path, run_id: UUID) -> Path:
+    """Short path segments keep dbt's nested compiled output under Windows' MAX_PATH."""
+    return sandbox_root / run_id.hex[:12]
+
+
 def build_and_test(ctx: StepContext, bundle: ArtifactBundle, resolved: ResolvedMapping, fingerprint: str) -> TestReport:
-    key = f"{bundle.manifest_hash[:16]}-{fingerprint[:12]}"
-    workdir = (ctx.settings.sandbox_root / str(ctx.run.run_id) / key).resolve()
+    workdir = (
+        sandbox_run_dir(ctx.settings.sandbox_root, ctx.run.run_id) / f"{bundle.manifest_hash[:10]}-{fingerprint[:8]}"
+    ).resolve()
     report_path = workdir / "report.json"
     if report_path.exists():
         cached = TestReport.model_validate_json(report_path.read_text(encoding="utf-8"))
         return cached.model_copy(update={"cached": True})
     started = time.monotonic()
     if workdir.exists():
-        shutil.rmtree(workdir)
+        remove_tree(workdir)
     (workdir / "project").mkdir(parents=True)
     materialize(ctx, bundle, workdir / "project")
     spec = ctx.adapter().spec
@@ -464,14 +472,14 @@ def build_and_test(ctx: StepContext, bundle: ArtifactBundle, resolved: ResolvedM
         duration_seconds=round(time.monotonic() - started, 2),
     )
     report_path.write_text(report.model_dump_json(indent=1), encoding="utf-8")
-    _prune(ctx.settings.sandbox_root / str(ctx.run.run_id), keep=ctx.settings.sandbox_keep_attempts)
+    _prune(sandbox_run_dir(ctx.settings.sandbox_root, ctx.run.run_id), keep=ctx.settings.sandbox_keep_attempts)
     return report
 
 
 def _prune(root: Path, keep: int) -> None:
     dirs = sorted((d for d in root.iterdir() if d.is_dir()), key=lambda d: d.stat().st_mtime, reverse=True)
     for d in dirs[keep:]:
-        shutil.rmtree(d, ignore_errors=True)
+        remove_tree(d)
 
 
 def run_automated_tests(ctx: StepContext) -> StepResult:
