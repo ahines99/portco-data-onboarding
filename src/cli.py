@@ -137,7 +137,7 @@ def review(
                     for i in r.pending_items
                 ],
             }
-            export.write_text(yaml.safe_dump(doc, sort_keys=False, width=120), encoding="utf-8")
+            export.write_text(yaml.safe_dump(doc, sort_keys=False, width=120), encoding="utf-8", newline="\n")
             typer.echo(f"wrote {len(r.pending_items)} items to {export}")
             return
         if not import_:
@@ -246,7 +246,7 @@ def report(run_id: UUID, out: Annotated[Path | None, typer.Option(help="write Ma
     svc = _service()
     text = render_run_report(svc, Principal(principal_id="cli:report", role=Role.ADMIN), run_id)
     if out:
-        out.write_text(text, encoding="utf-8")
+        out.write_text(text, encoding="utf-8", newline="\n")
         typer.echo(f"wrote {out}")
     else:
         typer.echo(text)

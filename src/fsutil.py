@@ -18,6 +18,17 @@ def _long(path: Path) -> str:
     return resolved
 
 
+def long_path(path: Path) -> Path:
+    """`path` in a form that file APIs accept beyond MAX_PATH on Windows (unchanged elsewhere)."""
+    return Path(_long(path))
+
+
+def write_bytes(path: Path, data: bytes) -> None:
+    target = long_path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(data)
+
+
 def remove_tree(path: Path) -> bool:
     """Delete a directory tree, handling long paths and read-only files. Returns True if it is gone."""
     if not path.exists():

@@ -23,5 +23,11 @@ target/
 logs/
 dbt_packages/
 
+# Local review/certification exports and the rolling eval report (dated snapshots are committed)
+review.yaml
+cert.yaml
+report.md
+evals/reports/latest.*
+
 # Secrets
 .env

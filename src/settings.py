@@ -6,7 +6,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -24,7 +24,8 @@ class Settings(BaseSettings):
     # Retry / timeout policy (POD-405)
     step_max_attempts: int = 3
     step_backoff_base_seconds: float = 0.2
-    step_timeout_seconds: float = 300.0
+    step_timeout_seconds: float = 900.0  # must outlast the dbt build inside the test step
+    lease_margin_seconds: float = 60.0
 
     # Sandbox (POD-308)
     sandbox_keep_attempts: int = 2
@@ -52,6 +53,13 @@ class Settings(BaseSettings):
 
     otel_console: bool = False
     fiscal_year_start_month: int = Field(default=2, ge=1, le=12)
+
+    @model_validator(mode="after")
+    def _timeouts_nest(self) -> Settings:
+        # A step timeout shorter than dbt's would abandon a still-running build (and its sandbox).
+        if self.step_timeout_seconds <= self.dbt_timeout_seconds + 60:
+            raise ValueError("step_timeout_seconds must exceed dbt_timeout_seconds + 60")
+        return self
 
     @property
     def db_url(self) -> str:

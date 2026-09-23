@@ -11,9 +11,11 @@ from typing import Any
 
 from mcp.server import MCPServer
 from mcp.server.auth.settings import AuthSettings
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
 
 from src.capabilities import prompts, resources, tools
-from src.capabilities.auth import StaticTokenVerifier
+from src.capabilities.auth import StaticTokenVerifier, parse_tokens
 from src.capabilities.common import ServerState
 from src.capabilities.guard import PiiGuardMiddleware
 from src.domain.models import Principal
@@ -40,7 +42,7 @@ def build_server(
 ) -> MCPServer:
     settings = settings or get_settings()
     state = ServerState(settings=settings, service=service, principal_override=principal)
-    guard = PiiGuardMiddleware(PiiGuard(canaries))
+    guard = PiiGuardMiddleware(PiiGuard(canaries), state)
     use_auth = with_auth if with_auth is not None else settings.http_tokens is not None
     auth_kwargs: dict[str, Any] = {}
     if use_auth:
@@ -63,6 +65,11 @@ def build_server(
     tools.register(server, state)
     resources.register(server, state)
     prompts.register(server)
+
+    @server.custom_route("/healthz", methods=["GET"], include_in_schema=False)  # type: ignore[untyped-decorator]
+    async def healthz(_request: Request) -> Response:  # unauthenticated liveness probe; reveals nothing
+        return JSONResponse({"status": "ok"})
+
     server._portco_state = state  # type: ignore[attr-defined]  # test hook
     server._portco_guard = guard  # type: ignore[attr-defined]
     return server
@@ -72,7 +79,14 @@ mcp = build_server()
 
 
 def _http_app() -> Any:
-    return mcp.streamable_http_app()
+    """The HTTP transport never serves unauthenticated: no valid tokens, no app."""
+    settings = get_settings()
+    secret = settings.http_tokens.get_secret_value() if settings.http_tokens else ""
+    if not parse_tokens(secret):
+        raise RuntimeError(
+            "refusing to serve MCP over HTTP without PORTCO_HTTP_TOKENS (token=principal:role:companies)"
+        )
+    return build_server(settings, with_auth=True).streamable_http_app()
 
 
 def __getattr__(name: str) -> Any:  # lazily build the ASGI app so importing the module stays cheap

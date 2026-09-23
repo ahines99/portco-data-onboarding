@@ -77,8 +77,10 @@ uv run portco audit <run_id> --verify                     # hash-chain check
 
 `.mcp.json` registers the stdio server (`uv run portco-mcp`) as an **agent** principal. Copy
 `skills/*` into `.claude/skills/`. See [docs/agent_walkthrough.md](docs/agent_walkthrough.md). Over
-HTTP, run `uvicorn src.mcp_server:app` with `PORTCO_HTTP_TOKENS` set; each bearer token carries a
-role and a tenant scope.
+HTTP, run `uvicorn src.mcp_server:app` with `PORTCO_HTTP_TOKENS` set (the app refuses to start
+without it); each bearer token carries a role and an explicit tenant scope
+(`token=principal:role:company1|company2`, `*` for all). `GET /healthz` is the unauthenticated
+liveness probe.
 
 ## MCP surface
 

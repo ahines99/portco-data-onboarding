@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from typing import Any, Protocol
+from uuid import UUID
 
 from src.adapters.external import type_family
 from src.domain.models import Confidence, EvidenceRef, Finding, FindingStatus, FindingType, StepName, utcnow
@@ -28,6 +29,7 @@ from src.domain.project_models import (
     UnmappedField,
 )
 from src.services.entities import confidence_for, field_owner
+from src.services.pii import TEST_RECORD_PATTERN
 from src.services.text import char_ratio, jaccard, raw_tokens, tokens
 from src.workflows.contracts import StepContext, StepResult, make_evidence
 
@@ -130,6 +132,7 @@ def propose_mapping(ctx: StepContext) -> StepResult:
     proposals: list[MappingProposal] = []
     findings: list[Finding] = []
     evidence = []
+    parents: dict[UUID, list[UUID]] = {}  # lineage: conflict evidence -> the table's profile evidence
     for table in profile.tables:
         entity = entity_of.get(table.qualified)
         if not entity:
@@ -231,6 +234,8 @@ def propose_mapping(ctx: StepContext) -> StepResult:
                 adapter.spec.as_of,
             )
             evidence.append(ev)
+            if table.evidence_id:
+                parents[ev.evidence_id] = [table.evidence_id]
             findings.append(
                 Finding(
                     code="CONFLICT",
@@ -306,6 +311,7 @@ def propose_mapping(ctx: StepContext) -> StepResult:
     return StepResult(
         output=mapping_set,
         evidence=evidence,
+        evidence_parents=parents,
         findings=findings,
         audit=[
             (
@@ -371,11 +377,11 @@ def _row_filters(ctx: StepContext, entity_of: dict[str, str]) -> list[RowFilter]
             if c.pattern_counts.get("test_prefix") and c.pii_class is None and "name" in tokens(c.column):
                 out.append(
                     RowFilter(
-                        filter_key=f"{t.qualified}.{c.column}:exclude_prefix",
+                        filter_key=f"{t.qualified}.{c.column}:exclude_match",
                         table=t.qualified,
                         column=c.column,
-                        kind="exclude_prefix",
-                        value="TEST",
+                        kind="exclude_match",
+                        value=TEST_RECORD_PATTERN,
                         rationale=f"{c.pattern_counts['test_prefix']} rows look like test records",
                         affected_rows=c.pattern_counts["test_prefix"],
                         evidence_ids=ev,

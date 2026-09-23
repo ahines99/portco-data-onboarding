@@ -142,7 +142,7 @@ class Generator:
                 parts.append(f"coalesce(cast({_q(f.column)} as boolean), false)")
             else:
                 value = (f.value or "").replace("'", "''")
-                parts.append(f"coalesce(starts_with(cast({_q(f.column)} as varchar), '{value}'), false)")
+                parts.append(f"coalesce(regexp_matches(cast({_q(f.column)} as varchar), '{value}'), false)")
         return "(" + " or ".join(parts) + ")" if parts else "false"
 
     def _source_col(self, table: str, column: str) -> str | None:

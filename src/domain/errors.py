@@ -86,5 +86,9 @@ class Conflict(DomainError):
     code = ErrorCode.CONFLICT
 
 
+class LeaseLost(Conflict):
+    """The worker no longer holds the run's execution lease (another worker reclaimed it)."""
+
+
 class NotImplementedStep(DomainError):
     code = ErrorCode.INTERNAL

@@ -13,5 +13,5 @@ select
     sha256(cast("billing_email" as varchar)) as billing_email_hash,
     cast("country" as varchar) as country,
     cast("currency" as varchar) as currency,
-    (coalesce(starts_with(cast("cust_name" as varchar), 'TEST'), false)) as _excluded
+    (coalesce(regexp_matches(cast("cust_name" as varchar), '^(TEST|Test|test)\b'), false)) as _excluded
 from source

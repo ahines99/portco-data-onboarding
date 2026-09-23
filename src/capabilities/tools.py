@@ -332,6 +332,7 @@ def register(mcp: MCPServer, state: ServerState) -> None:
         """Publish certified artifacts. Fails closed without a valid certification bound to the bundle."""
         svc, principal = state.svc(), state.principal()
         rid = parse_uuid(run_id, "run_id")
+        svc.get_run(principal, rid)  # NOT_FOUND (unknown or other tenant's run) before any denial is audited
         try:
             try:
                 packet = svc.artifact(principal, rid, StepName.HUMAN_CERTIFICATION)

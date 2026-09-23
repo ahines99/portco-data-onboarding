@@ -19,21 +19,35 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor, SpanExporter
 
-from src.domain.pii_guard import PiiGuard
+from src.domain.pii_guard import SECRET as SECRET_VALUE
+from src.domain.pii_guard import PiiGuard, mask
 
 SECRET_KEY = re.compile(r"(key|token|secret|password|authorization)", re.I)
 _GUARD = PiiGuard()
 _configured = False
 
 
+TRACEBACK_KEYS = frozenset({"exception", "exc_info", "stack"})
+
+
+def _clean(key: str, value: Any) -> Any:
+    if SECRET_KEY.search(key):
+        return "[REDACTED]"
+    if isinstance(value, str):
+        if key in TRACEBACK_KEYS:  # keep the traceback useful: mask only the offending values
+            return mask(value, _GUARD.canaries)
+        return "[REDACTED:PII]" if _GUARD.scan_text(value) or SECRET_VALUE.search(value) else value
+    if isinstance(value, dict):
+        return {k: _clean(str(k), v) for k, v in value.items()}
+    if isinstance(value, list | tuple):
+        return [_clean(key, v) for v in value]
+    return value
+
+
 def redact(_logger: Any, _name: str, event: MutableMapping[str, Any]) -> MutableMapping[str, Any]:
+    """Runs after `format_exc_info`, so rendered tracebacks are scanned too; recurses into nested values."""
     for k in list(event):
-        if SECRET_KEY.search(k):
-            event[k] = "[REDACTED]"
-            continue
-        v = event[k]
-        if isinstance(v, str) and _GUARD.scan_text(v):
-            event[k] = "[REDACTED:PII]"
+        event[k] = _clean(k, event[k])
     return event
 
 
@@ -54,14 +68,16 @@ def configure_logging(level: str = "INFO") -> None:
     global _configured
     if _configured:
         return
-    logging.basicConfig(stream=sys.stderr, level=getattr(logging, level.upper(), logging.INFO), format="%(message)s")
+    numeric = getattr(logging, level.upper(), logging.INFO)
+    logging.basicConfig(stream=sys.stderr, level=numeric, format="%(message)s")
     structlog.configure(
+        wrapper_class=structlog.make_filtering_bound_logger(numeric),
         processors=[
             structlog.contextvars.merge_contextvars,
             structlog.processors.add_log_level,
             structlog.processors.TimeStamper(fmt="iso", utc=True),
-            redact,
             structlog.processors.format_exc_info,
+            redact,  # after format_exc_info: tracebacks are strings by now and get masked
             structlog.processors.JSONRenderer(),
         ],
         logger_factory=_stderr_logger,

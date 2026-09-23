@@ -46,7 +46,7 @@ def main() -> None:
     OUT.mkdir(exist_ok=True)
     for name, model in MODELS.items():
         (OUT / f"{name}.schema.json").write_text(
-            json.dumps(schema_for(model), indent=2, sort_keys=True) + "\n", encoding="utf-8"
+            json.dumps(schema_for(model), indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n"
         )
     print(f"wrote {len(MODELS)} schemas to {OUT}")
 

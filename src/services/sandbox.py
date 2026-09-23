@@ -22,7 +22,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import duckdb
 
@@ -41,7 +41,8 @@ from src.domain.project_models import (
     ReviewItem,
     TestReport,
 )
-from src.fsutil import remove_tree
+from src.fsutil import remove_tree, write_bytes
+from src.observability import span
 from src.services.approvals import effective_decisions
 from src.workflows.contracts import StepContext, StepResult, make_evidence
 
@@ -97,9 +98,10 @@ def _inside(path: Path, root: Path) -> bool:
 
 def materialize(ctx: StepContext, bundle: ArtifactBundle, dest: Path) -> None:
     for f in bundle.files:
-        target = dest / f.path
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(ctx.blobs.get_bytes(f.sha256))
+        target = (dest / f.path).resolve()
+        if not _inside(target, dest):
+            raise PolicyViolation("bundle file path escapes the project directory")
+        write_bytes(target, ctx.blobs.get_bytes(f.sha256))
 
 
 def run_dbt(ctx: StepContext, workdir: Path, source_copy: Path) -> tuple[int, list[DbtResult]]:
@@ -137,19 +139,21 @@ def run_dbt(ctx: StepContext, workdir: Path, source_copy: Path) -> tuple[int, li
         "--no-use-colors",
     ]
     try:
-        proc = subprocess.run(
-            cmd,
-            env=env,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=ctx.settings.dbt_timeout_seconds,
-            check=False,
-        )
+        with span("dbt.build", manifest_dir=workdir.name) as sp:
+            proc = subprocess.run(
+                cmd,
+                env=env,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=ctx.settings.dbt_timeout_seconds,
+                check=False,
+            )
+            sp.set_attribute("exit_code", proc.returncode)
     except subprocess.TimeoutExpired as exc:
         raise DependencyFailed("dbt build exceeded its time budget") from exc
-    (workdir / "dbt_stdout.log").write_text(proc.stdout + "\n" + proc.stderr, encoding="utf-8")
+    (workdir / "dbt_stdout.log").write_text(proc.stdout + "\n" + proc.stderr, encoding="utf-8", newline="\n")
     results_path = workdir / "target" / "run_results.json"
     if not results_path.exists():
         if proc.returncode >= 2:
@@ -196,7 +200,7 @@ class SourceRows:
             v = row.get(f.column)
             if f.kind == "exclude_true" and v is True:
                 return True
-            if f.kind == "exclude_prefix" and isinstance(v, str) and v.startswith(f.value or ""):
+            if f.kind == "exclude_match" and isinstance(v, str) and re.search(f.value or "(?!)", v):
                 return True
         return False
 
@@ -452,8 +456,11 @@ def build_and_test(ctx: StepContext, bundle: ArtifactBundle, resolved: ResolvedM
         cached = TestReport.model_validate_json(report_path.read_text(encoding="utf-8"))
         return cached.model_copy(update={"cached": True})
     started = time.monotonic()
-    if workdir.exists():
+    if workdir.exists():  # an earlier attempt died before writing its report
         remove_tree(workdir)
+    # Build in a private directory and publish it under the key only when complete: an attempt
+    # abandoned on timeout keeps writing into its own directory, never into the next attempt's.
+    final, workdir = workdir, workdir.with_name(f"{workdir.name}.t{uuid4().hex[:6]}")
     (workdir / "project").mkdir(parents=True)
     materialize(ctx, bundle, workdir / "project")
     spec = ctx.adapter().spec
@@ -502,7 +509,11 @@ def build_and_test(ctx: StepContext, bundle: ArtifactBundle, resolved: ResolvedM
         failing_checks=sorted(failing),
         duration_seconds=round(time.monotonic() - started, 2),
     )
-    report_path.write_text(report.model_dump_json(indent=1), encoding="utf-8")
+    (workdir / "report.json").write_text(report.model_dump_json(indent=1), encoding="utf-8", newline="\n")
+    try:
+        workdir.rename(final)
+    except OSError:  # another attempt published the same key first; its report is equivalent
+        remove_tree(workdir)
     _prune(sandbox_run_dir(ctx.settings.sandbox_root, ctx.run.run_id), keep=ctx.settings.sandbox_keep_attempts)
     return report
 
@@ -560,7 +571,12 @@ def run_automated_tests(ctx: StepContext) -> StepResult:
             ],
         )
 
-    subject = content_hash({"manifest": report.manifest_hash, "failing": report.failing_checks})
+    # Fail closed: a non-passing build with no named failing check (e.g. dbt exited 2 after writing
+    # partial results) still needs an explicit waiver of its exit status.
+    failing = report.failing_checks or [f"dbt_exit_{report.dbt_exit_code}"]
+    # The waiver is bound to the whole report, not only the failing names: a different result
+    # set with the same names (other failure counts, other reconciliation outcomes) needs a new one.
+    subject = content_hash({**payload, "fingerprint": report.source_fingerprint, "failing": failing})
     decisions = effective_decisions(ctx.approvals, ReviewGate.TEST_FAILURES, subject)
     rejected = [k for k, d in decisions.items() if d.decision is ReviewDecision.REJECT]
     if rejected:
@@ -578,7 +594,7 @@ def run_automated_tests(ctx: StepContext) -> StepResult:
             subject_hash=subject,
             evidence_ids=[ev.evidence_id],
         )
-        for name in report.failing_checks
+        for name in failing
     ]
     pending = [i for i in items if i.item_key not in decisions]
     if pending:
@@ -586,10 +602,10 @@ def run_automated_tests(ctx: StepContext) -> StepResult:
             Finding(
                 code="SANDBOX_FAILED",
                 title="Generated artifacts failed in the sandbox",
-                statement=f"{len(report.failing_checks)} checks failed; nothing publishes unless a reviewer waives.",
+                statement=f"{len(failing)} checks failed; nothing publishes unless a reviewer waives.",
                 confidence=Confidence.HIGH,
                 evidence=[ev.ref()],
-                metadata={"failing": report.failing_checks},
+                metadata={"failing": failing},
             )
         )
         return StepResult(
@@ -600,9 +616,9 @@ def run_automated_tests(ctx: StepContext) -> StepResult:
             gate=ReviewGate.TEST_FAILURES,
             pending_items=pending,
             subject_hash=subject,
-            audit=[("sandbox_failed", {"failing": len(report.failing_checks)})],
+            audit=[("sandbox_failed", {"failing": len(failing)})],
         )
-    waived = sorted(k.removeprefix("test:") for k in decisions)
+    waived = sorted(i.item_key.removeprefix("test:") for i in items)
     report = report.model_copy(update={"waived_checks": waived})
     return StepResult(
         output=report,

@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -18,7 +18,7 @@ from sqlalchemy import Connection, Engine, and_, func, insert, select, update
 
 from src.adapters import db
 from src.adapters.artifact_store import ArtifactStore
-from src.domain.errors import NotFound
+from src.domain.errors import Conflict, LeaseLost, NotFound
 from src.domain.hashing import canonical_json, sha256_text
 from src.domain.models import (
     AuditEvent,
@@ -32,6 +32,7 @@ from src.domain.models import (
     utcnow,
 )
 from src.domain.project_models import Approval, ItemDecision, ReviewItem
+from src.domain.run_states import CLAIMABLE, check_transition
 
 
 def _aware(value: datetime | None) -> datetime | None:
@@ -52,8 +53,15 @@ class RunRecord(BaseModel):
     requested_by: str
     pending_items: list[ReviewItem] = Field(default_factory=list)
     error: dict[str, Any] | None = None
+    lease_owner: str | None = None
+    lease_expires_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
+
+    def lease_live(self, now: datetime | None = None) -> bool:
+        return self.lease_owner is not None and (
+            self.lease_expires_at is not None and self.lease_expires_at > (now or utcnow())
+        )
 
 
 class StepRunRecord(BaseModel):
@@ -105,13 +113,14 @@ class RunRepository:
         )
         return rec
 
-    def get(self, run_id: UUID) -> RunRecord:
-        row = self.conn.execute(select(db.workflow_runs).where(db.workflow_runs.c.run_id == run_id)).mappings().first()
+    def get(self, run_id: UUID, *, lock: bool = False) -> RunRecord:
+        q = select(db.workflow_runs).where(db.workflow_runs.c.run_id == run_id)
+        row = self.conn.execute(q.with_for_update() if lock else q).mappings().first()
         if row is None:
             raise NotFound(f"run {run_id} not found")
         data = dict(row)
-        data["created_at"] = _aware(data["created_at"])
-        data["updated_at"] = _aware(data["updated_at"])
+        for k in ("created_at", "updated_at", "lease_expires_at"):
+            data[k] = _aware(data[k])
         data["pending_items"] = [ReviewItem.model_validate(i) for i in (data["pending_items"] or [])]
         return RunRecord.model_validate(data)
 
@@ -122,6 +131,8 @@ class RunRepository:
         return [self.get(r) for r in self.conn.execute(q).scalars()]
 
     def update(self, run_id: UUID, **fields: Any) -> None:
+        if "status" in fields:
+            check_transition(self.get(run_id).status, RunStatus(fields["status"]))
         if "pending_items" in fields:
             fields["pending_items"] = [
                 i.model_dump(mode="json") if isinstance(i, BaseModel) else i for i in fields["pending_items"]
@@ -130,6 +141,54 @@ class RunRepository:
             fields["status"] = fields["status"].value
         fields["updated_at"] = utcnow()
         self.conn.execute(update(db.workflow_runs).where(db.workflow_runs.c.run_id == run_id).values(**fields))
+
+    # Execution lease. `claim` is a compare-and-set on (status, lease_owner): of two workers that
+    # read the same row, exactly one update matches, so a run is never advanced by two workers.
+
+    def claim(self, run_id: UUID, owner: str, lease_seconds: float) -> tuple[RunRecord, RunRecord]:
+        """Take the lease; returns (run before the claim, run after). Raises Conflict if not claimable."""
+        before = self.get(run_id)
+        now = utcnow()
+        if before.lease_live(now):
+            raise Conflict("run is being executed by another worker")
+        if before.status not in CLAIMABLE and before.status is not RunStatus.RUNNING:  # RUNNING = expired lease
+            raise Conflict(f"a {before.status.value} run cannot be started")
+        c = db.workflow_runs.c
+        same_owner = c.lease_owner.is_(None) if before.lease_owner is None else c.lease_owner == before.lease_owner
+        res = self.conn.execute(
+            update(db.workflow_runs)
+            .where(c.run_id == run_id, c.status == before.status.value, same_owner)
+            .values(
+                status=RunStatus.RUNNING.value,
+                lease_owner=owner,
+                lease_expires_at=now + timedelta(seconds=lease_seconds),
+                error=None,
+                updated_at=now,
+            )
+        )
+        if res.rowcount != 1:
+            raise Conflict("run was claimed by another worker")
+        return before, self.get(run_id)
+
+    def renew(self, run_id: UUID, owner: str, lease_seconds: float) -> RunRecord:
+        """Extend the lease. Raises LeaseLost if another worker has taken it."""
+        c = db.workflow_runs.c
+        res = self.conn.execute(
+            update(db.workflow_runs)
+            .where(c.run_id == run_id, c.lease_owner == owner)
+            .values(lease_expires_at=utcnow() + timedelta(seconds=lease_seconds))
+        )
+        if res.rowcount != 1:
+            raise LeaseLost("execution lease lost")
+        return self.get(run_id)
+
+    def release(self, run_id: UUID, owner: str) -> None:
+        c = db.workflow_runs.c
+        self.conn.execute(
+            update(db.workflow_runs)
+            .where(c.run_id == run_id, c.lease_owner == owner)
+            .values(lease_owner=None, lease_expires_at=None)
+        )
 
 
 # --------------------------------------------------------------------------- step runs

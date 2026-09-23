@@ -20,7 +20,7 @@ services:
     command: ["alembic", "upgrade", "head"]
     environment: &env
       PORTCO_DATABASE_URL: postgresql+psycopg://portco:portco@postgres:5432/portco
-      PORTCO_HTTP_TOKENS: ${PORTCO_HTTP_TOKENS:-dev-agent=agent:claude:agent;dev-reviewer=alice:reviewer}
+      PORTCO_HTTP_TOKENS: ${PORTCO_HTTP_TOKENS:-dev-agent=agent:claude:agent:*;dev-reviewer=alice:reviewer:*}
       PORTCO_HTTP_BASE_URL: http://localhost:8000
     depends_on:
       postgres: {condition: service_healthy}

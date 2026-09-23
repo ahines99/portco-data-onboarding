@@ -794,8 +794,13 @@ def build(seed: int = 42) -> Fixture:
         ],
         "row_filters": [
             {"table": "crm.accounts", "column": "is_deleted", "kind": "exclude_true"},
-            {"table": "crm.accounts", "column": "acct_nm", "kind": "exclude_prefix", "value": "TEST"},
-            {"table": "billing.customers", "column": "cust_name", "kind": "exclude_prefix", "value": "TEST"},
+            {"table": "crm.accounts", "column": "acct_nm", "kind": "exclude_match", "value": r"^(TEST|Test|test)\b"},
+            {
+                "table": "billing.customers",
+                "column": "cust_name",
+                "kind": "exclude_match",
+                "value": r"^(TEST|Test|test)\b",
+            },
         ],
         "expected_findings": ["DUPLICATE_ENTITIES", "ENTITY_OVERLAP", "POSSIBLE_MINOR_UNITS", "MULTI_CURRENCY"],
         "expected_metrics": {

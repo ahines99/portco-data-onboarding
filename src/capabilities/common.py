@@ -46,7 +46,7 @@ class ServerState:
 
 def principal_from_token(client_id: str, scopes: list[str]) -> Principal:
     role = next((s.split(":", 1)[1] for s in scopes if s.startswith("role:")), "agent")
-    companies = tuple(s.split(":", 1)[1] for s in scopes if s.startswith("company:")) or ("*",)
+    companies = tuple(s.split(":", 1)[1] for s in scopes if s.startswith("company:"))  # none -> no tenants
     return Principal(principal_id=client_id, role=Role(role), company_ids=companies)
 
 

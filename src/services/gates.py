@@ -46,7 +46,7 @@ def review_items(ms: MappingSet, ctx: StepContext) -> list[ReviewItem]:
         )
     for f in ms.row_filters:
         if f.requires_review:
-            desc = "rows where flag is true" if f.kind == "exclude_true" else f"rows starting with {f.value!r}"
+            desc = "rows where flag is true" if f.kind == "exclude_true" else "rows that look like test records"
             items.append(
                 ReviewItem(
                     item_key=f"filter:{f.filter_key}",
@@ -107,7 +107,7 @@ def resolve(ms: MappingSet, decisions: dict[str, ItemDecision]) -> tuple[Resolve
                 canonical_entity=p.canonical_entity,
                 canonical_field=override.get("canonical_field", p.canonical_field),
                 transform=override.get("transform", p.suggested_transform),
-                pii_handling=override.get("pii_handling", p.pii_handling),
+                pii_handling=override.get("pii_handling") or p.pii_handling,  # never relaxed to None
                 decided_by="reviewer",
                 overridden=d.decision is ReviewDecision.APPROVE_WITH_OVERRIDE,
             )

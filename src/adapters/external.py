@@ -32,6 +32,7 @@ from src.domain.hashing import content_hash
 from src.domain.pii_guard import value_is_pii
 from src.domain.project_models import ConnectionSpec
 from src.domain.untrusted import UntrustedText, looks_like_injection
+from src.observability import span
 
 SYSTEM_SCHEMAS = frozenset({"information_schema", "pg_catalog", "main"})
 NUMERIC_PREFIXES = (
@@ -62,6 +63,17 @@ INTEGER_PREFIXES = (
     "UBIGINT",
 )
 SAFE_CATEGORY = re.compile(r"^[A-Za-z0-9 _&./()\-]{1,40}$")
+# Labels of these columns are people (sales reps, owners, employees), never categories.
+PERSON_COLUMN_TOKENS = frozenset(
+    {"name", "owner", "rep", "manager", "user", "employee", "contact", "person", "assignee", "salesperson", "author"}
+)
+# "Jane Smith", "Mary-Ann O'Neil": two or more capitalised words, letters only. Some genuine labels
+# ("Deferred Revenue") match too; withholding those only costs an accepted_values test.
+TITLE_CASE_WORDS = re.compile(r"[A-Z][a-z'\-]+(?: [A-Z][a-z'\-]+)+")
+
+
+def _column_tokens(column: str) -> set[str]:
+    return set(re.findall(r"[a-z]+", re.sub(r"([a-z])([A-Z])", r"\1_\2", column).lower()))
 
 
 def type_family(dtype: str) -> str:
@@ -220,7 +232,8 @@ class DuckDBAdapter:
         timer = threading.Timer(self.timeout, self.con.interrupt)
         timer.start()
         try:
-            return self.con.execute(sql, list(params)).fetchall()
+            with span("adapter.query", connection=self.spec.connection_id, n=self.query_count):
+                return self.con.execute(sql, list(params)).fetchall()
         except duckdb.InterruptException as exc:
             raise SourceTimeout("source query exceeded its time budget") from exc
         except (duckdb.IOException, duckdb.ConnectionException) as exc:
@@ -424,6 +437,8 @@ class DuckDBAdapter:
 
     def low_cardinality_values(self, schema: str, table: str, column: str, max_values: int) -> CategoryValues:
         qt, c = self._qt(schema, table), self._qc(schema, table, column)
+        if _column_tokens(column) & PERSON_COLUMN_TOKENS:
+            return CategoryValues(values=None, withheld_reason="person_like_column")
         rows = self._query(
             f"SELECT DISTINCT CAST({c} AS VARCHAR) AS v FROM {qt} WHERE {c} IS NOT NULL "
             f"ORDER BY v LIMIT {int(max_values) + 1}"
@@ -436,6 +451,8 @@ class DuckDBAdapter:
                 return CategoryValues(values=None, withheld_reason="injection_suspected")
             if value_is_pii(v) or not SAFE_CATEGORY.match(v):
                 return CategoryValues(values=None, withheld_reason="pii_or_unsafe_value")
+            if TITLE_CASE_WORDS.fullmatch(v):
+                return CategoryValues(values=None, withheld_reason="person_name_suspected")
         return CategoryValues(values=values)
 
     def fingerprint(self) -> str:
@@ -448,10 +465,17 @@ class DuckDBAdapter:
                         "t": meta.qualified,
                         "cols": [(c.name, c.dtype) for c in meta.columns],
                         "rows": self.row_count(schema, table),
+                        "values": self.value_checksum(schema, table),
                         "comment": meta.comment.text if meta.comment else None,
                     }
                 )
         return content_hash(catalog)
+
+    def value_checksum(self, schema: str, table: str) -> str:
+        """Order-independent checksum of every row, so an in-place value edit changes the fingerprint
+        (a row count and schema alone would not). Returned as an opaque aggregate, never values."""
+        qt = self._qt(schema, table)
+        return str(self._query(f"SELECT CAST(sum(hash(t)) AS VARCHAR) FROM {qt} AS t")[0][0])
 
 
 # --------------------------------------------------------------------------- registry

@@ -14,5 +14,5 @@ select
     sha256(cast("owner_email" as varchar)) as owner_email_hash,
     cast(coalesce(try_strptime(cast("created_dt" as varchar), '%Y-%m-%d'), try_strptime(cast("created_dt" as varchar), '%m/%d/%Y')) as date) as created_date,
     cast("is_deleted" as boolean) as is_deleted,
-    (coalesce(starts_with(cast("acct_nm" as varchar), 'TEST'), false) or coalesce(cast("is_deleted" as boolean), false)) as _excluded
+    (coalesce(regexp_matches(cast("acct_nm" as varchar), '^(TEST|Test|test)\b'), false) or coalesce(cast("is_deleted" as boolean), false)) as _excluded
 from source

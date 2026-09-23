@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 from itertools import combinations
+from uuid import UUID
 
 from src.domain.models import Confidence, EvidenceRef, Finding, StepName, utcnow
 from src.domain.ontology import EntityDef, Ontology, load_scoring
@@ -145,6 +146,7 @@ def infer_entities(ctx: StepContext) -> StepResult:
     candidates: list[EntityCandidate] = []
     findings: list[Finding] = []
     evidence = []
+    parents: dict[UUID, list[UUID]] = {}  # lineage: derived evidence -> the profile evidence it came from
     for table in profile.tables:
         ref = EvidenceRef(source_id=str(table.evidence_id), uri=f"profile://{table.qualified}", retrieved_at=utcnow())
         if table.row_count == 0:
@@ -172,6 +174,8 @@ def infer_entities(ctx: StepContext) -> StepResult:
             ctx, f"duckdb://{ctx.run.company_id}/{table.qualified}#stat=entity", "entity_scoring", payload, as_of
         )
         evidence.append(ev)
+        if table.evidence_id:
+            parents[ev.evidence_id] = [table.evidence_id]
         refs = [ev.ref(), ref]
         if cand.canonical_entity is None:
             findings.append(
@@ -247,6 +251,7 @@ def infer_entities(ctx: StepContext) -> StepResult:
     return StepResult(
         output=result,
         evidence=evidence,
+        evidence_parents=parents,
         findings=findings,
         audit=[
             (

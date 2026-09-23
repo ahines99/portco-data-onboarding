@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from uuid import UUID
 
 from src.adapters.repositories import RunRecord, Tx
-from src.domain.errors import ApprovalRequired, Conflict, Forbidden, ValidationFailed
+from src.domain.errors import ApprovalRequired, Conflict, Forbidden, PolicyViolation, ValidationFailed
 from src.domain.models import AuditEvent, Principal, ReviewDecision, ReviewGate, RunStatus, utcnow
 from src.domain.policies import check_action
 from src.domain.project_models import Approval, ItemDecision, ReviewItem
@@ -44,6 +44,9 @@ def effective_decisions(approvals: list[Approval], gate: ReviewGate, subject_has
     return out
 
 
+PII_STRICTNESS = {"hash": 1, "exclude": 2}
+
+
 def _validate_override(item: ReviewItem, decision: ItemDecision) -> None:
     if decision.decision is not ReviewDecision.APPROVE_WITH_OVERRIDE:
         return
@@ -60,6 +63,11 @@ def _validate_override(item: ReviewItem, decision: ItemDecision) -> None:
         raise ValidationFailed("unsupported transform")
     if override.get("pii_handling") not in {None, "hash", "exclude"}:
         raise ValidationFailed("unsupported pii_handling")
+    current = item.options.get("pii_handling")
+    if current is not None and "pii_handling" in override:
+        new = override["pii_handling"]
+        if new is None or PII_STRICTNESS[new] < PII_STRICTNESS[current]:
+            raise PolicyViolation(f"PII handling of {item.item_key} can be tightened (hash -> exclude), never relaxed")
 
 
 def record(

@@ -394,13 +394,13 @@ row_filters:
   kind: exclude_true
   table: crm.accounts
 - column: acct_nm
-  kind: exclude_prefix
+  kind: exclude_match
   table: crm.accounts
-  value: TEST
+  value: ^(TEST|Test|test)\b
 - column: cust_name
-  kind: exclude_prefix
+  kind: exclude_match
   table: billing.customers
-  value: TEST
+  value: ^(TEST|Test|test)\b
 traps:
 - column: billing.invoice_lines.amount
   reason: UNIT_MISMATCH

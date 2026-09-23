@@ -25,7 +25,7 @@ from src.domain.project_models import ItemDecision, PublishReceipt, TestReport
 from src.fixtures.generate import ensure_fixture
 from src.fsutil import remove_tree
 from src.reporting import render_run_report
-from src.settings import PROJECT_ROOT, Settings
+from src.settings import PROJECT_ROOT, Settings, get_settings
 from src.workflows.facade import OnboardingService
 
 AGENT = Principal(principal_id="agent:demo", role=Role.AGENT)
@@ -57,7 +57,7 @@ def _reviewer_decisions(items: list[Any], script: dict[str, Any]) -> list[ItemDe
 async def _success(root: Path, script: dict[str, Any]) -> tuple[bool, str]:
     reviewer = Principal(principal_id=script.get("reviewer", "alice"), role=Role.REVIEWER)
     svc = OnboardingService.build(
-        Settings(var_root=root / "success", fixtures_root=PROJECT_ROOT / "var" / "fixtures", log_level="WARNING")
+        Settings(var_root=root / "success", fixtures_root=get_settings().fixtures_dir, log_level="WARNING")
     )
     _say("== 1. Success path: fixture A (synthetic B2B SaaS company)")
     run = await svc.start_run(AGENT, "fixture:portco_a")
@@ -105,7 +105,7 @@ async def _success(root: Path, script: dict[str, Any]) -> tuple[bool, str]:
     events, chain_ok = svc.audit(AGENT, run.run_id)
     _say(f"   audit log: {len(events)} events, hash chain {'intact' if chain_ok else 'BROKEN'}")
     out = root / "success_report.md"
-    out.write_text(render_run_report(svc, AGENT, run.run_id), encoding="utf-8")
+    out.write_text(render_run_report(svc, AGENT, run.run_id), encoding="utf-8", newline="\n")
     ok = run.status is RunStatus.COMPLETE and report.passed and chain_ok
     return ok, f"success path: {run.status.value}, report {out.as_posix()}"
 
@@ -114,7 +114,7 @@ async def _failure(root: Path, script: dict[str, Any]) -> tuple[bool, str]:
     reviewer = Principal(principal_id=script.get("reviewer", "alice"), role=Role.REVIEWER)
     settings = Settings(
         var_root=root / "failure",
-        fixtures_root=PROJECT_ROOT / "var" / "fixtures",
+        fixtures_root=get_settings().fixtures_dir,
         log_level="WARNING",
         step_backoff_base_seconds=0.05,
     )
@@ -138,7 +138,7 @@ async def _failure(root: Path, script: dict[str, Any]) -> tuple[bool, str]:
     _say(f"   run stopped at '{run.gate}' - nothing is published unless a reviewer waives or the mapping changes")
     published = list((root / "failure" / "published").rglob("*"))
     out = root / "failure_report.md"
-    out.write_text(render_run_report(svc, AGENT, run.run_id), encoding="utf-8")
+    out.write_text(render_run_report(svc, AGENT, run.run_id), encoding="utf-8", newline="\n")
     ok = (
         run.status is RunStatus.NEEDS_REVIEW
         and run.gate == "test_failures"
@@ -155,7 +155,7 @@ def run_demo(out: Path) -> int:
         root = root.with_name(f"{root.name}-{int(time.time())}")
     root.mkdir(parents=True, exist_ok=True)
     for name in ("portco_a", "portco_a__malformed"):
-        ensure_fixture(name, PROJECT_ROOT / "var" / "fixtures")
+        ensure_fixture(name, get_settings().fixtures_dir)
     script = yaml.safe_load((PROJECT_ROOT / "demo" / "reviews_gate_a.yaml").read_text(encoding="utf-8"))
     ok1, msg1 = anyio.run(_success, root, script)
     ok2, msg2 = anyio.run(_failure, root, script)

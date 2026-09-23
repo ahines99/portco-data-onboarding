@@ -25,7 +25,7 @@ import yaml
 from evals.checks import CheckResult, run_check
 from evals.drivers import run_case
 from src.fixtures.generate import ensure_fixture
-from src.settings import PROJECT_ROOT
+from src.settings import get_settings
 
 HERE = Path(__file__).resolve().parent
 DIMENSIONS = ["tool_correctness", "evidence", "calculation", "permission", "uncertainty", "recovery", "cost"]
@@ -35,7 +35,7 @@ async def evaluate(case_ids: list[str] | None, workdir: Path) -> dict[str, Any]:
     cases = yaml.safe_load((HERE / "cases.yaml").read_text(encoding="utf-8"))
     if case_ids:
         cases = [c for c in cases if c["id"] in case_ids]
-    fixtures_dir = PROJECT_ROOT / "var" / "fixtures"
+    fixtures_dir = get_settings().fixtures_dir
     for name in sorted({c["fixture"] for c in cases}):
         ensure_fixture(name, fixtures_dir)
     cache: dict[str, Any] = {}
@@ -136,8 +136,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case", action="append", help="run only these case ids")
     parser.add_argument("--keep", action="store_true", help="keep the eval working directory")
+    parser.add_argument("--snapshot", action="store_true", help="also write a dated, committable report copy")
     args = parser.parse_args(argv)
-    workdir = PROJECT_ROOT / "var" / "evals" / datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
+    # Short segments: each case's dbt sandbox nests deeply, and Windows paths stop at 260 characters.
+    workdir = get_settings().var_root / "ev" / datetime.now(UTC).strftime("%m%d%H%M%S")
     workdir.mkdir(parents=True, exist_ok=True)
     report = anyio.run(evaluate, args.case, workdir)
     thresholds = yaml.safe_load((HERE / "thresholds.yaml").read_text(encoding="utf-8"))
@@ -145,8 +147,11 @@ def main(argv: list[str] | None = None) -> int:
     report["gate"] = {"passed": not failures, "failures": failures}
     out = HERE / "reports"
     out.mkdir(exist_ok=True)
-    (out / "latest.json").write_text(json.dumps(report, indent=1), encoding="utf-8")
-    (out / "latest.md").write_text(to_markdown(report, failures), encoding="utf-8")
+    (out / "latest.json").write_text(json.dumps(report, indent=1), encoding="utf-8", newline="\n")
+    (out / "latest.md").write_text(to_markdown(report, failures), encoding="utf-8", newline="\n")
+    if args.snapshot and not args.case:
+        day = datetime.now(UTC).strftime("%Y-%m-%d")
+        (out / f"{day}.md").write_text(to_markdown(report, failures), encoding="utf-8", newline="\n")
     if not args.keep:
         shutil.rmtree(workdir, ignore_errors=True)
     print(

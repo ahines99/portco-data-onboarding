@@ -133,7 +133,7 @@ async def test_span_tree_for_a_run(tmp_path: Path, fixtures_dir: Path) -> None:
 def test_run_metrics(completed_a: CompletedRun) -> None:
     m = compute_run_metrics(completed_a.service, ADMIN, completed_a.run_id)
     assert m["outcome"] == "complete" and m["overrides"] == 1 and m["human_changed_recommendation"] == 1
-    assert m["steps"]["automated_tests"]["attempts"] >= 1 and m["evidence_ids_read"] > 10
+    assert m["steps"]["automated_tests"]["attempts"] >= 1 and m["evidence_cited"] > 10
     assert m["llm"]["calls"] == 0  # deterministic path
     json.dumps(m)
 

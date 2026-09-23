@@ -30,6 +30,7 @@ postgres = ["psycopg[binary]>=3.2"]
 llm = ["anthropic>=0.40"]
 dev = [
   "pytest>=8",
+  "pytest-cov>=5",
   "ruff>=0.7",
   "mypy>=1.12",
   "poethepoet>=0.29",
@@ -93,8 +94,8 @@ module = ["src.domain.*", "src.workflows.*", "src.adapters.*"]
 strict = true
 
 [tool.poe.tasks]
-lint = "ruff check src tests evals"
-fmt = "ruff format src tests evals"
+lint = "ruff check src tests evals scripts"
+fmt = "ruff format src tests evals scripts"
 typecheck = "mypy src"
 test = "pytest -q -m 'not postgres'"
 test-golden = "pytest -q -m golden"
@@ -105,3 +106,5 @@ migrate = "alembic upgrade head"
 demo = "python -m src.cli demo"
 schemas = "python scripts/export_schemas.py"
 docs = "python scripts/gen_data_contracts.py"
+cov-metrics = "pytest -q tests/test_metrics_reference.py --cov=src.domain.metrics_reference --cov-branch --cov-report=term-missing --cov-fail-under=100"
+

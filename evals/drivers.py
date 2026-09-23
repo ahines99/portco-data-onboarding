@@ -13,7 +13,7 @@ from src.adapters.faults import FaultInjector
 from src.adapters.repositories import RunRecord
 from src.domain.models import Principal, ReviewDecision, Role, RunStatus
 from src.domain.project_models import ItemDecision, ReviewItem
-from src.settings import PROJECT_ROOT, Settings
+from src.settings import Settings, get_settings
 from src.workflows.facade import OnboardingService
 
 AGENT = Principal(principal_id="agent:eval", role=Role.AGENT)
@@ -60,7 +60,7 @@ def decisions(items: list[ReviewItem], overrides: dict[str, Any], reject: set[st
 def build_service(root: Path, faults: str = "", **settings: Any) -> OnboardingService:
     s = Settings(
         var_root=root,
-        fixtures_root=PROJECT_ROOT / "var" / "fixtures",
+        fixtures_root=get_settings().fixtures_dir,
         env="test",
         step_backoff_base_seconds=0.0,
         log_level="WARNING",

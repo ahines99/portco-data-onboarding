@@ -30,6 +30,7 @@ from src.domain.hashing import content_hash
 from src.domain.ontology import Ontology
 from src.domain.pii_guard import PiiGuard
 from src.domain.project_models import ColumnProfile, MappingProposal, TableProfile
+from src.observability import span
 
 log = structlog.get_logger(__name__)
 PROMPT_VERSION = "judge-v1"
@@ -140,9 +141,12 @@ class ClaudeJudge:
         if self.client is None:
             return None
         started = time.monotonic()
-        response = self.client.messages.create(
-            **request, betas=["server-side-fallback-2026-07-01"], fallbacks="default"
-        )
+        with span("llm.judge", model=self.model, prompt_version=PROMPT_VERSION) as sp:
+            response = self.client.messages.create(
+                **request, betas=["server-side-fallback-2026-07-01"], fallbacks="default"
+            )
+            sp.set_attribute("input_tokens", response.usage.input_tokens)
+            sp.set_attribute("output_tokens", response.usage.output_tokens)
         latency = round(time.monotonic() - started, 3)
         if response.stop_reason == "refusal":
             result = {"choice": "ABSTAIN", "rationale": "model declined"}
@@ -163,7 +167,7 @@ class ClaudeJudge:
         }
         if self.mode == "record":
             self.cassette_dir.mkdir(parents=True, exist_ok=True)
-            cassette.write_text(json.dumps(result, indent=1, sort_keys=True), encoding="utf-8")
+            cassette.write_text(json.dumps(result, indent=1, sort_keys=True), encoding="utf-8", newline="\n")
         log.info("judge_called", model=result["model"], latency_s=latency, choice=result.get("choice"))
         return self._validated(result, allowed, proposal)
 

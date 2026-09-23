@@ -63,6 +63,10 @@ def is_sensitive_name(column: str) -> bool:
 
 
 # Regex patterns evaluated in-adapter; only match counts leave the source.
+# A test record: the value starts with the word TEST (any common casing). Used verbatim as a Python
+# regex, a DuckDB `regexp_matches` pattern (RE2) and in reconciliation, so all three agree.
+TEST_RECORD_PATTERN = r"^(TEST|Test|test)\b"
+
 PATTERNS: dict[str, tuple[str, bool]] = {
     "email": (r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}", True),
     "phone": (r"\+?[0-9]{1,3}[ \-.()][0-9 ()\-.]{6,}[0-9]", True),
@@ -72,7 +76,7 @@ PATTERNS: dict[str, tuple[str, bool]] = {
     "us_date": (r"[0-9]{2}/[0-9]{2}/[0-9]{4}", True),
     "numeric_text": (r"-?[0-9]+(\.[0-9]+)?", True),
     "ipv4": (r"([0-9]{1,3}\.){3}[0-9]{1,3}", True),
-    "test_prefix": (r"^(TEST|Test|test)\b", False),
+    "test_prefix": (TEST_RECORD_PATTERN, False),
     "contains_email": (r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}", False),
     "contains_ssn": (r"(^|[^0-9-])[0-9]{3}-[0-9]{2}-[0-9]{4}([^0-9-]|$)", False),
 }

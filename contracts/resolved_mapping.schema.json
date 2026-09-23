@@ -210,7 +210,7 @@
         "kind": {
           "enum": [
             "exclude_true",
-            "exclude_prefix"
+            "exclude_match"
           ],
           "title": "Kind",
           "type": "string"

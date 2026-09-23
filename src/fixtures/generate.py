@@ -78,7 +78,7 @@ def generate(name: str, root: Path | None = None, *, write_truth: bool = True) -
                     "content_digest",
                 )
             }
-        target.write_text(yaml.safe_dump(doc, sort_keys=True, width=120), encoding="utf-8")
+        target.write_text(yaml.safe_dump(doc, sort_keys=True, width=120), encoding="utf-8", newline="\n")
     return path
 
 

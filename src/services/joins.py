@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from src.adapters.external import type_family
 from src.domain.models import Confidence, Evidence, Finding, StepName
 from src.domain.ontology import load_scoring
@@ -61,6 +63,7 @@ def infer_joins(ctx: StepContext) -> StepResult:
 
     best: dict[tuple[str, str], JoinCandidate] = {}
     evidence: list[Evidence] = []
+    parents: dict[UUID, list[UUID]] = {}  # lineage: containment evidence -> both tables' profile evidence
     for rq, rpk in pk_of.items():
         if len(rpk) != 1:
             continue
@@ -117,6 +120,7 @@ def infer_joins(ctx: StepContext) -> StepResult:
                     payload,
                     adapter.spec.as_of,
                 )
+                parents[ev.evidence_id] = [e for e in (tables[lq].evidence_id, tables[rq].evidence_id) if e]
                 cand = JoinCandidate(
                     join_id=join_id,
                     left_table=lq,
@@ -173,6 +177,7 @@ def infer_joins(ctx: StepContext) -> StepResult:
     return StepResult(
         output=JoinGraph(joins=joins),
         evidence=evidence,
+        evidence_parents=parents,
         findings=findings,
         audit=[("joins_inferred", {"joins": len(joins), "requires_review": sum(j.requires_review for j in joins)})],
     )

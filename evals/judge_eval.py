@@ -17,7 +17,7 @@ import anyio
 from evals.checks import mapping_scores
 from evals.drivers import ADMIN, CaseRun, build_service, drive
 from src.domain.models import StepName
-from src.settings import PROJECT_ROOT
+from src.settings import PROJECT_ROOT, get_settings
 
 OUT = PROJECT_ROOT / "evals" / "reports" / "judge_comparison.md"
 
@@ -41,7 +41,7 @@ async def score(fixture: str, llm: bool, mode: str, root: Any) -> dict[str, Any]
 
 
 async def main_async(mode: str) -> str:
-    root = PROJECT_ROOT / "var" / "judge_eval"
+    root = get_settings().var_root / "judge_eval"
     shutil.rmtree(root, ignore_errors=True)
     rows = []
     verdicts = []
@@ -91,7 +91,7 @@ def main() -> None:
     parser.add_argument("--mode", choices=["replay", "record", "live"], default="replay")
     args = parser.parse_args()
     text = anyio.run(main_async, args.mode)
-    OUT.write_text(text, encoding="utf-8")
+    OUT.write_text(text, encoding="utf-8", newline="\n")
     print(text)
 
 

@@ -26,7 +26,8 @@ def compute_run_metrics(svc: Any, principal: Principal, run_id: UUID) -> dict[st
             s["failures"] += 1
     reused = sum(1 for e in events if e.event_type == "step_reused")
     retries = sum(1 for e in events if e.event_type == "step_retried")
-    evidence_read = sorted({ref.source_id for f in svc.findings(principal, run_id) for ref in f.evidence})
+    cited = {ref.source_id for f in svc.findings(principal, run_id) for ref in f.evidence}
+    tool_calls = [e for e in events if e.event_type == "mcp_tool_called"]
 
     calls = input_tokens = output_tokens = 0
     cost_usd = 0.0
@@ -60,7 +61,11 @@ def compute_run_metrics(svc: Any, principal: Principal, run_id: UUID) -> dict[st
         "steps": steps,
         "reused_steps": reused,
         "retries": retries,
-        "evidence_ids_read": len(evidence_read),
+        "evidence_cited": len(cited),  # distinct evidence records the findings cite
+        "evidence_reads": sum(1 for e in events if e.event_type == "evidence_read"),  # agent reads over MCP
+        "mcp_tool_calls": len(tool_calls),
+        "mcp_tool_errors": sum(1 for e in tool_calls if e.payload.get("is_error")),
+        "pii_guard_blocks": sum(1 for e in events if e.event_type == "pii_guard_blocked"),
         "approvals": len(approvals),
         "approval_events": sum(1 for e in events if e.event_type in {"approval_recorded", "approval_invalidated"}),
         "policy_denials": sum(1 for e in events if e.event_type == "policy_denied"),

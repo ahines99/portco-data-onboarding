@@ -241,8 +241,8 @@ class RowFilter(Contract):
     filter_key: str
     table: str
     column: str
-    kind: Literal["exclude_true", "exclude_prefix"]
-    value: str | None = None
+    kind: Literal["exclude_true", "exclude_match"]
+    value: str | None = None  # exclude_match: a regex valid in both Python `re` and DuckDB (RE2)
     rationale: str
     affected_rows: int
     requires_review: bool = True

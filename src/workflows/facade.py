@@ -20,6 +20,7 @@ from src.adapters.external import ConnectionRegistry
 from src.adapters.faults import FaultInjector
 from src.adapters.repositories import RunRecord, Store
 from src.domain.errors import Conflict, Forbidden, NotFound, ValidationFailed
+from src.domain.hashing import canonical_json
 from src.domain.identifiers import assert_safe_company
 from src.domain.models import (
     AuditEvent,
@@ -27,24 +28,28 @@ from src.domain.models import (
     Finding,
     Principal,
     ReviewGate,
+    Role,
     RunStatus,
     StepName,
 )
 from src.domain.ontology import load_ontology
 from src.domain.policies import check_action
 from src.domain.project_models import Approval, ItemDecision, ReviewItem
+from src.domain.run_states import can_transition
 from src.observability import configure_logging
 from src.services import approvals as approval_service
 from src.settings import PROJECT_ROOT, Settings, get_settings
 from src.workflows.base import WorkflowEngine
 from src.workflows.primary import OUTPUT_TYPES, PROJECT_STEPS
 
+SYSTEM = Principal(principal_id="system", role=Role.ADMIN)
+
 
 def migrate(url: str) -> None:
     logging.getLogger("alembic").setLevel(logging.WARNING)
     cfg = Config(str(PROJECT_ROOT / "alembic.ini"))
     cfg.set_main_option("script_location", str(PROJECT_ROOT / "migrations"))
-    cfg.set_main_option("sqlalchemy.url", url)
+    cfg.set_main_option("sqlalchemy.url", url.replace("%", "%%"))  # configparser interpolation
     command.upgrade(cfg, "head")
 
 
@@ -148,17 +153,13 @@ class OnboardingService:
                 requested_by=principal.principal_id,
                 stop_after=stop_after.value if stop_after else None,
             )
-        return await self.engine.run(run.run_id, principal.principal_id)
+        return await self._run(run.run_id, principal.principal_id)
 
     async def resume(self, principal: Principal, run_id: UUID, stop_after: StepName | None = None) -> RunRecord:
         run = self.get_run(principal, run_id)
         self._authorize(principal, "resume_run", run)
-        if run.status is RunStatus.RUNNING:
-            raise Conflict("run is already running")
-        if stop_after is not None:
-            with self.store.tx() as tx:
-                tx.runs.update(run_id, stop_after=stop_after.value)
-        return await self.engine.run(run_id, principal.principal_id)
+        # The engine's lease claim rejects a run another worker is executing (Conflict).
+        return await self._run(run_id, principal.principal_id, stop_after=stop_after.value if stop_after else None)
 
     async def rerun_from(
         self,
@@ -171,15 +172,51 @@ class OnboardingService:
         run = self.get_run(principal, run_id)
         self._authorize(principal, "rerun_from", run)
         self.engine.rerun_from(run_id, step, principal.principal_id, reopen_reviews=reopen_reviews)
-        if stop_after is not None:
-            with self.store.tx() as tx:
-                tx.runs.update(run_id, stop_after=stop_after.value)
-        return await self.engine.run(run_id, principal.principal_id)
+        return await self._run(run_id, principal.principal_id, stop_after=stop_after.value if stop_after else None)
+
+    async def _run(self, run_id: UUID, actor: str, stop_after: str | None = None) -> RunRecord:
+        with self.store.tx() as tx:
+            before = tx.runs.get(run_id).status
+        run = await self.engine.run(run_id, actor, stop_after=stop_after)
+        if before not in {RunStatus.COMPLETE, RunStatus.CANCELLED}:  # the engine did work
+            self._snapshot_metrics(run)
+        return run
+
+    def _snapshot_metrics(self, run: RunRecord) -> None:
+        """Persist the run's metrics at every stop (content-addressed blob + audit event)."""
+        from src.run_metrics import compute_run_metrics
+
+        try:
+            metrics = compute_run_metrics(self, SYSTEM, run.run_id)
+        except Exception:  # metrics must never fail a run
+            logging.getLogger(__name__).warning("run_metrics_failed", exc_info=True)
+            return
+        ref = self.store.blobs.put_bytes(canonical_json(metrics).encode())
+        with self.store.tx() as tx:
+            tx.audit.append(
+                AuditEvent(
+                    run_id=run.run_id,
+                    step=run.current_step or "",
+                    actor="system",
+                    event_type="run_metrics_recorded",
+                    payload={
+                        "metrics_ref": ref,
+                        "status": metrics["status"],
+                        "retries": metrics["retries"],
+                        "reused_steps": metrics["reused_steps"],
+                        "llm_cost_usd": metrics["llm"]["cost_usd"],
+                    },
+                )
+            )
 
     def cancel(self, principal: Principal, run_id: UUID, reason: str) -> RunRecord:
         run = self.get_run(principal, run_id)
         self._authorize(principal, "cancel_run", run)
         with self.store.tx() as tx:
+            # A running run is cancelled too: its worker sees the status at the next step boundary,
+            # discards any in-flight step result and releases the lease.
+            if not can_transition(tx.runs.get(run_id, lock=True).status, RunStatus.CANCELLED):
+                raise Conflict(f"a {run.status.value} run cannot be cancelled")
             tx.runs.update(run_id, status=RunStatus.CANCELLED, pending_items=[])
             tx.audit.append(
                 AuditEvent(
