@@ -46,6 +46,35 @@ from src.services.approvals import effective_decisions
 from src.workflows.contracts import StepContext, StepResult, make_evidence
 
 _GUARD = PiiGuard()
+DBT_ENV_ALLOWLIST = frozenset(
+    {
+        "PATH",
+        "PATHEXT",
+        "SYSTEMROOT",
+        "SYSTEMDRIVE",
+        "WINDIR",
+        "COMSPEC",
+        "TEMP",
+        "TMP",
+        "TMPDIR",
+        "HOME",
+        "USERPROFILE",
+        "HOMEDRIVE",
+        "HOMEPATH",
+        "APPDATA",
+        "LOCALAPPDATA",
+        "LANG",
+        "LC_ALL",
+    }
+)
+
+
+def _qi(ident: str) -> str:
+    return '"' + ident.replace('"', '""') + '"'
+
+
+def _ql(literal: str) -> str:
+    return "'" + literal.replace("'", "''") + "'"
 
 
 def _sanitize(message: str | None) -> str | None:
@@ -82,8 +111,9 @@ def run_dbt(ctx: StepContext, workdir: Path, source_copy: Path) -> tuple[int, li
     if not (_inside(warehouse, sandbox_root) and _inside(source_copy, sandbox_root)):
         raise PolicyViolation("dbt may only target files inside the sandbox directory")
     project = workdir / "project"
+    # dbt renders Jinja: give it only what it needs, never secrets from the parent environment.
     env = {
-        **os.environ,
+        **{k: v for k, v in os.environ.items() if k.upper() in DBT_ENV_ALLOWLIST},
         "PORTCO_DBT_WAREHOUSE": str(warehouse),
         "PORTCO_DBT_SOURCE": str(source_copy),
         "DBT_SEND_ANONYMOUS_USAGE_STATS": "false",
@@ -155,8 +185,8 @@ class SourceRows:
 
     def _cols(self, table: str, cols: list[str]) -> list[dict[str, Any]]:
         schema, name = table.split(".", 1)
-        sel = ", ".join(f'"{c}"' for c in cols) or "1 AS _row"
-        rows = self.con.execute(f'SELECT {sel} FROM "{schema}"."{name}"').fetchall()
+        sel = ", ".join(_qi(c) for c in cols) or "1 AS _row"
+        rows = self.con.execute(f"SELECT {sel} FROM {_qi(schema)}.{_qi(name)}").fetchall()
         return [dict(zip(cols, row, strict=False)) for row in rows]
 
     def own_excluded(self, table: str, row: dict[str, Any]) -> bool:
@@ -276,8 +306,9 @@ def reconcile(
     models = set(bundle.models)
 
     for table, stg in sorted(model_tables.items()):
-        src_n = src.con.execute(f'SELECT count(*) FROM "{table.split(".")[0]}"."{table.split(".", 1)[1]}"').fetchone()
-        stg_n, stg_x = wh.execute(f"SELECT count(*), count(*) FILTER (WHERE _excluded) FROM {stg}").fetchone()  # type: ignore[misc]
+        schema_name, table_name = table.split(".", 1)
+        src_n = src.con.execute(f"SELECT count(*) FROM {_qi(schema_name)}.{_qi(table_name)}").fetchone()
+        stg_n, stg_x = wh.execute(f"SELECT count(*), count(*) FILTER (WHERE _excluded) FROM {_qi(stg)}").fetchone()  # type: ignore[misc]
         rows = src.scoped(table, [])
         py_x = sum(1 for row in rows if src.own_excluded(table, row))
         checks.append(
@@ -446,7 +477,7 @@ def build_and_test(ctx: StepContext, bundle: ArtifactBundle, resolved: ResolvedM
             if stg in stg_models:
                 model_tables[m.source_table] = stg
         wh = duckdb.connect(str(warehouse), read_only=True)
-        wh.execute(f"ATTACH '{source_copy.as_posix()}' AS src (READ_ONLY)")
+        wh.execute(f"ATTACH {_ql(source_copy.as_posix())} AS src (READ_ONLY)")
         src = SourceRows(source_copy, resolved)
         try:
             ok_models = {

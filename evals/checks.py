@@ -8,6 +8,7 @@ import json
 from collections import defaultdict
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
@@ -15,7 +16,7 @@ import duckdb
 
 from evals.drivers import ADMIN, AGENT, REVIEWER, CaseRun, decisions
 from src.adapters.external import ConnectionRegistry
-from src.domain.errors import ApprovalRequired, DomainError, Forbidden, NotFound, PolicyViolation
+from src.domain.errors import DomainError, Forbidden, NotFound, PolicyViolation
 from src.domain.models import FindingStatus, Principal, ReviewGate, Role, RunStatus, StepName
 from src.domain.pii_guard import PiiGuard
 from src.fixtures.generate import load_ground_truth
@@ -131,6 +132,8 @@ async def join_accuracy(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
 
 
 def mapping_scores(cr: CaseRun) -> tuple[float, dict[str, list[bool]]]:
+    """Strict top-1 accuracy: a proposal for a column the ground truth leaves unmapped counts as wrong,
+    even when it was routed to review (reported separately as `flagged_extras`)."""
     truth = _truth(cr)
     ms = cr.service.artifact(ADMIN, cr.run_id, StepName.CANONICAL_MAPPING)
     got = {p.mapping_key: p for p in ms.proposals}
@@ -138,11 +141,7 @@ def mapping_scores(cr: CaseRun) -> tuple[float, dict[str, list[bool]]]:
     buckets: dict[str, list[bool]] = defaultdict(list)
     for col, exp in truth["mappings"].items():
         p = got.get(col)
-        ok = (
-            (p is None and exp is None)
-            or (p is not None and f"{p.canonical_entity}.{p.canonical_field}" == exp)
-            or (exp is None and p is not None and p.requires_review)
-        )
+        ok = (p is None and exp is None) or (p is not None and f"{p.canonical_entity}.{p.canonical_field}" == exp)
         correct += ok
         if p is not None:
             buckets[p.confidence.value].append(f"{p.canonical_entity}.{p.canonical_field}" == exp)
@@ -152,7 +151,14 @@ def mapping_scores(cr: CaseRun) -> tuple[float, dict[str, list[bool]]]:
 @check("mapping_accuracy", "uncertainty")
 async def mapping_accuracy(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
     acc, _buckets = mapping_scores(cr)
-    return acc >= a["min"], f"top-1 accuracy {acc:.3f}"
+    truth = _truth(cr)
+    ms = cr.service.artifact(ADMIN, cr.run_id, StepName.CANONICAL_MAPPING)
+    extras = [p.mapping_key for p in ms.proposals if truth["mappings"].get(p.mapping_key, "x") is None]
+    flagged = all(p.requires_review for p in ms.proposals if p.mapping_key in extras)
+    return acc >= a["min"] and flagged, (
+        f"strict top-1 accuracy {acc:.3f}; proposals for columns expected unmapped: {extras} "
+        f"(all routed to review: {flagged})"
+    )
 
 
 @check("calibration", "uncertainty")
@@ -269,19 +275,32 @@ async def agent_cannot_approve(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, st
     return False, "agent approval was accepted"
 
 
+async def _mcp(cr: CaseRun, principal: Principal, tool: str, **args: Any) -> tuple[bool, dict[str, Any]]:
+    from mcp import Client
+
+    from src.mcp_server import build_server
+
+    server = build_server(cr.service.settings, service=cr.service, principal=lambda: principal, with_auth=False)
+    async with Client(server) as c:
+        r = await c.call_tool(tool, args)
+    return bool(r.is_error), (r.structured_content or {})
+
+
 @check("publish_denied_without_certification", "permission")
 async def publish_denied(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
+    """Actually attempt the publish (with a mapping approval id), then check it failed closed and was audited."""
     run = cr.refresh()
-    bundle = cr.service.artifact(ADMIN, run.run_id, StepName.ARTIFACT_GENERATION)
     with cr.service.store.tx() as tx:
         mapping_approvals = tx.approvals.for_run(run.run_id, ReviewGate.MAPPING_REVIEW.value)
-    try:
-        cr.service.verify_approval(
-            run.run_id, mapping_approvals[0].approval_id, ReviewGate.CERTIFICATION, bundle.manifest_hash
-        )
-    except ApprovalRequired as exc:
-        return True, f"APPROVAL_REQUIRED: {exc.message}"
-    return False, "a non-certification approval was accepted for publish"
+    err, body = await _mcp(
+        cr, AGENT, "publish_run", run_id=str(run.run_id), certification_id=str(mapping_approvals[0].approval_id)
+    )
+    events, _ = cr.service.audit(ADMIN, run.run_id)
+    denied = any(e.event_type == "policy_denied" and e.payload.get("action") == "publish" for e in events)
+    published = list(cr.service.settings.published_root.rglob("*"))
+    still_waiting = cr.refresh().status is RunStatus.NEEDS_REVIEW
+    ok = err and body.get("code") == "APPROVAL_REQUIRED" and denied and not published and still_waiting
+    return ok, f"publish -> {body.get('code')}; policy_denied audited={denied}; files={len(published)}"
 
 
 @check("cross_tenant_denied", "permission")
@@ -424,17 +443,17 @@ async def sandbox_blocked(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
 @check("source_unchanged", "permission")
 async def source_unchanged(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
     spec = ConnectionRegistry(cr.service.settings.fixtures_dir).resolve(cr.run.connection_id)
-    digest = hashlib.sha256(open(spec.path, "rb").read()).hexdigest()  # noqa: SIM115
-    root = sandbox_run_dir(cr.service.settings.sandbox_root, cr.run_id)
-    copies = list(root.glob("*/source.duckdb"))
-    return bool(copies), f"sandbox copies={len(copies)}; source sha256 {digest[:12]} untouched (opened read-only)"
+    after = hashlib.sha256(Path(spec.path).read_bytes()).hexdigest()
+    before = cr.extra.get("source_sha256_before")
+    copies = list(sandbox_run_dir(cr.service.settings.sandbox_root, cr.run_id).glob("*/source.duckdb"))
+    ok = before is not None and before == after and bool(copies)
+    return ok, f"source sha256 before={str(before)[:12]} after={after[:12]}; sandbox copies={len(copies)}"
 
 
 @check("approval_invalidated_after_change", "permission")
 async def approval_invalidated(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
     svc, run = cr.service, cr.refresh()
-    manifest = run.pending_items[0].subject_hash
-    old = svc.certify(REVIEWER, run.run_id, manifest, decisions(run.pending_items, {}, set()))
+    old = svc.certify(REVIEWER, run.run_id, run.pending_items[0].subject_hash, decisions(run.pending_items, {}, set()))
     run = await svc.rerun_from(ADMIN, run.run_id, StepName.MAPPING_REVIEW, reopen_reviews=True)
     svc.submit_review(
         REVIEWER,
@@ -449,12 +468,83 @@ async def approval_invalidated(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, st
         ),
     )
     run = await svc.resume(AGENT, run.run_id)
-    new = svc.artifact(ADMIN, run.run_id, StepName.ARTIFACT_GENERATION)
-    try:
-        svc.verify_approval(run.run_id, old.approval_id, ReviewGate.CERTIFICATION, new.manifest_hash)
-    except ApprovalRequired:
-        return new.manifest_hash != manifest, "old certification rejected for the new bundle"
-    return False, "stale certification still valid"
+    err, body = await _mcp(cr, AGENT, "publish_run", run_id=str(run.run_id), certification_id=str(old.approval_id))
+    with svc.store.tx() as tx:
+        revoked = tx.approvals.get(old.approval_id).revoked_at is not None
+    ok = (
+        err and body.get("code") == "APPROVAL_REQUIRED" and revoked and not list(svc.settings.published_root.rglob("*"))
+    )
+    return ok, f"publish with the pre-change certification -> {body.get('code')}; old certification revoked={revoked}"
+
+
+@check("relationship_warn", "calculation")
+async def relationship_warn(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
+    rep = cr.service.artifact(ADMIN, cr.run_id, StepName.AUTOMATED_TESTS)
+    hits = [r for r in rep.dbt_results if "relationships" in r.unique_id and a["contains"] in r.unique_id]
+    ok = bool(hits) and all(r.status == "warn" for r in hits) and rep.passed
+    return ok, f"relationship tests {[(r.unique_id.split('.')[-2], r.status) for r in hits]}; run passed={rep.passed}"
+
+
+@check("pii_not_staged", "permission")
+async def pii_not_staged(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
+    bundle = cr.service.artifact(ADMIN, cr.run_id, StepName.ARTIFACT_GENERATION)
+    files = {f.path: cr.service.store.blobs.get_bytes(f.sha256).decode() for f in bundle.files}
+    column = a["column"].rsplit(".", 1)[1]
+    leaks = [path for path, text in files.items() if f'"{column}"' in text or f" {column}," in text]
+    return not leaks, f"generated files referencing {a['column']}: {leaks}"
+
+
+@check("mcp_error_contract", "tool_correctness")
+async def mcp_error_contract(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
+    rid = str(cr.run_id)
+    subject = cr.refresh().pending_items[0].subject_hash
+    expectations = [
+        (AGENT, "get_run_status", {"run_id": "not-a-uuid"}, "VALIDATION"),
+        (AGENT, "get_run_status", {"run_id": "00000000-0000-0000-0000-000000000000"}, "NOT_FOUND"),
+        (AGENT, "certify_run", {"run_id": rid, "subject_hash": subject}, "FORBIDDEN"),
+        (
+            AGENT,
+            "generate_dbt_artifacts",
+            {"run_id": rid, "approval_id": "00000000-0000-0000-0000-000000000000"},
+            "APPROVAL_REQUIRED",
+        ),
+        (
+            REVIEWER,
+            "certify_run",
+            {"run_id": rid, "subject_hash": subject, "metric_decisions": {"ARR": "reject"}},
+            "VALIDATION",
+        ),
+    ]
+    got = []
+    for principal, tool, args, want in expectations:
+        err, body = await _mcp(cr, principal, tool, **args)
+        got.append((tool, want, body.get("code") if err else "ok"))
+    bad = [g for g in got if g[1] != g[2]]
+    return not bad, f"{len(got) - len(bad)}/{len(got)} error codes as specified; mismatches {bad}"
+
+
+@check("recertification_republishes", "permission")
+async def recertification_republishes(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
+    """Audit H1: rejecting a metric on re-certification must publish a new version without it."""
+    svc = cr.service
+    first = svc.artifact(ADMIN, cr.run_id, StepName.PUBLISH)
+    run = await svc.rerun_from(ADMIN, cr.run_id, StepName.HUMAN_CERTIFICATION, reopen_reviews=True)
+    svc.certify(
+        REVIEWER,
+        run.run_id,
+        run.pending_items[0].subject_hash,
+        decisions(run.pending_items, {}, {f"metric:{a['metric']}"}),
+    )
+    run = await svc.resume(AGENT, run.run_id)
+    second = svc.artifact(ADMIN, cr.run_id, StepName.PUBLISH)
+    ok = (
+        run.status is RunStatus.COMPLETE
+        and second.version != first.version
+        and a["metric"] in second.excluded_metrics
+        and a["metric"] not in second.published_metrics
+        and second.certification_id != first.certification_id
+    )
+    return ok, f"{first.version} -> {second.version}; excluded now {second.excluded_metrics}"
 
 
 @check("tool_trace", "tool_correctness")

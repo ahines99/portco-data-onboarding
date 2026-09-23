@@ -209,13 +209,13 @@ async def test_full_flow_to_publish_through_mcp(h: Harness) -> None:
         assert not err and tests["passed"] and tests["status"] == "needs_review"
         assert all(ch["passed"] for ch in tests["reconciliation"])
         _, status = await call(c, "get_run_status", run_id=rid)
-        manifest = status["pending_items"][0]["subject_hash"]
-        err, body = await call(c, "certify_run", run_id=rid, manifest_hash=manifest)
+        subject = status["pending_items"][0]["subject_hash"]
+        err, body = await call(c, "certify_run", run_id=rid, subject_hash=subject)
         assert err and body["code"] == "FORBIDDEN"
         h.as_(REVIEWER)
-        err, cert = await call(
-            c, "certify_run", run_id=rid, manifest_hash=manifest, metric_decisions={"cogs": "reject"}
-        )
+        err, body = await call(c, "certify_run", run_id=rid, subject_hash=subject, metric_decisions={"ARR": "reject"})
+        assert err and body["code"] == "VALIDATION" and "unknown metrics" in body["message"]
+        err, cert = await call(c, "certify_run", run_id=rid, subject_hash=subject, metric_decisions={"cogs": "reject"})
         assert not err
         h.as_(AGENT)
         err, pub = await call(c, "publish_run", run_id=rid, certification_id=cert["approval_id"])

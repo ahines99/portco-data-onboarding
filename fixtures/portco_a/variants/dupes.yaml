@@ -1,5 +1,5 @@
 company_id: portco_a__dupes
-content_digest: e1337165fb5ab3e61e2f6efaefb0d2852501de8620d2e366ee406b01035517f2
+content_digest: 7b7f612a8aaec12f5385d5545343fa39d879bcc3ccbbb30d0eb58d1979912a8e
 expected_metrics: {}
 expected_variant:
   findings:

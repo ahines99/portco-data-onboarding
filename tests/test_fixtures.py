@@ -51,7 +51,7 @@ def test_every_variant_has_expected_outcome() -> None:
 
 def test_canaries_are_planted(truth_a: dict[str, Any]) -> None:
     fx = build_fixture("portco_a")
-    blob = repr([t.rows for t in fx.tables])
+    blob = " ".join(str(v) for t in fx.tables for row in t.rows for v in row)
     for canary in truth_a["canaries"]:
         assert canary in blob
 

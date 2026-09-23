@@ -9,32 +9,37 @@ receipt rather than creating a second version.
 from __future__ import annotations
 
 import json
-import shutil
+from uuid import uuid4
 
 from sqlalchemy.exc import IntegrityError
 
 from src.domain.errors import ApprovalRequired, PolicyViolation
+from src.domain.hashing import content_hash
 from src.domain.models import AuditEvent, Confidence, Finding, FindingType, ReviewDecision, ReviewGate, StepName
 from src.domain.policies import check_action
-from src.domain.project_models import ArtifactBundle, CertificationPacket, PublishReceipt
-from src.services.approvals import effective_decisions, is_valid
+from src.domain.project_models import Approval, ArtifactBundle, CertificationPacket, PublishReceipt
+from src.fsutil import remove_tree
+from src.services.approvals import is_valid
 from src.workflows.contracts import StepContext, StepResult, make_evidence
+
+MAX_VERSION_ATTEMPTS = 5
 
 
 def publish_bundle(ctx: StepContext) -> StepResult:
     bundle = ctx.get(StepName.ARTIFACT_GENERATION, ArtifactBundle)
     packet = ctx.get(StepName.HUMAN_CERTIFICATION, CertificationPacket)
-    subject = bundle.manifest_hash
-    if packet.manifest_hash != subject:
+    manifest = bundle.manifest_hash
+    if packet.manifest_hash != manifest:
         raise PolicyViolation("certification packet does not match the bundle being published")
+    subject = packet.review_hash()
     certs = [
         a
         for a in ctx.approvals
         if a.gate == ReviewGate.CERTIFICATION
         and is_valid(a, subject)
-        and any(d.item_key == f"bundle:{subject}" and d.decision is not ReviewDecision.REJECT for d in a.decisions)
+        and any(d.item_key == f"bundle:{manifest}" and d.decision is not ReviewDecision.REJECT for d in a.decisions)
     ]
-    decision = check_action("publish", has_approval=bool(certs))
+    decision = check_action("publish", has_approval=bool(certs) and bool(packet.certification_ids))
     if not decision.allowed:
         with ctx.store.tx() as tx:
             tx.audit.append(
@@ -48,27 +53,79 @@ def publish_bundle(ctx: StepContext) -> StepResult:
             )
         raise ApprovalRequired("publish requires a valid certification bound to this bundle")
     certification = sorted(certs, key=lambda a: a.created_at)[-1]
-    decisions = effective_decisions(ctx.approvals, ReviewGate.CERTIFICATION, subject)
-    rejected = {
-        k.removeprefix("metric:")
-        for k, d in decisions.items()
-        if k.startswith("metric:") and d.decision is ReviewDecision.REJECT
-    }
-    excluded = set(rejected)
-    for m in rejected:
-        excluded |= ctx.ontology.metric_dependents(m)
+    excluded = set(packet.excluded_metrics)
     published_metrics = sorted(m for m in bundle.generated_metrics if m not in excluded)
     company = ctx.run.company_id
-
+    # Idempotent on what is published and under which certification: the same content under the same approval
+    # reuses the receipt; a changed decision (e.g. a metric rejected on re-certification) publishes a new version.
+    key = content_hash(
+        {
+            "manifest": manifest,
+            "excluded": sorted(excluded),
+            "certifications": [str(c) for c in packet.certification_ids],
+        }
+    )
     with ctx.store.tx() as tx:
-        existing = tx.publications.by_hash(company, subject)
-        version = tx.publications.next_version(company)
+        existing = tx.publications.by_key(company, key)
     if existing:
         receipt = PublishReceipt.model_validate(existing).model_copy(update={"reused": True})
     else:
+        receipt = _publish_new(ctx, bundle, packet, certs, certification, excluded, published_metrics, key)
+
+    ev = make_evidence(
+        ctx,
+        f"publish://{company}/{receipt.version}",
+        "publish_receipt",
+        receipt.model_dump(mode="json", exclude={"reused", "published_at"}),
+    )
+    finding = Finding(
+        code="PUBLISHED",
+        title=f"Published {company} {receipt.version}",
+        finding_type=FindingType.OBSERVATION,
+        statement=(
+            f"{len(receipt.published_metrics)} certified metrics published"
+            + (f"; excluded {', '.join(receipt.excluded_metrics)}" if receipt.excluded_metrics else "")
+            + ("; identical publication already existed, receipt reused" if receipt.reused else "")
+            + "."
+        ),
+        confidence=Confidence.HIGH,
+        evidence=[ev.ref()],
+        metadata={"version": receipt.version},
+    )
+    return StepResult(
+        output=receipt,
+        evidence=[ev],
+        findings=[finding],
+        audit=[
+            (
+                "publish_completed",
+                {
+                    "version": receipt.version,
+                    "manifest_hash": manifest,
+                    "reused": receipt.reused,
+                    "certification_id": str(receipt.certification_id),
+                },
+            )
+        ],
+    )
+
+
+def _publish_new(
+    ctx: StepContext,
+    bundle: ArtifactBundle,
+    packet: CertificationPacket,
+    certs: list[Approval],
+    certification: Approval,
+    excluded: set[str],
+    published_metrics: list[str],
+    key: str,
+) -> PublishReceipt:
+    company = ctx.run.company_id
+    for _ in range(MAX_VERSION_ATTEMPTS):
+        with ctx.store.tx() as tx:
+            version = tx.publications.next_version(company)
         dest = ctx.settings.published_root / company / version
-        tmp = dest.with_name(dest.name + ".tmp")
-        shutil.rmtree(tmp, ignore_errors=True)
+        tmp = dest.with_name(f"{dest.name}.tmp-{uuid4().hex[:8]}")
         for f in bundle.files:
             if f.path.startswith("models/semantic/metrics/") and f.path.rsplit("/", 1)[1][:-4] in excluded:
                 continue
@@ -78,7 +135,7 @@ def publish_bundle(ctx: StepContext) -> StepResult:
         receipt = PublishReceipt(
             company_id=company,
             version=version,
-            manifest_hash=subject,
+            manifest_hash=bundle.manifest_hash,
             certification_id=certification.approval_id,
             publisher=certification.reviewer,
             path=str(dest),
@@ -96,53 +153,23 @@ def publish_bundle(ctx: StepContext) -> StepResult:
                 sort_keys=True,
             ),
             encoding="utf-8",
+            newline="\n",
         )
         try:
+            # Unique (company, version) and (company, key) constraints arbitrate concurrent publishers.
             with ctx.store.tx() as tx:
-                tx.publications.insert(company, subject, version, ctx.run.run_id, receipt.model_dump(mode="json"))
-            if dest.exists():
-                shutil.rmtree(dest)
-            tmp.rename(dest)
+                tx.publications.insert(
+                    company, bundle.manifest_hash, key, version, ctx.run.run_id, receipt.model_dump(mode="json")
+                )
         except IntegrityError:
-            shutil.rmtree(tmp, ignore_errors=True)
+            remove_tree(tmp)
             with ctx.store.tx() as tx:
-                existing = tx.publications.by_hash(company, subject)
-            assert existing is not None
-            receipt = PublishReceipt.model_validate(existing).model_copy(update={"reused": True})
-
-    ev = make_evidence(
-        ctx,
-        f"publish://{company}/{receipt.version}",
-        "publish_receipt",
-        receipt.model_dump(mode="json", exclude={"reused", "published_at"}),
-    )
-    finding = Finding(
-        code="PUBLISHED",
-        title=f"Published {company} {receipt.version}",
-        finding_type=FindingType.OBSERVATION,
-        statement=(
-            f"{len(receipt.published_metrics)} certified metrics published"
-            + (f"; excluded {', '.join(receipt.excluded_metrics)}" if receipt.excluded_metrics else "")
-            + ("; identical bundle was already published, receipt reused" if receipt.reused else "")
-            + "."
-        ),
-        confidence=Confidence.HIGH,
-        evidence=[ev.ref()],
-        metadata={"version": receipt.version},
-    )
-    return StepResult(
-        output=receipt,
-        evidence=[ev],
-        findings=[finding],
-        audit=[
-            (
-                "publish_completed",
-                {
-                    "version": receipt.version,
-                    "manifest_hash": subject,
-                    "reused": receipt.reused,
-                    "certification_id": str(receipt.certification_id),
-                },
-            )
-        ],
-    )
+                existing = tx.publications.by_key(company, key)
+            if existing:
+                return PublishReceipt.model_validate(existing).model_copy(update={"reused": True})
+            continue  # another publisher took this version number: try the next one
+        if dest.exists():
+            raise PolicyViolation(f"publish target {version} already exists on disk; refusing to overwrite")
+        tmp.rename(dest)
+        return receipt
+    raise PolicyViolation("could not allocate a publication version after several attempts")

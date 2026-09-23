@@ -40,6 +40,8 @@ CANARIES = {
     "employee_name": "Canary7f3a Sentinel",
     "employee_ssn": "987-65-4329",
     "card_number": "4929000073377335",
+    "employee_dob": "1901-02-03",
+    "employee_salary": "987654.32",
 }
 
 ADJ = [
@@ -449,6 +451,9 @@ def build(seed: int = 42) -> Fixture:
             name = f"{rng.choice(FIRST)} {rng.choice(LAST)}"
             ssn = f"{rng.randint(100, 665):03d}-{rng.randint(1, 99):02d}-{rng.randint(1, 9999):04d}"
         dob = date(1965, 1, 1) + timedelta(days=rng.randint(0, 35 * 365))
+        salary = Decimal(rng.randint(60, 220)) * 1000 + Decimal("0.50")
+        if i == 3:  # extreme values: they would surface as a column min/max if profiling leaked them
+            dob, salary = date.fromisoformat(CANARIES["employee_dob"]), Decimal(CANARIES["employee_salary"])
         emp_rows.append(
             (
                 f"E{i:04d}",
@@ -458,7 +463,7 @@ def build(seed: int = 42) -> Fixture:
                 rng.choice(DEPTS),
                 hire,
                 term,
-                Decimal(rng.randint(60, 220)) * 1000 + Decimal("0.50"),
+                salary,
             )
         )
 

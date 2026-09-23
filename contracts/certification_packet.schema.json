@@ -158,12 +158,34 @@
   },
   "additionalProperties": false,
   "properties": {
+    "certification_ids": {
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": "Certification Ids",
+      "type": "array"
+    },
+    "certified_metrics": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Certified Metrics",
+      "type": "array"
+    },
     "evidence_ids": {
       "items": {
         "format": "uuid",
         "type": "string"
       },
       "title": "Evidence Ids",
+      "type": "array"
+    },
+    "excluded_metrics": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Excluded Metrics",
       "type": "array"
     },
     "failing_checks": {

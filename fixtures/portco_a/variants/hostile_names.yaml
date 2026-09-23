@@ -1,5 +1,5 @@
-company_id: portco_a__empty_table
-content_digest: 504e711eec1b9365c184b052a9f09e18356521caf6908da99c11f1c9048a1113
+company_id: portco_a__hostile_names
+content_digest: 1a081cb6c5a860ebac07961f548d43ddbd9cc95ae40951a4002301262c26d567
 expected_metrics:
   active_customers:
     2024-02: 41
@@ -198,10 +198,13 @@ expected_metrics:
     2025-12: '218260.50'
     2026-01: '204485.20'
 expected_variant:
-  excluded_tables:
-  - billing.credit_notes
   findings:
-  - EMPTY_TABLE
-fixture: portco_a__empty_table
-variant: empty_table
+  - UNSAFE_IDENTIFIER
+  mappings_equal_base: true
+  no_output_contains:
+  - raise_compiler_error
+  - pwned
+  - var('x')
+fixture: portco_a__hostile_names
+variant: hostile_names
 variant_of: portco_a

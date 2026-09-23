@@ -176,8 +176,12 @@ async def test_changing_a_mapping_after_certification_revokes_it(tmp_path: Path,
     run = await svc.resume(AGENT, run.run_id)
     assert run.gate in {"certification", "test_failures"}
     new_bundle = svc.artifact(AGENT, run.run_id, StepName.ARTIFACT_GENERATION)
-    assert new_bundle.manifest_hash != manifest
-    with pytest.raises(ApprovalRequired):
-        svc.verify_approval(run.run_id, old_cert.approval_id, ReviewGate.CERTIFICATION, new_bundle.manifest_hash)
+    assert new_bundle.manifest_hash not in manifest
+    with svc.store.tx() as tx:
+        assert tx.approvals.get(old_cert.approval_id).revoked_at is not None
+    if run.gate == "certification":
+        packet = svc.artifact(AGENT, run.run_id, StepName.HUMAN_CERTIFICATION)
+        with pytest.raises(ApprovalRequired):
+            svc.verify_approval(run.run_id, old_cert.approval_id, ReviewGate.CERTIFICATION, packet.review_hash())
     events, ok = svc.audit(ADMIN, run.run_id)
     assert ok and any(e.event_type == "approval_invalidated" for e in events)

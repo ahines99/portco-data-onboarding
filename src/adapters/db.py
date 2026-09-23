@@ -52,6 +52,12 @@ workflow_runs = Table(
     Column("error", JsonType),
     Column("created_at", TS, nullable=False),
     Column("updated_at", TS, nullable=False),
+    # Execution lease: only the holder may advance the run; an expired lease can be reclaimed (audit M5).
+    Column("lease_owner", String(64)),
+    Column("lease_expires_at", TS),
+    # Audit chain head, updated in the same transaction as each append, so tail truncation is detectable.
+    Column("audit_count", Integer, nullable=False, server_default="0"),
+    Column("audit_head", String(64)),
 )
 
 step_runs = Table(
@@ -127,6 +133,8 @@ audit_events = Table(
     Column("created_at", TS, nullable=False),
     Column("prev_hash", String(64)),
     Column("event_hash", String(64), nullable=False),
+    # Exact canonical JSON the hash was computed over (JSONB may re-render numbers).
+    Column("payload_canonical", Text),
 )
 
 artifacts = Table(
@@ -165,11 +173,14 @@ publications = Table(
     Column("publication_id", Uuid, primary_key=True),
     Column("company_id", String(128), nullable=False),
     Column("manifest_hash", String(64), nullable=False),
+    # hash(manifest, excluded metrics, certification id): what exactly was published, under which approval.
+    Column("publication_key", String(64), nullable=False),
     Column("version", String(32), nullable=False),
     Column("run_id", Uuid, ForeignKey("workflow_runs.run_id"), nullable=False),
     Column("receipt", JsonType, nullable=False),
     Column("created_at", TS, nullable=False),
-    UniqueConstraint("company_id", "manifest_hash", name="uq_publications_company_manifest"),
+    UniqueConstraint("company_id", "publication_key", name="uq_publications_company_key"),
+    UniqueConstraint("company_id", "version", name="uq_publications_company_version"),
 )
 
 

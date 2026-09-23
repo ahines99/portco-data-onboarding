@@ -20,6 +20,7 @@ from src.adapters.external import ConnectionRegistry
 from src.adapters.faults import FaultInjector
 from src.adapters.repositories import RunRecord, Store
 from src.domain.errors import Conflict, Forbidden, NotFound, ValidationFailed
+from src.domain.identifiers import assert_safe_company
 from src.domain.models import (
     AuditEvent,
     Evidence,
@@ -138,6 +139,7 @@ class OnboardingService:
         company = company_id or spec.company_id
         if company != spec.company_id:
             raise ValidationFailed("connection does not belong to that company")
+        assert_safe_company(company)
         self._authorize(principal, "start_run", company_id=company)
         with self.store.tx() as tx:
             run = tx.runs.create(

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import date
 from enum import StrEnum
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 from uuid import UUID, uuid4
 
 from pydantic import AwareDatetime, Field
@@ -427,7 +427,17 @@ class CertificationPacket(Contract):
     waived_checks: list[str]
     open_findings: list[dict[str, Any]]
     evidence_ids: list[UUID]
+    # Filled in once a reviewer has decided; part of the step output (and therefore of publish's input).
+    certified_metrics: list[str] = Field(default_factory=list)
+    excluded_metrics: list[str] = Field(default_factory=list)
+    certification_ids: list[UUID] = Field(default_factory=list)
     schema_version: Literal["1"] = SCHEMA_VERSION
+
+    DECISION_FIELDS: ClassVar[set[str]] = {"certified_metrics", "excluded_metrics", "certification_ids"}
+
+    def review_hash(self) -> str:
+        """What the reviewer certifies: everything in the packet except the decisions themselves."""
+        return content_hash(self.model_dump(mode="json", exclude=self.DECISION_FIELDS))
 
     def content_hash(self) -> str:
         return content_hash(self.model_dump(mode="json"))

@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import statistics
 from datetime import UTC, date, datetime
+from typing import Any
 
 from src.adapters.external import ColumnMeta, ColumnStats, TableMeta, type_family
-from src.domain.models import Confidence, Evidence, EvidenceRef, Finding, FindingType, StepName
+from src.domain.identifiers import is_safe_identifier, redacted
+from src.domain.models import Confidence, Evidence, EvidenceRef, Finding, FindingStatus, FindingType, StepName
 from src.domain.ontology import load_scoring
 from src.domain.project_models import (
     ColumnProfile,
@@ -65,6 +67,19 @@ def _semantic(
             return SemanticType.FREE_TEXT
         return SemanticType.CODE if numeric >= 0.95 else SemanticType.FREE_TEXT
     return SemanticType.UNKNOWN
+
+
+def _summary_stats(name: str, family: str, st: ColumnStats, is_pii: bool) -> dict[str, Any]:
+    """min/max/mean are values too: PII and sensitive columns get none, dates are coarsened to the month."""
+    if is_pii or pii.is_sensitive_name(name):
+        return {"min_value": None, "max_value": None, "mean_value": None}
+    if family in {"date", "timestamp"}:
+        return {
+            "min_value": st.min_value[:7] if st.min_value else None,
+            "max_value": st.max_value[:7] if st.max_value else None,
+            "mean_value": None,
+        }
+    return {"min_value": st.min_value, "max_value": st.max_value, "mean_value": st.mean_value}
 
 
 def _dominant_pattern(counts: dict[str, int], nn: int) -> str | None:
@@ -134,9 +149,7 @@ def profile_table(ctx: StepContext, meta: TableMeta) -> tuple[TableProfile, Evid
                 null_pct=round(1 - st.non_null / row_count, 6) if row_count else 0.0,
                 distinct_count=st.distinct,
                 uniqueness_ratio=round(st.distinct / st.non_null, 6) if st.non_null else None,
-                min_value=st.min_value,
-                max_value=st.max_value,
-                mean_value=st.mean_value,
+                **_summary_stats(col.name, fam, st, pii_class is not None),
                 integer_valued=st.integer_valued,
                 negative_count=st.negative_count,
                 pattern_counts=counts | ({"true_count": st.true_count} if st.true_count is not None else {}),
@@ -149,10 +162,13 @@ def profile_table(ctx: StepContext, meta: TableMeta) -> tuple[TableProfile, Evid
             )
         )
 
+    # Freshness is computed from the raw statistics (it is table-level activity, not a personal value).
     dates = [
-        _parse_date(c.max_value)
+        _parse_date(stats[c.column].max_value if c.column in stats else None)
         for c in columns
-        if c.inferred_semantic_type in {SemanticType.DATE, SemanticType.TIMESTAMP} and c.pii_class is None
+        if c.inferred_semantic_type in {SemanticType.DATE, SemanticType.TIMESTAMP}
+        and c.pii_class is None
+        and not pii.is_sensitive_name(c.column)
     ]
     freshness = max((d for d in dates if d), default=None)
     tp = TableProfile(
@@ -331,9 +347,17 @@ def profile_schema(ctx: StepContext) -> StepResult:
     tables: list[TableProfile] = []
     evidence: list[Evidence] = []
     findings: list[Finding] = []
+    unsafe: list[str] = []
     for schema in adapter.list_schemas():
         for table in adapter.list_tables(schema):
+            if not (is_safe_identifier(schema) and is_safe_identifier(table)):
+                unsafe.append(redacted(f"{schema}.{table}"))
+                continue
             meta = adapter.describe_table(schema, table)
+            bad_cols = [c.name for c in meta.columns if not is_safe_identifier(c.name)]
+            if bad_cols:
+                unsafe += [f"{schema}.{table}.{redacted(c)}" for c in bad_cols]
+                meta = meta.model_copy(update={"columns": [c for c in meta.columns if c.name not in bad_cols]})
             tp, ev, fs = profile_table(ctx, meta)
             tables.append(tp)
             evidence.append(ev)
@@ -347,6 +371,21 @@ def profile_schema(ctx: StepContext) -> StepResult:
         tables=tables,
     )
     findings += _minor_unit_findings(profile, cfg["minor_units_ratio"])
+    if unsafe:
+        findings.append(
+            Finding(
+                code="UNSAFE_IDENTIFIER",
+                title=f"{len(unsafe)} source identifiers excluded as unsafe",
+                statement=(
+                    "Some schema, table or column names contain characters that could be interpreted as code "
+                    "(e.g. template or SQL syntax). They were excluded from profiling and generation and are "
+                    "reported only by hash."
+                ),
+                confidence=Confidence.HIGH,
+                status=FindingStatus.NEEDS_EVIDENCE,
+                metadata={"identifiers": sorted(unsafe)},
+            )
+        )
     pii_cols = sum(1 for t in tables for c in t.columns if c.pii_class)
     findings.append(
         Finding(

@@ -243,8 +243,9 @@ async def test_rejected_certification_fails_the_run(service: OnboardingService) 
 
     run = await drive(service, certify=False)
     assert run.gate == "certification"
-    manifest = run.pending_items[0].subject_hash
-    service.certify(REVIEWER, run.run_id, manifest, decide_all(run.pending_items, reject={f"bundle:{manifest}"}))
+    subject = run.pending_items[0].subject_hash
+    bundle_key = next(i.item_key for i in run.pending_items if i.kind == "bundle")
+    service.certify(REVIEWER, run.run_id, subject, decide_all(run.pending_items, reject={bundle_key}))
     run = await service.resume(AGENT, run.run_id)
     assert run.status is RunStatus.FAILED and run.error and run.error["code"] == "VALIDATION"
     assert "rejected the bundle" in run.error["message"]

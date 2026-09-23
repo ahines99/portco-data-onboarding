@@ -51,8 +51,8 @@ async def drive_mcp(svc: OnboardingService, fixture: str) -> CaseRun:
         await call(c, "generate_dbt_artifacts", AGENT, run_id=rid, approval_id=approval["approval_id"])
         await call(c, "run_sandbox_tests", AGENT, run_id=rid)
         status = await call(c, "get_run_status", AGENT, run_id=rid)
-        manifest = status["pending_items"][0]["subject_hash"]
-        cert = await call(c, "certify_run", REVIEWER, run_id=rid, manifest_hash=manifest)
+        subject = status["pending_items"][0]["subject_hash"]
+        cert = await call(c, "certify_run", REVIEWER, run_id=rid, subject_hash=subject)
         await call(c, "publish_run", AGENT, run_id=rid, certification_id=cert["approval_id"])
     result = CaseRun(svc, svc.get_run(ADMIN, UUID(rid)), 0.0, trace=trace)
     result.extra["agent_self_approval"] = denied

@@ -1,14 +1,16 @@
 as_of: '2026-01-31'
 canaries:
 - +1-555-013-7337
+- '1901-02-03'
 - '4929000073377335'
 - 987-65-4329
+- '987654.32'
 - Canary7f3a
 - Canary7f3a Sentinel
 - ap-canary-7f3a@canary.invalid
 - canary-7f3a@canary.invalid
 company_id: portco_a
-content_digest: 8de5a2206843e2f0dbdaf6b4aa9634226705b2309850c81129ba9a1f9d75965a
+content_digest: 441bb9eac249eb81d20dae8f847d8d071515cffe63dce363364c342a8c02cd7b
 entities:
   billing.customers: customer
   billing.invoice_lines: invoice_line

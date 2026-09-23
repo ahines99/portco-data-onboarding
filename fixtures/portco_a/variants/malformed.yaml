@@ -1,5 +1,5 @@
 company_id: portco_a__malformed
-content_digest: 5801b1b9292c32a9d2bf759726f4b744d8508bce33a8c0f525f18a0b4e1f1768
+content_digest: 3cefb150e4aceacf62050d9eecf7174f2dd100326a76678a1cae4c74132f1465
 expected_metrics: {}
 expected_variant:
   findings:

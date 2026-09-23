@@ -1,5 +1,5 @@
 company_id: portco_a__pii_heavy
-content_digest: a299b7a99df06582980b9e0f4d850d92f6fa12e7e079f01f084150c0cfa486a9
+content_digest: 2873b95f8702e8a92efd94ca622f95e96f45e9ea314986f879619b0db29fc453
 expected_metrics:
   active_customers:
     2024-02: 41

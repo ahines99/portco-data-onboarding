@@ -1,5 +1,5 @@
 company_id: portco_a__missing_required
-content_digest: 6e93cc9e705f4fc85dbe77d6afa2cb4b76311ffed80aa8342a235eecfb3b3628
+content_digest: aed708460c8e5ccdbe2c9bdaea7ef0413be707724c7dfbddef46a36f8038a1f4
 expected_metrics: {}
 expected_variant:
   needs_evidence_metrics:

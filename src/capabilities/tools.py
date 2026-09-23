@@ -25,10 +25,11 @@ from src.capabilities.schemas import (
     TestReportSummary,
 )
 from src.capabilities.summaries import finding_counts, review_item_out, run_summary
-from src.domain.errors import Conflict, DomainError, NotFound
+from src.domain.errors import ApprovalRequired, Conflict, DomainError, NotFound, ValidationFailed
 from src.domain.models import SCHEMA_VERSION, AuditEvent, ReviewDecision, ReviewGate, RunStatus, StepName
 from src.domain.project_models import (
     ArtifactBundle,
+    CertificationPacket,
     ItemDecision,
     MappingSet,
     PublishReceipt,
@@ -152,28 +153,35 @@ def register(mcp: MCPServer, state: ServerState) -> None:
     @tool_errors
     async def certify_run(
         run_id: str,
-        manifest_hash: str,
+        subject_hash: str,
         bundle_decision: str = "approve",
         metric_decisions: dict[str, str] | None = None,
         comment: str | None = None,
     ) -> ApprovalResult:
         """Certify the generated bundle and its metrics. Reviewer principals only.
 
-        `manifest_hash` must equal the bundle under review; `metric_decisions` maps metric -> approve|reject.
-        Metrics not listed are approved. Rejected metrics (and metrics derived from them) are not published.
+        `subject_hash` is the `subject_hash` of the pending certification items: it binds the approval to the
+        exact packet under review (bundle, tests, waivers, open findings). `metric_decisions` maps
+        metric -> approve|reject; unknown metric names are rejected, unlisted metrics are approved. Rejected
+        metrics (and metrics derived from them) are not published.
         """
         svc, principal = state.svc(), state.principal()
         rid = parse_uuid(run_id, "run_id")
         run = svc.get_run(principal, rid)
         metric_decisions = metric_decisions or {}
-        decisions = [ItemDecision(item_key=f"bundle:{manifest_hash}", decision=ReviewDecision(bundle_decision))]
-        for item in run.pending_items:
-            if item.kind == "metric":
-                name = item.item_key.removeprefix("metric:")
-                decisions.append(
-                    ItemDecision(item_key=item.item_key, decision=ReviewDecision(metric_decisions.get(name, "approve")))
-                )
-        approval = svc.certify(principal, rid, manifest_hash, decisions, comment)
+        metric_items = {i.item_key.removeprefix("metric:"): i for i in run.pending_items if i.kind == "metric"}
+        unknown = sorted(set(metric_decisions) - set(metric_items))
+        if unknown:
+            raise ValidationFailed(f"unknown metrics in metric_decisions: {unknown}; expected {sorted(metric_items)}")
+        bundle_items = [i for i in run.pending_items if i.kind == "bundle"]
+        if not bundle_items:
+            raise Conflict("run is not waiting for certification")
+        decisions = [ItemDecision(item_key=bundle_items[0].item_key, decision=ReviewDecision(bundle_decision))]
+        decisions += [
+            ItemDecision(item_key=item.item_key, decision=ReviewDecision(metric_decisions.get(name, "approve")))
+            for name, item in sorted(metric_items.items())
+        ]
+        approval = svc.certify(principal, rid, subject_hash, decisions, comment)
         return ApprovalResult(
             approval_id=str(approval.approval_id),
             run_id=run_id,
@@ -324,11 +332,14 @@ def register(mcp: MCPServer, state: ServerState) -> None:
         """Publish certified artifacts. Fails closed without a valid certification bound to the bundle."""
         svc, principal = state.svc(), state.principal()
         rid = parse_uuid(run_id, "run_id")
-        bundle = svc.artifact(principal, rid, StepName.ARTIFACT_GENERATION)
-        assert isinstance(bundle, ArtifactBundle)
         try:
+            try:
+                packet = svc.artifact(principal, rid, StepName.HUMAN_CERTIFICATION)
+            except NotFound as exc:
+                raise ApprovalRequired("there is no certification packet for the current bundle") from exc
+            assert isinstance(packet, CertificationPacket)
             svc.verify_approval(
-                rid, parse_uuid(certification_id, "certification_id"), ReviewGate.CERTIFICATION, bundle.manifest_hash
+                rid, parse_uuid(certification_id, "certification_id"), ReviewGate.CERTIFICATION, packet.review_hash()
             )
         except DomainError:
             with svc.store.tx() as tx:

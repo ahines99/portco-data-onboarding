@@ -1,5 +1,5 @@
 company_id: portco_a__inj_values
-content_digest: 0019b87a86a60ed96cda111f1f47d4c9b791be6543ef405368768155ac71882e
+content_digest: c61b0a1e946eed1c211d078a45cc6497a8226b157422764b6fedc0da61b801ed
 expected_metrics:
   active_customers:
     2024-02: 41

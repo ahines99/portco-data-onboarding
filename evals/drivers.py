@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -105,6 +106,8 @@ async def run_case(case: dict[str, Any], workdir: Path, cache: dict[str, CaseRun
         return cache[key]
     root = workdir / case["id"]
     svc = build_service(root, case.get("faults", ""))
+    source = Path(svc.connections.resolve(f"fixture:{case['fixture']}").path)
+    before = hashlib.sha256(source.read_bytes()).hexdigest()
     started = time.monotonic()
     driver = case.get("driver", "gate_a")
     if driver == "mcp":
@@ -117,6 +120,7 @@ async def run_case(case: dict[str, Any], workdir: Path, cache: dict[str, CaseRun
         )
         result = CaseRun(svc, run, 0.0)
     result.seconds = round(time.monotonic() - started, 2)
+    result.extra["source_sha256_before"] = before
     if not case.get("fresh"):
         cache[key] = result  # fresh runs get mutated by their checks; never share them
     return result

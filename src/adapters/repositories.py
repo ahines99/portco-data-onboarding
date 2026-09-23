@@ -6,6 +6,7 @@ transaction: a step's outputs, evidence, findings and audit events commit atomic
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -276,8 +277,8 @@ class AuditRepository:
         self.conn = conn
 
     @staticmethod
-    def _hash(prev: str | None, event: AuditEvent) -> str:
-        body = canonical_json(
+    def _body(event: AuditEvent) -> str:
+        return canonical_json(
             {
                 "run_id": str(event.run_id),
                 "step": event.step,
@@ -287,16 +288,23 @@ class AuditRepository:
                 "created_at": event.created_at.astimezone(UTC).isoformat(),
             }
         )
+
+    @staticmethod
+    def _hash(prev: str | None, body: str) -> str:
         return sha256_text((prev or "") + body)
 
     def append(self, event: AuditEvent) -> AuditEvent:
-        prev = self.conn.execute(
-            select(db.audit_events.c.event_hash)
-            .where(db.audit_events.c.run_id == event.run_id)
-            .order_by(db.audit_events.c.event_id.desc())
-            .limit(1)
-        ).scalar()
-        event_hash = self._hash(prev, event)
+        # Lock the run row (FOR UPDATE on Postgres; SQLite serializes writers) so concurrent appends
+        # cannot fork the chain; the run row also carries the chain head and length.
+        head = self.conn.execute(
+            select(db.workflow_runs.c.audit_head, db.workflow_runs.c.audit_count)
+            .where(db.workflow_runs.c.run_id == event.run_id)
+            .with_for_update()
+        ).first()
+        prev = head[0] if head else None
+        count = int(head[1] or 0) if head else 0
+        body = self._body(event)
+        event_hash = self._hash(prev, body)
         res = self.conn.execute(
             insert(db.audit_events).values(
                 run_id=event.run_id,
@@ -304,10 +312,16 @@ class AuditRepository:
                 actor=event.actor,
                 event_type=event.event_type,
                 payload=event.payload,
+                payload_canonical=body,
                 created_at=event.created_at,
                 prev_hash=prev,
                 event_hash=event_hash,
             )
+        )
+        self.conn.execute(
+            update(db.workflow_runs)
+            .where(db.workflow_runs.c.run_id == event.run_id)
+            .values(audit_head=event_hash, audit_count=count + 1)
         )
         pk = res.inserted_primary_key
         return event.model_copy(
@@ -321,16 +335,42 @@ class AuditRepository:
         out = []
         for r in rows:
             data = dict(r)
+            data.pop("payload_canonical", None)
             data["created_at"] = _aware(data["created_at"])
             out.append(AuditEvent.model_validate(data))
         return out
 
     def verify_chain(self, run_id: UUID) -> tuple[bool, str | None]:
+        rows = self.conn.execute(
+            select(db.audit_events).where(db.audit_events.c.run_id == run_id).order_by(db.audit_events.c.event_id)
+        ).mappings()
         prev: str | None = None
-        for ev in self.list(run_id):
-            if ev.prev_hash != prev or self._hash(prev, ev) != ev.event_hash:
-                return False, f"chain broken at event {ev.event_id}"
-            prev = ev.event_hash
+        n = 0
+        for r in rows:
+            body = r["payload_canonical"]
+            if body is None:  # rows written before migration 0002
+                ev = AuditEvent.model_validate(
+                    {k: v for k, v in dict(r).items() if k != "payload_canonical"}
+                    | {"created_at": _aware(r["created_at"])}
+                )
+                body = self._body(ev)
+            if r["prev_hash"] != prev or self._hash(prev, body) != r["event_hash"]:
+                return False, f"chain broken at event {r['event_id']}"
+            # The hashed canonical copy must also agree with the queryable columns (value equality, so a
+            # JSONB re-rendering of numbers is not mistaken for tampering).
+            hashed = json.loads(body)
+            stored = {"step": r["step"], "actor": r["actor"], "event_type": r["event_type"], "payload": r["payload"]}
+            if any(hashed[k] != v for k, v in stored.items()):
+                return False, f"event {r['event_id']} differs from its hashed content"
+            prev = r["event_hash"]
+            n += 1
+        head = self.conn.execute(
+            select(db.workflow_runs.c.audit_head, db.workflow_runs.c.audit_count).where(
+                db.workflow_runs.c.run_id == run_id
+            )
+        ).first()
+        if head is not None and (head[0] != prev or int(head[1] or 0) != n):
+            return False, "chain head does not match the stored events (events missing or truncated)"
         return True, None
 
 
@@ -550,10 +590,10 @@ class PublicationRepository:
     def __init__(self, conn: Connection) -> None:
         self.conn = conn
 
-    def by_hash(self, company_id: str, manifest_hash: str) -> dict[str, Any] | None:
+    def by_key(self, company_id: str, publication_key: str) -> dict[str, Any] | None:
         row = self.conn.execute(
             select(db.publications.c.receipt).where(
-                and_(db.publications.c.company_id == company_id, db.publications.c.manifest_hash == manifest_hash)
+                and_(db.publications.c.company_id == company_id, db.publications.c.publication_key == publication_key)
             )
         ).first()
         return dict(row[0]) if row else None
@@ -567,12 +607,22 @@ class PublicationRepository:
         )
         return f"v{n + 1:04d}"
 
-    def insert(self, company_id: str, manifest_hash: str, version: str, run_id: UUID, receipt: dict[str, Any]) -> None:
+    def insert(
+        self,
+        company_id: str,
+        manifest_hash: str,
+        publication_key: str,
+        version: str,
+        run_id: UUID,
+        receipt: dict[str, Any],
+    ) -> None:
+        """Unique on (company, key) and (company, version): a concurrent publisher gets IntegrityError."""
         self.conn.execute(
             insert(db.publications).values(
                 publication_id=uuid4(),
                 company_id=company_id,
                 manifest_hash=manifest_hash,
+                publication_key=publication_key,
                 version=version,
                 run_id=run_id,
                 receipt=receipt,

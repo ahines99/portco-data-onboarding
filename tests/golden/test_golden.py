@@ -84,9 +84,11 @@ def test_mapping_accuracy_and_traps(gate_run: tuple[str, GateRun]) -> None:
         for col, exp in truth["mappings"].items()
         if (exp is None and col not in got)
         or (col in got and f"{got[col].canonical_entity}.{got[col].canonical_field}" == exp)
-        or (exp is None and col in got and got[col].requires_review)
     )
     assert correct / len(truth["mappings"]) >= t["mapping_top1"]
+    # A proposal for a column that should stay unmapped is wrong; it must at least be routed to review.
+    extras = [c for c, exp in truth["mappings"].items() if exp is None and c in got]
+    assert all(got[c].requires_review for c in extras)
     for trap in truth["traps"]:
         p = got[trap["column"]]
         assert p.requires_review and trap["reason"] in p.reason_codes

@@ -1,5 +1,5 @@
 company_id: portco_a__stale
-content_digest: c8e0814bea4dfeceb883cee84d104cfe8bdd9ba2f4fd04d5f9d2e89c85e48a84
+content_digest: ce7d74f74411abb9e27a2a0a6fe9b21c34326971d46281cea6d9c1ef50dae103
 expected_metrics: {}
 expected_variant:
   findings:

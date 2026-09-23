@@ -16,6 +16,7 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from src.domain.errors import ApprovalRequired
 from src.domain.hashing import content_hash, sha256_text
+from src.domain.identifiers import assert_safe, assert_safe_company
 from src.domain.models import Confidence, Finding, FindingType, ReviewGate, StepName
 from src.domain.ontology import Ontology
 from src.domain.project_models import (
@@ -136,6 +137,7 @@ class Generator:
         for f in self.r.filters:
             if f.table != table:
                 continue
+            assert_safe(f.column)
             if f.kind == "exclude_true":
                 parts.append(f"coalesce(cast({_q(f.column)} as boolean), false)")
             else:
@@ -161,6 +163,7 @@ class Generator:
             by_table.setdefault(m.source_table, []).append(m)
         for table in sorted(by_table):
             schema, name = table.split(".", 1)
+            assert_safe(schema, name, *(m.source_column for m in by_table[table]))
             entity = self.r.entity_tables[table]
             tm = TableModel(
                 table=table,
@@ -557,6 +560,7 @@ class Generator:
     # ------------------------------------------------------------------ project
 
     def build(self) -> dict[str, str]:
+        assert_safe_company(self.company_id)
         self.build_staging()
         self.build_intermediate()
         self.build_marts()

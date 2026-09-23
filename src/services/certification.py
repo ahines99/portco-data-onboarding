@@ -20,7 +20,7 @@ from src.domain.project_models import (
     ReviewItem,
     TestReport,
 )
-from src.services.approvals import effective_decisions
+from src.services.approvals import effective_decisions, is_valid
 from src.workflows.contracts import StepContext, StepResult, make_evidence
 
 OPEN_FINDING_CODES = {
@@ -95,15 +95,19 @@ def build_packet(ctx: StepContext) -> CertificationPacket:
 
 def human_certification(ctx: StepContext) -> StepResult:
     packet = build_packet(ctx)
-    subject = packet.manifest_hash
+    manifest = packet.manifest_hash
+    # Approvals bind to everything the reviewer saw (bundle, tests, waivers, open findings), not the manifest
+    # alone: a refreshed test report or new findings on the same bundle require a fresh certification.
+    subject = packet.review_hash()
     items = [
         ReviewItem(
-            item_key=f"bundle:{subject}",
+            item_key=f"bundle:{manifest}",
             gate=ReviewGate.CERTIFICATION,
             kind="bundle",
             summary=(
-                f"Certify bundle {subject[:12]}: {packet.mapping_summary['accepted']} mappings, "
-                f"{len(packet.joins)} joins, tests {'passed' if packet.test_report_passed else 'waived'}"
+                f"Certify bundle {manifest[:12]}: {packet.mapping_summary['accepted']} mappings, "
+                f"{len(packet.joins)} joins, tests {'passed' if packet.test_report_passed else 'waived'}, "
+                f"{len(packet.open_findings)} open findings"
             ),
             reason_codes=["CERTIFICATION"],
             subject_hash=subject,
@@ -122,7 +126,7 @@ def human_certification(ctx: StepContext) -> StepResult:
         if m.status == "generated"
     ]
     decisions = effective_decisions(ctx.approvals, ReviewGate.CERTIFICATION, subject)
-    bundle_decision = decisions.get(f"bundle:{subject}")
+    bundle_decision = decisions.get(f"bundle:{manifest}")
     if bundle_decision is not None and bundle_decision.decision is ReviewDecision.REJECT:
         raise ValidationFailed("reviewer rejected the bundle; change the mapping and rerun from canonical_mapping")
     pending = [i for i in items if i.item_key not in decisions]
@@ -136,29 +140,60 @@ def human_certification(ctx: StepContext) -> StepResult:
             gate=ReviewGate.CERTIFICATION,
             pending_items=pending,
             subject_hash=subject,
-            audit=[("certification_requested", {"manifest_hash": subject, "items": len(pending)})],
+            audit=[
+                (
+                    "certification_requested",
+                    {"manifest_hash": manifest, "subject_hash": subject, "items": len(pending)},
+                )
+            ],
         )
     rejected = sorted(
         k.removeprefix("metric:")
         for k, d in decisions.items()
         if k.startswith("metric:") and d.decision is ReviewDecision.REJECT
     )
-    certified = sorted(m.metric for m in packet.metrics if m.status == "generated" and m.metric not in rejected)
+    excluded = set(rejected)
+    for metric in rejected:
+        excluded |= ctx.ontology.metric_dependents(metric)
+    certified = sorted(m.metric for m in packet.metrics if m.status == "generated" and m.metric not in excluded)
+    cert_ids = sorted(
+        {a.approval_id for a in ctx.approvals if a.gate == ReviewGate.CERTIFICATION and is_valid(a, subject)},
+        key=str,
+    )
+    # The decisions are part of this step's output, so publish's input hash changes whenever they do (audit H1).
+    decided = packet.model_copy(
+        update={"certified_metrics": certified, "excluded_metrics": sorted(excluded), "certification_ids": cert_ids}
+    )
+    extra = len(excluded) - len(rejected)
     findings = [
         Finding(
             code="CERTIFIED",
             title="Bundle certified by a human reviewer",
             finding_type=FindingType.OBSERVATION,
-            statement=f"{len(certified)} metrics certified, {len(rejected)} rejected; bundle {subject[:12]}.",
+            statement=(
+                f"{len(certified)} metrics certified, {len(rejected)} rejected"
+                + (f" ({extra} more excluded as dependents)" if extra else "")
+                + f"; bundle {manifest[:12]}."
+            ),
             confidence=Confidence.HIGH,
             evidence=[ev.ref()],
-            metadata={"certified": certified, "rejected": rejected},
+            metadata={"certified": certified, "rejected": rejected, "excluded": sorted(excluded)},
         )
     ]
     return StepResult(
-        output=packet,
+        output=decided,
         evidence=[ev],
         findings=findings,
         subject_hash=subject,
-        audit=[("certified", {"manifest_hash": subject, "certified": certified, "rejected": rejected})],
+        audit=[
+            (
+                "certified",
+                {
+                    "manifest_hash": manifest,
+                    "subject_hash": subject,
+                    "certified": certified,
+                    "excluded": sorted(excluded),
+                },
+            )
+        ],
     )

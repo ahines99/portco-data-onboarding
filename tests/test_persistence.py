@@ -82,6 +82,18 @@ def test_audit_chain_detects_tampering(store: Store) -> None:
         assert not ok and where
 
 
+def test_audit_chain_detects_deleted_tail(store: Store) -> None:
+    with store.tx() as tx:
+        run = tx.runs.create(company_id="c", connection_id="fixture:x", requested_by="a")
+        for i in range(3):
+            tx.audit.append(AuditEvent(run_id=run.run_id, step="s", event_type=f"e{i}", actor="a"))
+    with store.engine.begin() as conn:
+        conn.execute(text("DELETE FROM audit_events WHERE event_type = 'e2'"))
+    with store.tx() as tx:
+        ok, where = tx.audit.verify_chain(run.run_id)
+        assert not ok and "truncated" in (where or "")
+
+
 def test_audit_repository_has_no_mutators() -> None:
     from src.adapters.repositories import AuditRepository
 

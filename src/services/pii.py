@@ -35,6 +35,32 @@ PERSON_NAME_COLUMNS = frozenset(
     }
 )
 NON_PII_CARD_TOKENS = frozenset({"last4", "brand", "type", "expiry"})
+SENSITIVE_TOKENS = frozenset(
+    {
+        "salary",
+        "salaries",
+        "wage",
+        "wages",
+        "compensation",
+        "comp",
+        "bonus",
+        "payroll",
+        "ssn",
+        "dob",
+        "birth",
+        "gbdat",
+        "medical",
+        "diagnosis",
+        "religion",
+        "ethnicity",
+    }
+)
+
+
+def is_sensitive_name(column: str) -> bool:
+    """Columns whose individual values are sensitive even when they are not direct identifiers."""
+    return bool(set(raw_tokens(column)) & SENSITIVE_TOKENS)
+
 
 # Regex patterns evaluated in-adapter; only match counts leave the source.
 PATTERNS: dict[str, tuple[str, bool]] = {
