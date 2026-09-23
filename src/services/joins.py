@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from src.adapters.external import type_family
-from src.domain.models import Confidence, Finding, StepName
+from src.domain.models import Confidence, Evidence, Finding, StepName
 from src.domain.ontology import load_scoring
 from src.domain.project_models import (
     Cardinality,
@@ -60,7 +60,7 @@ def infer_joins(ctx: StepContext) -> StepResult:
     pk_of = {c.table: c.primary_key_columns for c in entities.candidates if c.canonical_entity}
 
     best: dict[tuple[str, str], JoinCandidate] = {}
-    evidence = []
+    evidence: list[Evidence] = []
     for rq, rpk in pk_of.items():
         if len(rpk) != 1:
             continue

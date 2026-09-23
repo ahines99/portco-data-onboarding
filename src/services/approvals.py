@@ -74,13 +74,10 @@ def record(
 ) -> Approval:
     decision = check_action(ACTION_FOR_GATE[gate], role=principal.role)
     if not decision.allowed:
-        _deny(tx, run, principal, ACTION_FOR_GATE[gate], decision.reason)
         raise Forbidden(decision.reason)
     if not principal.can_access(run.company_id):
-        _deny(tx, run, principal, ACTION_FOR_GATE[gate], "principal is not scoped to this company")
         raise Forbidden("principal is not scoped to this company")
     if settings.require_distinct_reviewer and principal.principal_id == run.requested_by:
-        _deny(tx, run, principal, ACTION_FOR_GATE[gate], "reviewer started this run")
         raise Forbidden("the principal that started a run cannot approve it (separation of duties)")
     if run.status is not RunStatus.NEEDS_REVIEW or run.gate != gate.value:
         raise Conflict(f"run is not waiting at gate {gate.value}")
@@ -156,15 +153,3 @@ def revoke_stale(tx: Tx, run_id: UUID, gate: ReviewGate, current_hash: str, acto
                 )
             )
     return revoked
-
-
-def _deny(tx: Tx, run: RunRecord, principal: Principal, action: str, reason: str) -> None:
-    tx.audit.append(
-        AuditEvent(
-            run_id=run.run_id,
-            step=run.current_step or "",
-            actor=principal.principal_id,
-            event_type="policy_denied",
-            payload={"action": action, "reason": reason},
-        )
-    )

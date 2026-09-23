@@ -80,7 +80,7 @@ class WorkflowEngine:
         def opener() -> SourceAdapter:
             adapter = self.connections.open(run.connection_id)
             if self.faults.active:
-                return FaultyAdapter(adapter, self.faults)  # type: ignore[return-value]
+                return FaultyAdapter(adapter, self.faults)
             return adapter
 
         return opener
@@ -306,12 +306,28 @@ class WorkflowEngine:
 
     # ------------------------------------------------------------------ control
 
-    def rerun_from(self, run_id: UUID, step: StepName, actor: str) -> None:
+    def rerun_from(self, run_id: UUID, step: StepName, actor: str, *, reopen_reviews: bool = False) -> None:
+        """Invalidate `step` and everything after it. With `reopen_reviews`, approvals recorded at gates
+        from `step` onward are revoked too, so a reviewer can change a decision (new approvals required)."""
         names = [s.name for s in self.steps]
         idx = names.index(step)
         with self.store.tx() as tx:
             for s in names[idx:]:
                 tx.steps.deactivate(run_id, s.value)
+            if reopen_reviews:
+                gates = {spec.gate.value for spec in self.steps[idx:] if spec.gate is not None}
+                for a in tx.approvals.for_run(run_id):
+                    if a.gate.value in gates and a.revoked_at is None:
+                        tx.approvals.revoke(a.approval_id, "review reopened")
+                        self._audit(
+                            tx,
+                            run_id,
+                            step.value,
+                            "approval_invalidated",
+                            actor,
+                            approval_id=str(a.approval_id),
+                            reason="review reopened",
+                        )
             tx.runs.update(
                 run_id, status=RunStatus.PENDING, current_step=step.value, gate=None, pending_items=[], error=None
             )

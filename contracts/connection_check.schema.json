@@ -1,0 +1,71 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "company_id": {
+      "title": "Company Id",
+      "type": "string"
+    },
+    "connection_id": {
+      "title": "Connection Id",
+      "type": "string"
+    },
+    "engine_version": {
+      "title": "Engine Version",
+      "type": "string"
+    },
+    "evidence_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Evidence Id"
+    },
+    "reachable": {
+      "title": "Reachable",
+      "type": "boolean"
+    },
+    "read_only_verified": {
+      "title": "Read Only Verified",
+      "type": "boolean"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "schemas_visible": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Schemas Visible",
+      "type": "array"
+    },
+    "source_fingerprint": {
+      "title": "Source Fingerprint",
+      "type": "string"
+    },
+    "tables_visible": {
+      "title": "Tables Visible",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "connection_id",
+    "company_id",
+    "reachable",
+    "read_only_verified",
+    "schemas_visible",
+    "tables_visible",
+    "source_fingerprint",
+    "engine_version"
+  ],
+  "title": "ConnectionCheck",
+  "type": "object"
+}

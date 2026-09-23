@@ -1,0 +1,9 @@
+version: 2
+sources:
+- name: hr
+  database: src
+  schema: hr
+  description: Read-only source schema hr of portco_a (sandbox attach).
+  tables:
+  - name: employees
+    description: Profiled source table; entity employee.

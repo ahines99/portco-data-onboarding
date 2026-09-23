@@ -1,0 +1,165 @@
+{
+  "$defs": {
+    "ItemDecision": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Comment"
+        },
+        "decision": {
+          "$ref": "#/$defs/ReviewDecision"
+        },
+        "item_key": {
+          "title": "Item Key",
+          "type": "string"
+        },
+        "override": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Override"
+        }
+      },
+      "required": [
+        "item_key",
+        "decision"
+      ],
+      "title": "ItemDecision",
+      "type": "object"
+    },
+    "ReviewDecision": {
+      "enum": [
+        "approve",
+        "reject",
+        "approve_with_override"
+      ],
+      "title": "ReviewDecision",
+      "type": "string"
+    },
+    "ReviewGate": {
+      "enum": [
+        "mapping_review",
+        "test_failures",
+        "certification"
+      ],
+      "title": "ReviewGate",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "approval_id": {
+      "format": "uuid",
+      "title": "Approval Id",
+      "type": "string"
+    },
+    "comment": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Comment"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "decisions": {
+      "items": {
+        "$ref": "#/$defs/ItemDecision"
+      },
+      "title": "Decisions",
+      "type": "array"
+    },
+    "expires_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Expires At"
+    },
+    "gate": {
+      "$ref": "#/$defs/ReviewGate"
+    },
+    "reviewer": {
+      "title": "Reviewer",
+      "type": "string"
+    },
+    "revoked_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Revoked At"
+    },
+    "revoked_reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Revoked Reason"
+    },
+    "role": {
+      "title": "Role",
+      "type": "string"
+    },
+    "run_id": {
+      "format": "uuid",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "subject_hash": {
+      "title": "Subject Hash",
+      "type": "string"
+    }
+  },
+  "required": [
+    "run_id",
+    "gate",
+    "subject_hash",
+    "decisions",
+    "reviewer",
+    "role"
+  ],
+  "title": "Approval",
+  "type": "object"
+}

@@ -28,7 +28,9 @@ def compute_run_metrics(svc: Any, principal: Principal, run_id: UUID) -> dict[st
     retries = sum(1 for e in events if e.event_type == "step_retried")
     evidence_read = sorted({ref.source_id for f in svc.findings(principal, run_id) for ref in f.evidence})
 
-    llm = {"calls": 0, "input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0, "model": None}
+    calls = input_tokens = output_tokens = 0
+    cost_usd = 0.0
+    model: str | None = None
     overrides = rejections = 0
     try:
         ms = svc.artifact(principal, run_id, StepName.CANONICAL_MAPPING)
@@ -36,11 +38,11 @@ def compute_run_metrics(svc: Any, principal: Principal, run_id: UUID) -> dict[st
         for p in ms.proposals:
             if p.judge and p.judge.get("usage"):
                 u = p.judge["usage"]
-                llm["calls"] += 1
-                llm["input_tokens"] += int(u.get("input_tokens", 0))
-                llm["output_tokens"] += int(u.get("output_tokens", 0))
-                llm["cost_usd"] = round(llm["cost_usd"] + float(u.get("cost_usd", 0.0)), 6)
-                llm["model"] = p.judge.get("model")
+                calls += 1
+                input_tokens += int(u.get("input_tokens", 0))
+                output_tokens += int(u.get("output_tokens", 0))
+                cost_usd = round(cost_usd + float(u.get("cost_usd", 0.0)), 6)
+                model = p.judge.get("model")
     except NotFound:
         pass
     try:
@@ -65,6 +67,12 @@ def compute_run_metrics(svc: Any, principal: Principal, run_id: UUID) -> dict[st
         "human_changed_recommendation": overrides + rejections,
         "overrides": overrides,
         "rejections": rejections,
-        "llm": llm,
+        "llm": {
+            "calls": calls,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "cost_usd": cost_usd,
+            "model": model,
+        },
         "outcome": run.status.value,
     }

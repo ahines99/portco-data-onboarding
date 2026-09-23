@@ -1,6 +1,6 @@
 """Bearer-token auth for the HTTP transport (POD-509).
 
-Dev tokens come from `PORTCO_HTTP_TOKENS`: `token=principal:role:company1|company2;...`.
+Dev tokens come from `PORTCO_HTTP_TOKENS`: `token=principal:role[:company1|company2];...`.
 Each token becomes an AccessToken whose scopes encode the role and tenant scope; the
 server resolves a `Principal` from it on every call. Production would swap this verifier for
 an OAuth/JWT verifier without touching any tool.
@@ -17,8 +17,15 @@ def parse_tokens(spec: str) -> dict[str, tuple[str, str, list[str]]]:
     out: dict[str, tuple[str, str, list[str]]] = {}
     for part in (p.strip() for p in spec.split(";") if p.strip()):
         token, _, rest = part.partition("=")
-        principal, role, companies = [*rest.split(":"), "", "", ""][:3]
-        out[token] = (principal, role or "agent", [c for c in companies.split("|") if c] or ["*"])
+        # Principal ids may contain ':' (e.g. agent:claude), so split role and companies from the right.
+        if rest.count(":") >= 2:
+            principal, role, companies = rest.rsplit(":", 2)
+        else:
+            principal, _, role = rest.partition(":")
+            companies = ""
+        if role not in {"agent", "reviewer", "admin"}:
+            continue  # misconfigured tokens are dropped, never defaulted to a role
+        out[token] = (principal, role, [c for c in companies.split("|") if c] or ["*"])
     return out
 
 

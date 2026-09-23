@@ -1,0 +1,91 @@
+{
+  "$defs": {
+    "ArtifactFile": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "sha256": {
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size": {
+          "title": "Size",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path",
+        "sha256",
+        "kind",
+        "size"
+      ],
+      "title": "ArtifactFile",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "bundle_id": {
+      "format": "uuid",
+      "title": "Bundle Id",
+      "type": "string"
+    },
+    "files": {
+      "items": {
+        "$ref": "#/$defs/ArtifactFile"
+      },
+      "title": "Files",
+      "type": "array"
+    },
+    "generated_metrics": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Generated Metrics",
+      "type": "array"
+    },
+    "manifest_hash": {
+      "title": "Manifest Hash",
+      "type": "string"
+    },
+    "mapping_hash": {
+      "title": "Mapping Hash",
+      "type": "string"
+    },
+    "models": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Models",
+      "type": "array"
+    },
+    "not_generated": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Not Generated",
+      "type": "object"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "mapping_hash",
+    "files",
+    "manifest_hash",
+    "generated_metrics"
+  ],
+  "title": "ArtifactBundle",
+  "type": "object"
+}

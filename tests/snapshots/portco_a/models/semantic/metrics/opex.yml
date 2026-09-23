@@ -1,0 +1,7 @@
+metrics:
+- name: opex
+  label: Opex
+  description: Operating expenses excluding depreciation and amortization.
+  type: simple
+  type_params:
+    measure: opex

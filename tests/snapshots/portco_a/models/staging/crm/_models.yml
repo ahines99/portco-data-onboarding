@@ -1,0 +1,69 @@
+version: 2
+models:
+- name: stg_crm__accounts
+  description: Staging for crm.accounts (customer).
+  columns:
+  - name: crm_account_id
+  - name: customer_name
+    data_tests:
+    - not_null
+  - name: industry
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - education
+          - energy
+          - financial_services
+          - healthcare
+          - logistics
+          - manufacturing
+          - media
+          - retail
+  - name: owner_email_hash
+  - name: created_date
+  - name: is_deleted
+- name: stg_crm__contacts
+  description: Staging for crm.contacts (contact).
+  columns:
+  - name: contact_id
+    data_tests:
+    - unique
+    - not_null
+  - name: crm_account_id
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('stg_crm__accounts')
+          field: crm_account_id
+  - name: first_name_hash
+  - name: last_name_hash
+  - name: email_hash
+  - name: phone_hash
+- name: stg_crm__opportunities
+  description: Staging for crm.opportunities (opportunity).
+  columns:
+  - name: opportunity_id
+    data_tests:
+    - unique
+    - not_null
+  - name: crm_account_id
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('stg_crm__accounts')
+          field: crm_account_id
+  - name: amount
+    data_tests:
+    - non_negative
+  - name: stage
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - closed_lost
+          - closed_won
+          - negotiation
+          - proposal
+          - prospecting
+  - name: close_date

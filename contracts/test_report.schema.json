@@ -1,0 +1,164 @@
+{
+  "$defs": {
+    "DbtResult": {
+      "additionalProperties": false,
+      "properties": {
+        "failures": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Failures"
+        },
+        "message": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Message"
+        },
+        "resource_type": {
+          "title": "Resource Type",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "unique_id": {
+          "title": "Unique Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "unique_id",
+        "resource_type",
+        "status"
+      ],
+      "title": "DbtResult",
+      "type": "object"
+    },
+    "ReconciliationCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "actual": {
+          "additionalProperties": true,
+          "title": "Actual",
+          "type": "object"
+        },
+        "blocking": {
+          "default": true,
+          "title": "Blocking",
+          "type": "boolean"
+        },
+        "detail": {
+          "title": "Detail",
+          "type": "string"
+        },
+        "expected": {
+          "additionalProperties": true,
+          "title": "Expected",
+          "type": "object"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "passed",
+        "detail"
+      ],
+      "title": "ReconciliationCheck",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "cached": {
+      "default": false,
+      "title": "Cached",
+      "type": "boolean"
+    },
+    "dbt_exit_code": {
+      "title": "Dbt Exit Code",
+      "type": "integer"
+    },
+    "dbt_results": {
+      "items": {
+        "$ref": "#/$defs/DbtResult"
+      },
+      "title": "Dbt Results",
+      "type": "array"
+    },
+    "duration_seconds": {
+      "default": 0.0,
+      "title": "Duration Seconds",
+      "type": "number"
+    },
+    "failing_checks": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Failing Checks",
+      "type": "array"
+    },
+    "manifest_hash": {
+      "title": "Manifest Hash",
+      "type": "string"
+    },
+    "passed": {
+      "title": "Passed",
+      "type": "boolean"
+    },
+    "reconciliation": {
+      "items": {
+        "$ref": "#/$defs/ReconciliationCheck"
+      },
+      "title": "Reconciliation",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_fingerprint": {
+      "title": "Source Fingerprint",
+      "type": "string"
+    },
+    "waived_checks": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Waived Checks",
+      "type": "array"
+    }
+  },
+  "required": [
+    "manifest_hash",
+    "source_fingerprint",
+    "passed",
+    "dbt_exit_code",
+    "dbt_results",
+    "reconciliation"
+  ],
+  "title": "TestReport",
+  "type": "object"
+}

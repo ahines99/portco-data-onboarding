@@ -1,0 +1,426 @@
+{
+  "$defs": {
+    "Confidence": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "Confidence",
+      "type": "string"
+    },
+    "JoinCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "cardinality": {
+          "enum": [
+            "1:1",
+            "1:N",
+            "N:1",
+            "N:M"
+          ],
+          "title": "Cardinality",
+          "type": "string"
+        },
+        "confidence": {
+          "$ref": "#/$defs/Confidence"
+        },
+        "containment_ratio": {
+          "title": "Containment Ratio",
+          "type": "number"
+        },
+        "evidence_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Id"
+        },
+        "join_id": {
+          "title": "Join Id",
+          "type": "string"
+        },
+        "left_columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Left Columns",
+          "type": "array"
+        },
+        "left_table": {
+          "title": "Left Table",
+          "type": "string"
+        },
+        "name_score": {
+          "title": "Name Score",
+          "type": "number"
+        },
+        "orphan_rate": {
+          "title": "Orphan Rate",
+          "type": "number"
+        },
+        "reason_codes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reason Codes",
+          "type": "array"
+        },
+        "requires_review": {
+          "title": "Requires Review",
+          "type": "boolean"
+        },
+        "right_columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Right Columns",
+          "type": "array"
+        },
+        "right_table": {
+          "title": "Right Table",
+          "type": "string"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "join_id",
+        "left_table",
+        "left_columns",
+        "right_table",
+        "right_columns",
+        "containment_ratio",
+        "orphan_rate",
+        "cardinality",
+        "name_score",
+        "score",
+        "confidence",
+        "requires_review"
+      ],
+      "title": "JoinCandidate",
+      "type": "object"
+    },
+    "MappingProposal": {
+      "additionalProperties": false,
+      "properties": {
+        "alternatives": {
+          "items": {
+            "$ref": "#/$defs/ScoredTarget"
+          },
+          "title": "Alternatives",
+          "type": "array"
+        },
+        "canonical_entity": {
+          "title": "Canonical Entity",
+          "type": "string"
+        },
+        "canonical_field": {
+          "title": "Canonical Field",
+          "type": "string"
+        },
+        "confidence": {
+          "$ref": "#/$defs/Confidence"
+        },
+        "evidence_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "judge": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Judge"
+        },
+        "mapping_key": {
+          "title": "Mapping Key",
+          "type": "string"
+        },
+        "pii_handling": {
+          "anyOf": [
+            {
+              "enum": [
+                "hash",
+                "exclude"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pii Handling"
+        },
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        },
+        "reason_codes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reason Codes",
+          "type": "array"
+        },
+        "requires_review": {
+          "title": "Requires Review",
+          "type": "boolean"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "source_column": {
+          "title": "Source Column",
+          "type": "string"
+        },
+        "source_field": {
+          "title": "Source Field",
+          "type": "string"
+        },
+        "source_table": {
+          "title": "Source Table",
+          "type": "string"
+        },
+        "suggested_transform": {
+          "anyOf": [
+            {
+              "enum": [
+                "cents_to_major",
+                "parse_mixed_date"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Suggested Transform"
+        }
+      },
+      "required": [
+        "mapping_key",
+        "source_table",
+        "source_column",
+        "source_field",
+        "canonical_entity",
+        "canonical_field",
+        "confidence",
+        "score",
+        "rationale",
+        "requires_review"
+      ],
+      "title": "MappingProposal",
+      "type": "object"
+    },
+    "RowFilter": {
+      "additionalProperties": false,
+      "properties": {
+        "affected_rows": {
+          "title": "Affected Rows",
+          "type": "integer"
+        },
+        "column": {
+          "title": "Column",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "filter_key": {
+          "title": "Filter Key",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "exclude_true",
+            "exclude_prefix"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        },
+        "requires_review": {
+          "default": true,
+          "title": "Requires Review",
+          "type": "boolean"
+        },
+        "table": {
+          "title": "Table",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "required": [
+        "filter_key",
+        "table",
+        "column",
+        "kind",
+        "rationale",
+        "affected_rows"
+      ],
+      "title": "RowFilter",
+      "type": "object"
+    },
+    "ScoredTarget": {
+      "additionalProperties": false,
+      "properties": {
+        "entity": {
+          "title": "Entity",
+          "type": "string"
+        },
+        "field": {
+          "title": "Field",
+          "type": "string"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "entity",
+        "field",
+        "score"
+      ],
+      "title": "ScoredTarget",
+      "type": "object"
+    },
+    "UnmappedField": {
+      "additionalProperties": false,
+      "properties": {
+        "affected_metrics": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Affected Metrics",
+          "type": "array"
+        },
+        "entity": {
+          "title": "Entity",
+          "type": "string"
+        },
+        "field": {
+          "title": "Field",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entity",
+        "field"
+      ],
+      "title": "UnmappedField",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "entity_tables": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "table -> canonical entity",
+      "title": "Entity Tables",
+      "type": "object"
+    },
+    "joins": {
+      "items": {
+        "$ref": "#/$defs/JoinCandidate"
+      },
+      "title": "Joins",
+      "type": "array"
+    },
+    "mapping_id": {
+      "format": "uuid",
+      "title": "Mapping Id",
+      "type": "string"
+    },
+    "metrics_needing_evidence": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Metrics Needing Evidence",
+      "type": "array"
+    },
+    "primary_tables": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "entity -> system-of-record table",
+      "title": "Primary Tables",
+      "type": "object"
+    },
+    "proposals": {
+      "items": {
+        "$ref": "#/$defs/MappingProposal"
+      },
+      "title": "Proposals",
+      "type": "array"
+    },
+    "row_filters": {
+      "items": {
+        "$ref": "#/$defs/RowFilter"
+      },
+      "title": "Row Filters",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "unmapped_required": {
+      "items": {
+        "$ref": "#/$defs/UnmappedField"
+      },
+      "title": "Unmapped Required",
+      "type": "array"
+    }
+  },
+  "required": [
+    "proposals"
+  ],
+  "title": "MappingSet",
+  "type": "object"
+}

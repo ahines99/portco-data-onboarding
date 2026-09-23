@@ -1,0 +1,162 @@
+{
+  "$defs": {
+    "Confidence": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "Confidence",
+      "type": "string"
+    },
+    "EntityCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "alternatives": {
+          "items": {
+            "$ref": "#/$defs/ScoredEntity"
+          },
+          "title": "Alternatives",
+          "type": "array"
+        },
+        "canonical_entity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Canonical Entity"
+        },
+        "confidence": {
+          "$ref": "#/$defs/Confidence"
+        },
+        "excluded_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Excluded Reason"
+        },
+        "feature_breakdown": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Feature Breakdown",
+          "type": "object"
+        },
+        "primary_key_columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Primary Key Columns",
+          "type": "array"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "table": {
+          "title": "Table",
+          "type": "string"
+        }
+      },
+      "required": [
+        "table",
+        "canonical_entity",
+        "score",
+        "confidence"
+      ],
+      "title": "EntityCandidate",
+      "type": "object"
+    },
+    "EntityOverlap": {
+      "additionalProperties": false,
+      "properties": {
+        "entity": {
+          "title": "Entity",
+          "type": "string"
+        },
+        "system_of_record": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "System Of Record"
+        },
+        "tables": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tables",
+          "type": "array"
+        }
+      },
+      "required": [
+        "entity",
+        "tables"
+      ],
+      "title": "EntityOverlap",
+      "type": "object"
+    },
+    "ScoredEntity": {
+      "additionalProperties": false,
+      "properties": {
+        "entity": {
+          "title": "Entity",
+          "type": "string"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "entity",
+        "score"
+      ],
+      "title": "ScoredEntity",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "candidates": {
+      "items": {
+        "$ref": "#/$defs/EntityCandidate"
+      },
+      "title": "Candidates",
+      "type": "array"
+    },
+    "overlaps": {
+      "items": {
+        "$ref": "#/$defs/EntityOverlap"
+      },
+      "title": "Overlaps",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "candidates"
+  ],
+  "title": "EntityInference",
+  "type": "object"
+}

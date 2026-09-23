@@ -1,0 +1,8 @@
+metrics:
+- name: arr
+  label: Arr
+  description: 'Annual recurring revenue = 12 x month-end MRR. Pitfall: ARR is not 12 x a single month''s billings;
+    prepaid annual contracts break that shortcut.'
+  type: simple
+  type_params:
+    measure: arr

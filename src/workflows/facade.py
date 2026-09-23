@@ -154,10 +154,20 @@ class OnboardingService:
                 tx.runs.update(run_id, stop_after=stop_after.value)
         return await self.engine.run(run_id, principal.principal_id)
 
-    async def rerun_from(self, principal: Principal, run_id: UUID, step: StepName) -> RunRecord:
+    async def rerun_from(
+        self,
+        principal: Principal,
+        run_id: UUID,
+        step: StepName,
+        reopen_reviews: bool = False,
+        stop_after: StepName | None = None,
+    ) -> RunRecord:
         run = self.get_run(principal, run_id)
         self._authorize(principal, "rerun_from", run)
-        self.engine.rerun_from(run_id, step, principal.principal_id)
+        self.engine.rerun_from(run_id, step, principal.principal_id, reopen_reviews=reopen_reviews)
+        if stop_after is not None:
+            with self.store.tx() as tx:
+                tx.runs.update(run_id, stop_after=stop_after.value)
         return await self.engine.run(run_id, principal.principal_id)
 
     def cancel(self, principal: Principal, run_id: UUID, reason: str) -> RunRecord:
@@ -198,8 +208,7 @@ class OnboardingService:
         if gate is None:
             raise Conflict("run is not waiting for review")
         subject = run.pending_items[0].subject_hash if run.pending_items else ""
-        with self.store.tx() as tx:
-            return approval_service.record(tx, self.settings, principal, run, gate, subject, decisions, comment)
+        return self._record(principal, run, gate, subject, decisions, comment)
 
     def certify(
         self,
@@ -210,10 +219,33 @@ class OnboardingService:
         comment: str | None = None,
     ) -> Approval:
         run = self.get_run(principal, run_id)
-        with self.store.tx() as tx:
-            return approval_service.record(
-                tx, self.settings, principal, run, ReviewGate.CERTIFICATION, manifest_hash, decisions, comment
-            )
+        return self._record(principal, run, ReviewGate.CERTIFICATION, manifest_hash, decisions, comment)
+
+    def _record(
+        self,
+        principal: Principal,
+        run: RunRecord,
+        gate: ReviewGate,
+        subject: str,
+        decisions: list[ItemDecision],
+        comment: str | None,
+    ) -> Approval:
+        try:
+            with self.store.tx() as tx:
+                return approval_service.record(tx, self.settings, principal, run, gate, subject, decisions, comment)
+        except Forbidden as exc:
+            # The failed transaction rolled back; record the denial in its own committed transaction.
+            with self.store.tx() as tx:
+                tx.audit.append(
+                    AuditEvent(
+                        run_id=run.run_id,
+                        step=run.current_step or "",
+                        actor=principal.principal_id,
+                        event_type="policy_denied",
+                        payload={"action": approval_service.ACTION_FOR_GATE[gate], "reason": exc.message},
+                    )
+                )
+            raise
 
     def verify_approval(self, run_id: UUID, approval_id: UUID, gate: ReviewGate, subject_hash: str) -> Approval:
         with self.store.tx() as tx:

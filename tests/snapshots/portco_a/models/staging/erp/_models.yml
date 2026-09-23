@@ -1,0 +1,108 @@
+version: 2
+models:
+- name: stg_erp__gl_accounts
+  description: Staging for erp.gl_accounts (gl_account).
+  columns:
+  - name: account_code
+    data_tests:
+    - unique
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - '1000'
+          - '1100'
+          - '1500'
+          - '2000'
+          - '4000'
+          - '4100'
+          - '5000'
+          - '5100'
+          - '6000'
+          - '6100'
+          - '6200'
+          - '6900'
+  - name: account_name
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - Accounts Receivable
+          - Accumulated Depreciation
+          - Cash
+          - Deferred Revenue
+          - Depreciation & Amortization
+          - General & Administrative
+          - Hosting COGS
+          - Research & Development
+          - Sales & Marketing
+          - Services Revenue
+          - Subscription Revenue
+          - Support COGS
+  - name: account_type
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - asset
+          - cogs
+          - da
+          - liability
+          - opex
+          - revenue
+- name: stg_erp__journal_lines
+  description: Staging for erp.journal_lines (gl_entry).
+  columns:
+  - name: journal_id
+    data_tests:
+    - not_null
+  - name: line_number
+    data_tests:
+    - not_null
+  - name: account_code
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - '1000'
+          - '1100'
+          - '1500'
+          - '4000'
+          - '4100'
+          - '5000'
+          - '5100'
+          - '6000'
+          - '6100'
+          - '6200'
+          - '6900'
+    - relationships:
+        arguments:
+          to: ref('stg_erp__gl_accounts')
+          field: account_code
+  - name: posting_date
+    data_tests:
+    - not_null
+  - name: debit_amount
+    data_tests:
+    - not_null
+    - non_negative
+  - name: credit_amount
+    data_tests:
+    - not_null
+    - non_negative
+  - name: entity_code
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - EU01
+          - UK01
+          - US01
+  data_tests:
+  - portco_unique_combination:
+      arguments:
+        combination_of_columns:
+        - journal_id
+        - line_number

@@ -1,0 +1,8 @@
+metrics:
+- name: revenue_recognized
+  label: Revenue Recognized
+  description: 'Recognized revenue from the general ledger (credits minus debits on revenue accounts). Pitfall:
+    Only GL revenue is recognized revenue; billings and bookings are not substitutes.'
+  type: simple
+  type_params:
+    measure: revenue_recognized

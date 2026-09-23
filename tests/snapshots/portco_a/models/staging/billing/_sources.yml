@@ -1,0 +1,17 @@
+version: 2
+sources:
+- name: billing
+  database: src
+  schema: billing
+  description: Read-only source schema billing of portco_a (sandbox attach).
+  tables:
+  - name: customers
+    description: Profiled source table; entity customer.
+  - name: invoice_lines
+    description: Profiled source table; entity invoice_line.
+  - name: invoices
+    description: Profiled source table; entity invoice.
+  - name: payments
+    description: Profiled source table; entity payment.
+  - name: subscriptions
+    description: Profiled source table; entity subscription.

@@ -1,0 +1,87 @@
+semantic_models:
+- name: sm_fct_invoice
+  model: ref('fct_invoice')
+  defaults:
+    agg_time_dimension: invoice_date
+  entities:
+  - name: invoice
+    type: primary
+    expr: invoice_id
+  - name: customer
+    type: foreign
+    expr: customer_id
+  dimensions:
+  - name: invoice_date
+    type: time
+    type_params:
+      time_granularity: day
+  - name: currency
+    type: categorical
+  - name: status
+    type: categorical
+  measures:
+  - name: billings
+    agg: sum
+    expr: total_amount
+    description: Invoiced amount per month and currency. Billings are not revenue.
+- name: sm_fct_mrr_monthly
+  model: ref('fct_mrr_monthly')
+  defaults:
+    agg_time_dimension: month_end
+  entities:
+  - name: mrr_snapshot
+    type: primary
+    expr: mrr_snapshot_id
+  - name: customer
+    type: foreign
+    expr: customer_id
+  dimensions:
+  - name: month_end
+    type: time
+    type_params:
+      time_granularity: day
+  - name: currency
+    type: categorical
+  measures:
+  - name: active_customers
+    agg: count_distinct
+    expr: case when mrr > 0 then customer_id end
+    description: Distinct customers with positive MRR at month end.
+  - name: arr
+    agg: sum
+    expr: mrr * 12
+    description: Annual recurring revenue = 12 x month-end MRR.
+  - name: mrr
+    agg: sum
+    expr: mrr
+    description: Monthly recurring revenue from subscriptions active at month end.
+- name: sm_fct_gl_entry
+  model: ref('fct_gl_entry')
+  defaults:
+    agg_time_dimension: posting_date
+  entities:
+  - name: gl_entry
+    type: primary
+    expr: gl_entry_key
+  dimensions:
+  - name: posting_date
+    type: time
+    type_params:
+      time_granularity: day
+  - name: account_type
+    type: categorical
+  - name: entity_code
+    type: categorical
+  measures:
+  - name: cogs
+    agg: sum
+    expr: case when account_type = 'cogs' then debit_amount - credit_amount else 0 end
+    description: Cost of goods sold from the general ledger.
+  - name: opex
+    agg: sum
+    expr: case when account_type = 'opex' then debit_amount - credit_amount else 0 end
+    description: Operating expenses excluding depreciation and amortization.
+  - name: revenue_recognized
+    agg: sum
+    expr: case when account_type = 'revenue' then credit_amount - debit_amount else 0 end
+    description: Recognized revenue from the general ledger (credits minus debits on revenue accounts).

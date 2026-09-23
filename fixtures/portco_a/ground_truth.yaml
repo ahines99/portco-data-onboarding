@@ -250,7 +250,7 @@ joins:
   left: billing.invoice_lines.inv_no
   orphan_rate: 0.0
   right: billing.invoices.inv_no
-- cardinality: N:1
+- cardinality: '1:1'
   left: billing.payments.inv_no
   orphan_rate: 0.0
   right: billing.invoices.inv_no

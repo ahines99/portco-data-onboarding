@@ -1,0 +1,13 @@
+# Sandbox-only profile. The runner sets both paths to files inside the run's sandbox
+# directory; the source is attached read-only (ADR-0008).
+portco_sandbox:
+  target: sandbox
+  outputs:
+    sandbox:
+      type: duckdb
+      path: "{{ env_var('PORTCO_DBT_WAREHOUSE') }}"
+      threads: 1
+      attach:
+        - path: "{{ env_var('PORTCO_DBT_SOURCE') }}"
+          alias: src
+          read_only: true

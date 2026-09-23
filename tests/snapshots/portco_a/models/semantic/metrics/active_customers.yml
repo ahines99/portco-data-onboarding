@@ -1,0 +1,7 @@
+metrics:
+- name: active_customers
+  label: Active Customers
+  description: Distinct customers with positive MRR at month end.
+  type: simple
+  type_params:
+    measure: active_customers

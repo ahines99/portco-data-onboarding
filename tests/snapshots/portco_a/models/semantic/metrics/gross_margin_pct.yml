@@ -1,0 +1,10 @@
+metrics:
+- name: gross_margin_pct
+  label: Gross Margin Pct
+  description: '(revenue_recognized - cogs) / revenue_recognized. Pitfall: Undefined when revenue is zero.'
+  type: derived
+  type_params:
+    expr: (revenue_recognized - cogs) / revenue_recognized
+    metrics:
+    - name: revenue_recognized
+    - name: cogs

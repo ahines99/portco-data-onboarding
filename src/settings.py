@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     env: Literal["dev", "test", "production"] = "dev"
     var_root: Path = PROJECT_ROOT / "var"
+    fixtures_root: Path | None = None  # defaults to <var_root>/fixtures
     database_url: str = ""
     log_level: str = "INFO"
 
@@ -58,7 +59,7 @@ class Settings(BaseSettings):
 
     @property
     def fixtures_dir(self) -> Path:
-        return self.var_root / "fixtures"
+        return self.fixtures_root or self.var_root / "fixtures"
 
     @property
     def artifact_root(self) -> Path:

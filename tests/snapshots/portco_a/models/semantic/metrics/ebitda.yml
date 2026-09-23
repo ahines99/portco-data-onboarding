@@ -1,0 +1,12 @@
+metrics:
+- name: ebitda
+  label: Ebitda
+  description: 'revenue_recognized - cogs - opex (D&A excluded by construction). Pitfall: Adjusted EBITDA add-backs
+    are a human judgment and are never generated automatically.'
+  type: derived
+  type_params:
+    expr: revenue_recognized - cogs - opex
+    metrics:
+    - name: revenue_recognized
+    - name: cogs
+    - name: opex

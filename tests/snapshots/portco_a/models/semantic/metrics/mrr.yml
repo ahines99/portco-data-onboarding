@@ -1,0 +1,8 @@
+metrics:
+- name: mrr
+  label: Mrr
+  description: 'Monthly recurring revenue from subscriptions active at month end. Pitfall: Exclude one-time fees;
+    normalize annual contracts to a monthly amount before summing.'
+  type: simple
+  type_params:
+    measure: mrr

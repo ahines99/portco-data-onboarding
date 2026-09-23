@@ -1,0 +1,28 @@
+version: 2
+models:
+- name: stg_hr__employees
+  description: Staging for hr.employees (employee).
+  columns:
+  - name: employee_id
+    data_tests:
+    - unique
+    - not_null
+  - name: full_name_hash
+  - name: department
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - Engineering
+          - G&A
+          - Marketing
+          - Product
+          - Sales
+          - Support
+  - name: hire_date
+    data_tests:
+    - not_null
+  - name: termination_date
+  - name: salary
+    data_tests:
+    - non_negative

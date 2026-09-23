@@ -1,0 +1,14 @@
+# Golden-test thresholds (POD-107). Change only with a reviewed reason.
+portco_a:
+  pk_recall: 1.0
+  pk_precision: 0.95
+  join_recall: 0.9
+  join_precision: 0.9
+  orphan_rate_tolerance: 0.01
+  mapping_top1: 0.85
+  pii_recall_critical: 1.0      # national_id, payment_card, email
+portco_b:
+  pk_recall: 1.0
+  join_recall: 0.9
+  join_precision: 0.9
+  mapping_top1: 0.75

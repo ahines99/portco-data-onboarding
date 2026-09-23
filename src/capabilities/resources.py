@@ -1,6 +1,7 @@
 """MCP resources and resource templates (POD-504). Every run-scoped read is tenant-checked."""
 
 import json
+from collections.abc import Callable
 from typing import Any
 
 from mcp.server import MCPServer
@@ -19,7 +20,7 @@ def _dump(value: Any) -> str:
     return json.dumps(value, indent=1, sort_keys=True, default=str)
 
 
-def _guarded(fn: Any) -> Any:
+def _guarded(fn: Callable[[], str]) -> str:
     try:
         return fn()
     except NotFound as exc:

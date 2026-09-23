@@ -1,0 +1,11 @@
+version: 2
+sources:
+- name: erp
+  database: src
+  schema: erp
+  description: Read-only source schema erp of portco_a (sandbox attach).
+  tables:
+  - name: gl_accounts
+    description: Profiled source table; entity gl_account.
+  - name: journal_lines
+    description: Profiled source table; entity gl_entry.

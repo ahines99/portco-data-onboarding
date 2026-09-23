@@ -411,12 +411,12 @@ def build(seed: int = 42) -> Fixture:
         fx = FX_TO_USD[ccy]
         sub_usd = (sub_part * fx).quantize(Decimal("0.01"))
         svc_usd = ((total - sub_part) * fx).quantize(Decimal("0.01"))
-        lines = [("1100", sub_usd + svc_usd, zero)]
+        gl_lines: list[tuple[str, Decimal, Decimal]] = [("1100", sub_usd + svc_usd, zero)]
         if sub_usd:
-            lines.append(("4000", zero, sub_usd))
+            gl_lines.append(("4000", zero, sub_usd))
         if svc_usd:
-            lines.append(("4100", zero, svc_usd))
-        post(inv_date, entity_for[ccy], lines)
+            gl_lines.append(("4100", zero, svc_usd))
+        post(inv_date, entity_for[ccy], gl_lines)
         expected_revenue[_mkey(inv_date)] += sub_usd + svc_usd
         month_sub_rev_usd[_mkey(inv_date)] += sub_usd
     posted_ccy = {meta[0]: meta[5] for meta in invoices_meta}  # test-customer invoices never hit the GL
@@ -691,7 +691,7 @@ def build(seed: int = 42) -> Fixture:
             {
                 "left": "billing.payments.inv_no",
                 "right": "billing.invoices.inv_no",
-                "cardinality": "N:1",
+                "cardinality": "1:1",
                 "orphan_rate": 0.0,
             },
             {

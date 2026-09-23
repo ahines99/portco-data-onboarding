@@ -1,0 +1,8 @@
+metrics:
+- name: billings
+  label: Billings
+  description: 'Invoiced amount per month and currency. Billings are not revenue. Pitfall: Billings include prepaid
+    annual invoices; do not present them as recognized revenue.'
+  type: simple
+  type_params:
+    measure: billings

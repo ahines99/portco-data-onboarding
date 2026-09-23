@@ -46,7 +46,11 @@ def build_server(
     if use_auth:
         auth_kwargs = {
             "token_verifier": StaticTokenVerifier(settings),
-            "auth": AuthSettings(issuer_url=settings.http_base_url, resource_server_url=settings.http_base_url),
+            "auth": AuthSettings(
+                issuer_url=settings.http_base_url,
+                resource_server_url=settings.http_base_url,
+                validate_token_resource=False,  # dev static tokens carry no audience; the verifier scopes them
+            ),
         }
     server = MCPServer(
         "portco-data-onboarding",

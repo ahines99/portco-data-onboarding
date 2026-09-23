@@ -1,0 +1,72 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "certification_id": {
+      "format": "uuid",
+      "title": "Certification Id",
+      "type": "string"
+    },
+    "company_id": {
+      "title": "Company Id",
+      "type": "string"
+    },
+    "excluded_metrics": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Excluded Metrics",
+      "type": "array"
+    },
+    "manifest_hash": {
+      "title": "Manifest Hash",
+      "type": "string"
+    },
+    "path": {
+      "title": "Path",
+      "type": "string"
+    },
+    "published_at": {
+      "format": "date-time",
+      "title": "Published At",
+      "type": "string"
+    },
+    "published_metrics": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Published Metrics",
+      "type": "array"
+    },
+    "publisher": {
+      "title": "Publisher",
+      "type": "string"
+    },
+    "reused": {
+      "default": false,
+      "title": "Reused",
+      "type": "boolean"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "version": {
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "company_id",
+    "version",
+    "manifest_hash",
+    "certification_id",
+    "publisher",
+    "path",
+    "published_metrics",
+    "excluded_metrics"
+  ],
+  "title": "PublishReceipt",
+  "type": "object"
+}

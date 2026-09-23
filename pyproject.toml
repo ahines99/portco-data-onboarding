@@ -78,7 +78,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S", "PT011"]
+"tests/**" = ["S", "PT011", "PT012", "PT018", "E501"]
 "evals/**" = ["S"]
 "src/fixtures/**" = ["S311"]  # seeded PRNG for reproducible synthetic data, not crypto
 

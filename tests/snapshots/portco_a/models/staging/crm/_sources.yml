@@ -1,0 +1,13 @@
+version: 2
+sources:
+- name: crm
+  database: src
+  schema: crm
+  description: Read-only source schema crm of portco_a (sandbox attach).
+  tables:
+  - name: accounts
+    description: Profiled source table; entity customer.
+  - name: contacts
+    description: Profiled source table; entity contact.
+  - name: opportunities
+    description: Profiled source table; entity opportunity.

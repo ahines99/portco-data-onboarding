@@ -37,6 +37,19 @@ def redact(_logger: Any, _name: str, event: MutableMapping[str, Any]) -> Mutable
     return event
 
 
+class _StderrLogger:
+    """Resolves sys.stderr on every write, so redirected or replaced streams are always honoured."""
+
+    def msg(self, message: str) -> None:
+        print(message, file=sys.stderr, flush=True)
+
+    log = debug = info = warning = warn = error = critical = exception = fatal = msg
+
+
+def _stderr_logger(*_args: Any) -> _StderrLogger:
+    return _StderrLogger()
+
+
 def configure_logging(level: str = "INFO") -> None:
     global _configured
     if _configured:
@@ -51,7 +64,7 @@ def configure_logging(level: str = "INFO") -> None:
             structlog.processors.format_exc_info,
             structlog.processors.JSONRenderer(),
         ],
-        logger_factory=structlog.PrintLoggerFactory(file=sys.stderr),
+        logger_factory=_stderr_logger,
         cache_logger_on_first_use=True,
     )
     _configured = True

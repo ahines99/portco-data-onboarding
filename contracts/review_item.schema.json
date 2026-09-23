@@ -1,0 +1,72 @@
+{
+  "$defs": {
+    "ReviewGate": {
+      "enum": [
+        "mapping_review",
+        "test_failures",
+        "certification"
+      ],
+      "title": "ReviewGate",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "evidence_ids": {
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": "Evidence Ids",
+      "type": "array"
+    },
+    "gate": {
+      "$ref": "#/$defs/ReviewGate"
+    },
+    "item_key": {
+      "title": "Item Key",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "mapping",
+        "row_filter",
+        "join",
+        "bundle",
+        "metric",
+        "test_failure"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "options": {
+      "additionalProperties": true,
+      "title": "Options",
+      "type": "object"
+    },
+    "reason_codes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Reason Codes",
+      "type": "array"
+    },
+    "subject_hash": {
+      "title": "Subject Hash",
+      "type": "string"
+    },
+    "summary": {
+      "title": "Summary",
+      "type": "string"
+    }
+  },
+  "required": [
+    "item_key",
+    "gate",
+    "kind",
+    "summary",
+    "subject_hash"
+  ],
+  "title": "ReviewItem",
+  "type": "object"
+}

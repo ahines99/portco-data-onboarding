@@ -1,0 +1,184 @@
+version: 2
+models:
+- name: stg_billing__customers
+  description: Staging for billing.customers (customer).
+  columns:
+  - name: customer_id
+    data_tests:
+    - unique
+    - not_null
+  - name: crm_account_id
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('stg_crm__accounts')
+          field: crm_account_id
+        config:
+          severity: warn
+  - name: customer_name
+    data_tests:
+    - not_null
+  - name: billing_email_hash
+  - name: country
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - DE
+          - FR
+          - GB
+          - US
+  - name: currency
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - EUR
+          - GBP
+          - USD
+- name: stg_billing__invoice_lines
+  description: Staging for billing.invoice_lines (invoice_line).
+  columns:
+  - name: invoice_line_id
+    data_tests:
+    - unique
+    - not_null
+  - name: invoice_id
+    data_tests:
+    - not_null
+    - relationships:
+        arguments:
+          to: ref('stg_billing__invoices')
+          field: invoice_id
+  - name: sku
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - SVC-FEE
+          - enterprise
+          - growth
+          - scale
+          - starter
+  - name: quantity
+    data_tests:
+    - non_negative
+  - name: amount
+    data_tests:
+    - not_null
+    - non_negative
+- name: stg_billing__invoices
+  description: Staging for billing.invoices (invoice).
+  columns:
+  - name: invoice_id
+    data_tests:
+    - unique
+    - not_null
+  - name: customer_id
+    data_tests:
+    - not_null
+    - relationships:
+        arguments:
+          to: ref('stg_billing__customers')
+          field: customer_id
+  - name: invoice_date
+    data_tests:
+    - not_null
+  - name: due_date
+  - name: total_amount
+    data_tests:
+    - not_null
+    - non_negative
+  - name: currency
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - EUR
+          - GBP
+          - USD
+  - name: status
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - open
+          - paid
+- name: stg_billing__payments
+  description: Staging for billing.payments (payment).
+  columns:
+  - name: payment_id
+    data_tests:
+    - unique
+    - not_null
+  - name: invoice_id
+    data_tests:
+    - not_null
+    - relationships:
+        arguments:
+          to: ref('stg_billing__invoices')
+          field: invoice_id
+  - name: paid_at
+  - name: amount
+    data_tests:
+    - not_null
+    - non_negative
+  - name: method
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - ach
+          - card
+          - wire
+  - name: card_last4
+- name: stg_billing__subscriptions
+  description: Staging for billing.subscriptions (subscription).
+  columns:
+  - name: subscription_id
+    data_tests:
+    - unique
+    - not_null
+  - name: customer_id
+    data_tests:
+    - not_null
+    - relationships:
+        arguments:
+          to: ref('stg_billing__customers')
+          field: customer_id
+  - name: plan_code
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - enterprise
+          - growth
+          - scale
+          - starter
+  - name: mrr
+    data_tests:
+    - not_null
+    - non_negative
+  - name: currency
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - EUR
+          - GBP
+          - USD
+  - name: start_date
+    data_tests:
+    - not_null
+  - name: end_date
+  - name: status
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - active
+          - cancelled
+          - downgraded
+          - upgraded

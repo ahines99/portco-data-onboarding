@@ -400,11 +400,8 @@ def _primary_tables(
             maps = {p.canonical_field for p in proposals if p.source_table == t and p.source_column in pk}
             if maps & id_fields:
                 pk_tables.append(t)
-        pick = (
-            sorted(pk_tables)[0]
-            if pk_tables
-            else max(tables, key=lambda t: (entities.for_table(t).score if entities.for_table(t) else 0, t))
-        )  # type: ignore[union-attr]
+        scores = {t: (c.score if (c := entities.for_table(t)) else 0.0) for t in tables}
+        pick = sorted(pk_tables)[0] if pk_tables else max(tables, key=lambda t: (scores[t], t))
         out[entity] = pick
     return out
 

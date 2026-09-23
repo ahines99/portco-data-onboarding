@@ -1,0 +1,7 @@
+metrics:
+- name: cogs
+  label: Cogs
+  description: Cost of goods sold from the general ledger.
+  type: simple
+  type_params:
+    measure: cogs

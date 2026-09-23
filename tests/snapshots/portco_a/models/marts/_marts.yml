@@ -1,0 +1,90 @@
+version: 2
+models:
+- name: dim_contact
+  description: 'A person at a customer. Entirely PII except identifiers. Source of record: crm.contacts.'
+  columns:
+  - name: contact_id
+    data_tests:
+    - unique
+    - not_null
+- name: dim_customer
+  description: 'A paying customer (system of record is billing; CRM accounts enrich it). Source of record: billing.customers.'
+  columns:
+  - name: customer_id
+    data_tests:
+    - unique
+    - not_null
+- name: dim_employee
+  description: 'An employee. Identity fields are PII and are hashed or excluded in staging. Source of record: hr.employees.'
+  columns:
+  - name: employee_id
+    data_tests:
+    - unique
+    - not_null
+- name: dim_gl_account
+  description: 'A general-ledger account in the chart of accounts. Source of record: erp.gl_accounts.'
+  columns:
+  - name: account_code
+    data_tests:
+    - unique
+    - not_null
+- name: fct_gl_entry
+  description: 'A general-ledger journal line. Source of record: erp.journal_lines.'
+  columns:
+  - name: gl_entry_key
+    data_tests:
+    - unique
+    - not_null
+- name: fct_invoice
+  description: 'A customer invoice header (billing document). Source of record: billing.invoices.'
+  columns:
+  - name: invoice_id
+    data_tests:
+    - unique
+    - not_null
+- name: fct_invoice_line
+  description: 'A line on a customer invoice. Source of record: billing.invoice_lines.'
+  columns:
+  - name: invoice_line_id
+    data_tests:
+    - unique
+    - not_null
+- name: fct_opportunity
+  description: 'A sales opportunity. Its amount is a BOOKING, never revenue. Source of record: crm.opportunities.'
+  columns:
+  - name: opportunity_id
+    data_tests:
+    - unique
+    - not_null
+- name: fct_payment
+  description: 'A cash receipt applied to an invoice. Source of record: billing.payments.'
+  columns:
+  - name: payment_id
+    data_tests:
+    - unique
+    - not_null
+- name: fct_subscription
+  description: 'A recurring-revenue subscription or contract line, normalized to monthly value. Source of record:
+    billing.subscriptions.'
+  columns:
+  - name: subscription_id
+    data_tests:
+    - unique
+    - not_null
+- name: fct_mrr_monthly
+  description: Month-end MRR per customer and currency.
+  columns:
+  - name: mrr_snapshot_id
+    data_tests:
+    - unique
+    - not_null
+  - name: mrr
+    data_tests:
+    - non_negative
+- name: metricflow_time_spine
+  description: Daily time spine for the semantic layer.
+  time_spine:
+    standard_granularity_column: date_day
+  columns:
+  - name: date_day
+    granularity: day

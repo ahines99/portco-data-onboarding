@@ -1,0 +1,134 @@
+{
+  "$defs": {
+    "Confidence": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "Confidence",
+      "type": "string"
+    },
+    "JoinCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "cardinality": {
+          "enum": [
+            "1:1",
+            "1:N",
+            "N:1",
+            "N:M"
+          ],
+          "title": "Cardinality",
+          "type": "string"
+        },
+        "confidence": {
+          "$ref": "#/$defs/Confidence"
+        },
+        "containment_ratio": {
+          "title": "Containment Ratio",
+          "type": "number"
+        },
+        "evidence_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Id"
+        },
+        "join_id": {
+          "title": "Join Id",
+          "type": "string"
+        },
+        "left_columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Left Columns",
+          "type": "array"
+        },
+        "left_table": {
+          "title": "Left Table",
+          "type": "string"
+        },
+        "name_score": {
+          "title": "Name Score",
+          "type": "number"
+        },
+        "orphan_rate": {
+          "title": "Orphan Rate",
+          "type": "number"
+        },
+        "reason_codes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reason Codes",
+          "type": "array"
+        },
+        "requires_review": {
+          "title": "Requires Review",
+          "type": "boolean"
+        },
+        "right_columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Right Columns",
+          "type": "array"
+        },
+        "right_table": {
+          "title": "Right Table",
+          "type": "string"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "join_id",
+        "left_table",
+        "left_columns",
+        "right_table",
+        "right_columns",
+        "containment_ratio",
+        "orphan_rate",
+        "cardinality",
+        "name_score",
+        "score",
+        "confidence",
+        "requires_review"
+      ],
+      "title": "JoinCandidate",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "joins": {
+      "items": {
+        "$ref": "#/$defs/JoinCandidate"
+      },
+      "title": "Joins",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "joins"
+  ],
+  "title": "JoinGraph",
+  "type": "object"
+}
