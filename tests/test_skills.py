@@ -16,8 +16,23 @@ from src.settings import PROJECT_ROOT
 
 pytestmark = pytest.mark.unit
 SKILLS = sorted((PROJECT_ROOT / "skills").glob("*/SKILL.md"))
-TOOL_PREFIXES = ("start_", "get_", "resume_", "list_", "submit_", "certify_", "profile_", "propose_", "generate_",
-                 "run_", "publish_", "explain_", "review_", "onboarding_", "healthcheck")
+TOOL_PREFIXES = (
+    "start_",
+    "get_",
+    "resume_",
+    "list_",
+    "submit_",
+    "certify_",
+    "profile_",
+    "propose_",
+    "generate_",
+    "run_",
+    "publish_",
+    "explain_",
+    "review_",
+    "onboarding_",
+    "healthcheck",
+)
 NOT_TOOLS = {"run_id"}
 SECRET = re.compile(r"(sk-[A-Za-z0-9]{10,}|api[_-]?key\s*[:=]\s*\S+|password\s*[:=]\s*\S+)", re.I)
 ABS_PATH = re.compile(r"([A-Za-z]:\\|/Users/|/home/)")
@@ -53,8 +68,13 @@ def _template_regex(template: str) -> re.Pattern[str]:
 
 
 def test_there_are_five_skills() -> None:
-    assert {p.parent.name for p in SKILLS} == {"schema-profiling", "canonical-pe-ontology", "dbt-modeling",
-                                                 "semantic-layer-generation", "data-quality"}
+    assert {p.parent.name for p in SKILLS} == {
+        "schema-profiling",
+        "canonical-pe-ontology",
+        "dbt-modeling",
+        "semantic-layer-generation",
+        "data-quality",
+    }
 
 
 @pytest.mark.parametrize("path", SKILLS, ids=lambda p: p.parent.name)
@@ -79,8 +99,13 @@ def test_every_referenced_tool_prompt_and_resource_exists(path: Path, surface: d
     for tok in tokens:
         name = tok.split("(")[0]
         if "://" in tok:
-            uri = tok.replace("{run_id}", "r1").replace("{evidence_id}", "e1").replace("{metric}", "arr") \
-                .replace("{finding_id}", "f1").replace("{path}", "a/b.sql")
+            uri = (
+                tok.replace("{run_id}", "r1")
+                .replace("{evidence_id}", "e1")
+                .replace("{metric}", "arr")
+                .replace("{finding_id}", "f1")
+                .replace("{path}", "a/b.sql")
+            )
             assert uri in surface["resources"] or any(t.match(uri) for t in templates), f"{path.parent.name}: {tok}"
         elif name.startswith(TOOL_PREFIXES) and name not in NOT_TOOLS and re.fullmatch(r"[a-z_]+", name):
             assert name in surface["tools"] | surface["prompts"], f"{path.parent.name} mentions unknown tool {name}"

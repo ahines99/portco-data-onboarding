@@ -1,0 +1,8 @@
+# Scripted reviewer decisions for the demo (what a human reviewer would record at Gate A).
+# Items not listed are approved as proposed.
+reviewer: alice
+default: approve
+overrides:
+  mapping:crm.opportunities.rev:
+    canonical_field: amount          # it is bookings on the opportunity, not revenue
+    comment: CRM "rev" is deal value (bookings); recognized revenue comes from the GL.

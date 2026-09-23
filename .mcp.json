@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "portco-data-onboarding": {
+      "command": "uv",
+      "args": ["run", "portco-mcp"],
+      "env": {"PORTCO_LOCAL_PRINCIPAL_ID": "agent:claude-code", "PORTCO_LOCAL_PRINCIPAL_ROLE": "agent"}
+    }
+  }
+}

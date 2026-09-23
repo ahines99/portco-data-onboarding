@@ -1,0 +1,96 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PORTCO_ENV: test
+  PORTCO_LOG_LEVEL: WARNING
+
+jobs:
+  lint-and-types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with: {enable-cache: true}
+      - run: uv sync --all-extras --frozen
+      - run: uv run poe lint
+      - run: uv run ruff format --check src tests evals scripts
+      - run: uv run poe typecheck
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with: {enable-cache: true}
+      - run: uv sync --all-extras --frozen
+      - run: uv run poe fixtures
+      - name: Unit, integration, golden and MCP tests (SQLite)
+        run: uv run pytest -q -m "not postgres and not security"
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with: {enable-cache: true}
+      - run: uv sync --all-extras --frozen
+      - run: uv run poe fixtures
+      - run: uv run pytest -q -m security
+
+  test-postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: portco
+          POSTGRES_PASSWORD: portco
+          POSTGRES_DB: portco
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U portco" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PORTCO_TEST_POSTGRES_URL: postgresql+psycopg://portco:portco@localhost:5432/portco
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with: {enable-cache: true}
+      - run: uv sync --all-extras --frozen
+      - run: uv run poe fixtures
+      - run: uv run pytest -q -m postgres
+
+  eval:
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with: {enable-cache: true}
+      - run: uv sync --all-extras --frozen
+      - run: uv run poe fixtures
+      - name: Golden evaluation (gating)
+        run: uv run poe eval
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-report
+          path: evals/reports/latest.*
+
+  demo:
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with: {enable-cache: true}
+      - run: uv sync --all-extras --frozen
+      - run: uv run poe demo

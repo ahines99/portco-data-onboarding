@@ -36,7 +36,7 @@ class Settings(BaseSettings):
 
     # Model judgment layer (POD-607) — off by default; the deterministic core never needs it.
     llm_enabled: bool = False
-    llm_model: str = "claude-sonnet-5"
+    llm_model: str = "claude-opus-5"
     llm_mode: Literal["live", "replay", "record"] = "replay"
     anthropic_api_key: SecretStr | None = None
 

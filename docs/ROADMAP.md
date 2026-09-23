@@ -1,5 +1,19 @@
 # Roadmap: Portco Data Onboarding Agent v0.1
 
+> **Implementation status (2026-09-23): all 71 tickets implemented.** 250 tests pass, 34/34 golden eval
+> cases pass, and ruff and mypy are clean. See [acceptance.md](acceptance.md) for the checklist audit.
+> Deviations from this plan, each recorded where noted:
+> - The MCP capability package is `src/capabilities/`, not `src/mcp/`, so it cannot shadow the `mcp` SDK import.
+> - dbt runs as a subprocess, not in-process `dbtRunner`: stdout would corrupt the stdio transport, and a
+>   subprocess can be killed on timeout (ADR-0008).
+> - There is no separate `mapping_proposals` table. The mapping set is a content-addressed step artifact,
+>   and decisions live in `approvals`.
+> - The golden dataset has 34 cases (target was 30), including an MCP tool-trace case (G31).
+> - The mapping-review gate is a workflow step, and there is also a test-failure waiver gate (ADR-0005).
+> - Not executed in the build environment: the Postgres suite (runs in CI; no local Docker), the live
+>   LLM-judge comparison and the with-vs-without-Skill comparison (no model credentials). The tooling for
+>   all three is in place.
+
 This document breaks [IMPLEMENTATION_HANDOFF.md](../IMPLEMENTATION_HANDOFF.md) into tickets that can each be built, reviewed, and closed on their own. The handoff doc defines **what** the system is and **why**. This roadmap defines **the order to build it in** and **when each piece counts as done**.
 
 Starting point (2026-09-23): the repo has a one-tool MCP server (`healthcheck`), three of the four core Pydantic models, five placeholder Skills with identical text, and one passing test. There is no git repo, persistence, workflow engine, fixture data, or domain service yet.

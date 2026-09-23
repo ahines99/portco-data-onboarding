@@ -1,0 +1,38 @@
+# `docker compose up -d postgres`            -> Postgres for tests (PORTCO_TEST_POSTGRES_URL)
+# `docker compose --profile full up --build` -> Postgres + migrations + authenticated MCP server on :8000
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: portco
+      POSTGRES_PASSWORD: portco
+      POSTGRES_DB: portco
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portco"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    profiles: [full]
+    build: .
+    command: ["alembic", "upgrade", "head"]
+    environment: &env
+      PORTCO_DATABASE_URL: postgresql+psycopg://portco:portco@postgres:5432/portco
+      PORTCO_HTTP_TOKENS: ${PORTCO_HTTP_TOKENS:-dev-agent=agent:claude:agent;dev-reviewer=alice:reviewer}
+      PORTCO_HTTP_BASE_URL: http://localhost:8000
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  mcp:
+    profiles: [full]
+    build: .
+    environment: *env
+    ports: ["8000:8000"]
+    volumes: ["portco-data:/data"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+
+volumes:
+  portco-data:

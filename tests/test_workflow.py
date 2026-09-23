@@ -204,3 +204,47 @@ async def test_reject_mapping_item_removes_it(service: OnboardingService) -> Non
     assert not [a for a in resolved.accepted if a.source_column == "rev"]
     ms = service.artifact(AGENT, run.run_id, StepName.CANONICAL_MAPPING)
     assert isinstance(ms, MappingSet)
+
+
+@pytest.mark.parametrize(
+    "step",
+    [
+        StepName.CONNECTION_VALIDATION,
+        StepName.SCHEMA_PROFILING,
+        StepName.ENTITY_INFERENCE,
+        StepName.JOIN_INFERENCE,
+        StepName.CANONICAL_MAPPING,
+    ],
+)
+async def test_every_step_has_an_audited_failure_path(service: OnboardingService, step: StepName) -> None:
+    """Acceptance checklist: each step produces an artifact and audit events, and fails in a controlled way."""
+    from dataclasses import replace
+
+    from src.domain.errors import DataContractError
+
+    def broken(ctx):  # type: ignore[no-untyped-def]
+        raise DataContractError(f"simulated contract violation in {step.value}")
+
+    idx = next(i for i, s in enumerate(service.engine.steps) if s.name is step)
+    service.engine.steps = [*service.engine.steps]
+    service.engine.steps[idx] = replace(service.engine.steps[idx], fn=broken)
+    run = await service.start_run(AGENT, "fixture:portco_a")
+    assert run.status is RunStatus.FAILED and run.current_step == step.value
+    assert run.error and run.error["code"] == "DATA_CONTRACT" and run.error["retryable"] is False
+    events = _events(service, run.run_id)
+    assert "step_failed" in events and "run_failed" in events
+    for earlier in service.engine.steps[:idx]:
+        assert service.artifact(AGENT, run.run_id, earlier.name) is not None
+
+
+@pytest.mark.slow
+async def test_rejected_certification_fails_the_run(service: OnboardingService) -> None:
+    from tests.conftest import drive
+
+    run = await drive(service, certify=False)
+    assert run.gate == "certification"
+    manifest = run.pending_items[0].subject_hash
+    service.certify(REVIEWER, run.run_id, manifest, decide_all(run.pending_items, reject={f"bundle:{manifest}"}))
+    run = await service.resume(AGENT, run.run_id)
+    assert run.status is RunStatus.FAILED and run.error and run.error["code"] == "VALIDATION"
+    assert "rejected the bundle" in run.error["message"]

@@ -164,7 +164,7 @@ def infer_joins(ctx: StepContext) -> StepResult:
             Finding(
                 code="JOIN_INFERRED",
                 title=f"Join {j.join_id}",
-                statement=f"{j.cardinality} join, score {j.score:.2f}, containment {j.containment_ratio:.1%}.",
+                statement=f"{j.join_id}: {j.cardinality}, score {j.score:.2f}, containment {j.containment_ratio:.1%}.",
                 confidence=j.confidence,
                 evidence=refs,
                 metadata={"join": j.join_id, "requires_review": j.requires_review},

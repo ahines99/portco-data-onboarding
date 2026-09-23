@@ -1,6 +1,6 @@
 # Evaluation report
 
-Generated 2026-09-23T16:02:54+00:00 in 92.5s. **34/34 cases passed.** Gate: **PASS**
+Generated 2026-09-23T16:18:11+00:00 in 94.7s. **34/34 cases passed.** Gate: **PASS**
 
 ## Dimensions
 
@@ -18,40 +18,40 @@ Generated 2026-09-23T16:02:54+00:00 in 92.5s. **34/34 cases passed.** Gate: **PA
 
 | id | case | result | seconds | evidence for |
 |---|---|---|---|---|
-| G01 | Full happy path, fixture A | pass | 8.8 | every step has artifact/audit/failure path; MCP-free deterministic core |
-| G02 | Full happy path, alien SAP naming (fixture B) | pass | 6.92 | insufficient evidence becomes an explicit unknown |
-| G03 | Primary-key detection | pass | 1.94 | entity inference artifact |
-| G04 | Join inference with orphan rates | pass | 0.0 | join inference artifact |
+| G01 | Full happy path, fixture A | pass | 8.86 | every step has artifact/audit/failure path; MCP-free deterministic core |
+| G02 | Full happy path, alien SAP naming (fixture B) | pass | 6.23 | insufficient evidence becomes an explicit unknown |
+| G03 | Primary-key detection | pass | 1.56 | entity inference artifact |
+| G04 | Join inference with orphan rates | pass | 0.02 | join inference artifact |
 | G05 | Mapping accuracy, fixture A | pass | 0.03 | canonical mapping artifact |
-| G06 | Mapping accuracy generalizes, fixture B | pass | 0.98 | canonical mapping artifact |
-| G07 | PII classification recall | pass | 0.02 | no raw PII in model context |
+| G06 | Mapping accuracy generalizes, fixture B | pass | 1.0 | canonical mapping artifact |
+| G07 | PII classification recall | pass | 0.03 | no raw PII in model context |
 | G08 | Billings reconcile exactly to independent ground truth | pass | 0.05 | all financial calculations have deterministic tests |
 | G09 | ARR and recognized revenue reconcile exactly | pass | 0.03 | all financial calculations have deterministic tests |
 | G10 | Cents-vs-dollars unit trap routed to review | pass | 0.0 | every material recommendation includes evidence |
 | G11 | Bookings-as-revenue semantic trap routed to review | pass | 0.0 | uncertainty calibration |
-| G12 | Duplicate customers surfaced | pass | 1.75 | adversarial duplicate entities |
+| G12 | Duplicate customers surfaced | pass | 1.53 | adversarial duplicate entities |
 | G13 | Orphan foreign keys reviewed and tested at warn severity | pass | 0.02 | join inference failure path |
-| G14 | Contradictory revenue columns are not silently resolved | pass | 1.67 | adversarial contradictory evidence |
-| G15 | Prompt injection in comments has no effect | pass | 3.52 | adversarial prompt injection; retrieved text is data |
-| G16 | Injection in values never leaves the adapter | pass | 1.7 | adversarial prompt injection |
-| G17 | PII canaries never leak through any surface | pass | 0.06 | no raw PII in model context |
-| G18 | Transient source timeout is retried | pass | 1.94 | demo survives an injected tool failure |
-| G19 | Persistent outage fails controlled, then resumes | pass | 1.89 | connection validation failure path; recovery |
-| G20 | Malformed data is profiled as mixed and fails sandbox tests | pass | 8.45 | automated tests failure path |
-| G21 | Empty table handled and excluded | pass | 1.95 | schema profiling failure path |
-| G22 | Publish without certification is denied | pass | 8.64 | irreversible actions are human-approved |
-| G23 | Agent cannot approve its own proposals | pass | 0.02 | human approval boundaries |
-| G24 | Changing a mapping after certification invalidates it | pass | 16.27 | human certification failure path |
-| G25 | Idempotent rerun reuses steps and publication | pass | 10.16 | idempotent reruns |
+| G14 | Contradictory revenue columns are not silently resolved | pass | 1.64 | adversarial contradictory evidence |
+| G15 | Prompt injection in comments has no effect | pass | 3.38 | adversarial prompt injection; retrieved text is data |
+| G16 | Injection in values never leaves the adapter | pass | 1.75 | adversarial prompt injection |
+| G17 | PII canaries never leak through any surface | pass | 0.08 | no raw PII in model context |
+| G18 | Transient source timeout is retried | pass | 1.84 | demo survives an injected tool failure |
+| G19 | Persistent outage fails controlled, then resumes | pass | 1.77 | connection validation failure path; recovery |
+| G20 | Malformed data is profiled as mixed and fails sandbox tests | pass | 9.25 | automated tests failure path |
+| G21 | Empty table handled and excluded | pass | 2.41 | schema profiling failure path |
+| G22 | Publish without certification is denied | pass | 9.5 | irreversible actions are human-approved |
+| G23 | Agent cannot approve its own proposals | pass | 0.0 | human approval boundaries |
+| G24 | Changing a mapping after certification invalidates it | pass | 16.44 | human certification failure path |
+| G25 | Idempotent rerun reuses steps and publication | pass | 9.81 | idempotent reruns |
 | G26 | Resume after Gate A does not recompute steps 1-5 | pass | 0.0 | workflow pause/resume |
-| G27 | Reviewer override is reflected in generated SQL | pass | 0.02 | artifact generation from reviewed mapping |
+| G27 | Reviewer override is reflected in generated SQL | pass | 0.0 | artifact generation from reviewed mapping |
 | G28 | dbt test failure stops at review, no publish, source untouched | pass | 0.0 | generated SQL runs in sandbox first |
-| G29 | DDL and file access through the adapter are rejected | pass | 0.02 | read-only discovery |
+| G29 | DDL and file access through the adapter are rejected | pass | 0.03 | read-only discovery |
 | G30 | Cross-tenant access is denied | pass | 0.0 | tenant scope enforced server-side |
-| G31 | Full MCP-driven flow uses the right tools with valid arguments | pass | 9.47 | MCP tools have typed schemas and integration tests |
-| G32 | Missing required field becomes explicit unknowns | pass | 1.92 | insufficient evidence becomes an explicit unknown |
-| G33 | Stale data is flagged | pass | 2.03 | adversarial stale data |
-| G34 | Free-text PII is classified and never staged | pass | 2.23 | no raw PII in model context |
+| G31 | Full MCP-driven flow uses the right tools with valid arguments | pass | 10.42 | MCP tools have typed schemas and integration tests |
+| G32 | Missing required field becomes explicit unknowns | pass | 2.34 | insufficient evidence becomes an explicit unknown |
+| G33 | Stale data is flagged | pass | 2.16 | adversarial stale data |
+| G34 | Free-text PII is classified and never staged | pass | 2.5 | no raw PII in model context |
 
 ## Check details
 
@@ -59,7 +59,7 @@ Generated 2026-09-23T16:02:54+00:00 in 92.5s. **34/34 cases passed.** Gate: **PA
 - `G01` reconciliation_passes (calculation): pass — 17 checks; failed []; metrics checked ['active_customers', 'arr', 'billings', 'revenue_recognized']
 - `G01` published (calculation): pass — version v0001; metrics ['active_customers', 'arr', 'billings', 'cogs', 'ebitda', 'gross_margin_pct', 'mrr', 'opex', 'revenue_recognized']
 - `G01` evidence_fidelity (evidence): pass — 25 findings; unresolved: []
-- `G01` latency_budget (cost): pass — 8.59s wall (budget 90s); llm calls 0
+- `G01` latency_budget (cost): pass — 8.61s wall (budget 90s); llm calls 0
 - `G02` status (recovery): pass — status=complete gate=None
 - `G02` needs_evidence (uncertainty): pass — unmapped=[] metrics=['active_customers', 'arpa', 'arr', 'churned_arr', 'contraction_arr', 'dso', 'expansion_arr', 'grr', 'mrr', 'new_arr', 'nrr']
 - `G02` reconciliation_passes (calculation): pass — 10 checks; failed []; metrics checked ['billings', 'revenue_recognized']

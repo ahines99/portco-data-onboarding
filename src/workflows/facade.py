@@ -73,6 +73,10 @@ class OnboardingService:
         connections = ConnectionRegistry(settings.fixtures_dir)
         faults = faults if faults is not None else FaultInjector.parse(settings.faults, settings.env)
         services: dict[str, Any] = {"faults": faults}
+        if judge is None and settings.llm_enabled:
+            from src.services.judge import ClaudeJudge
+
+            judge = ClaudeJudge.from_settings(settings)
         if judge is not None:
             services["judge"] = judge
         engine = WorkflowEngine(

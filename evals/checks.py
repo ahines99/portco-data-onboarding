@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 from collections import defaultdict
@@ -47,10 +48,8 @@ def emitted(cr: CaseRun) -> dict[str, Any]:
     svc, rid = cr.service, cr.run_id
     out: dict[str, Any] = {"findings": [f.model_dump(mode="json") for f in svc.findings(ADMIN, rid)]}
     for spec in PROJECT_STEPS:
-        try:
+        with contextlib.suppress(NotFound):
             out[spec.name.value] = svc.artifact(ADMIN, rid, spec.name).model_dump(mode="json")
-        except NotFound:
-            pass
     out["audit"] = [e.model_dump(mode="json") for e in svc.audit(ADMIN, rid)[0]]
     out["pending"] = [i.model_dump(mode="json") for i in cr.refresh().pending_items]
     try:
@@ -151,7 +150,7 @@ def mapping_scores(cr: CaseRun) -> tuple[float, dict[str, list[bool]]]:
 
 @check("mapping_accuracy", "uncertainty")
 async def mapping_accuracy(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
-    acc, buckets = mapping_scores(cr)
+    acc, _buckets = mapping_scores(cr)
     return acc >= a["min"], f"top-1 accuracy {acc:.3f}"
 
 
