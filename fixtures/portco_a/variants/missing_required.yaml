@@ -1,0 +1,12 @@
+company_id: portco_a__missing_required
+content_digest: 6e93cc9e705f4fc85dbe77d6afa2cb4b76311ffed80aa8342a235eecfb3b3628
+expected_metrics: {}
+expected_variant:
+  needs_evidence_metrics:
+  - billings
+  - dso
+  unmapped:
+  - invoice.invoice_date
+fixture: portco_a__missing_required
+variant: missing_required
+variant_of: portco_a

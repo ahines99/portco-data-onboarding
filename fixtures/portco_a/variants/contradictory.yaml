@@ -1,0 +1,12 @@
+company_id: portco_a__contradictory
+content_digest: 87e05861580141f9ae884863c76e1b66ad323d61710e41ad1f422466df111b5f
+expected_metrics: {}
+expected_variant:
+  findings:
+  - CONFLICT
+  review_reasons:
+    billing.invoices.gross_amt: CONFLICT
+    billing.invoices.total_amt: CONFLICT
+fixture: portco_a__contradictory
+variant: contradictory
+variant_of: portco_a

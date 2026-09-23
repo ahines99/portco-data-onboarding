@@ -1,0 +1,10 @@
+company_id: portco_a__dupes
+content_digest: e1337165fb5ab3e61e2f6efaefb0d2852501de8620d2e366ee406b01035517f2
+expected_metrics: {}
+expected_variant:
+  findings:
+  - DUPLICATE_ENTITIES
+  min_duplicate_ratio: 0.1
+fixture: portco_a__dupes
+variant: dupes
+variant_of: portco_a

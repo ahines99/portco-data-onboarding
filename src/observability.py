@@ -1,0 +1,98 @@
+"""Structured logging and tracing (POD-803, POD-804, POD-706).
+
+Logs go to stderr as JSON: stdout is reserved for the stdio MCP transport. A redaction
+processor drops secret-looking keys and blocks raw PII detected by the PII guard.
+"""
+
+from __future__ import annotations
+
+import logging
+import re
+import sys
+from collections.abc import Iterator, MutableMapping
+from contextlib import contextmanager
+from typing import Any
+
+import structlog
+from opentelemetry import trace
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor, SpanExporter
+
+from src.domain.pii_guard import PiiGuard
+
+SECRET_KEY = re.compile(r"(key|token|secret|password|authorization)", re.I)
+_GUARD = PiiGuard()
+_configured = False
+
+
+def redact(_logger: Any, _name: str, event: MutableMapping[str, Any]) -> MutableMapping[str, Any]:
+    for k in list(event):
+        if SECRET_KEY.search(k):
+            event[k] = "[REDACTED]"
+            continue
+        v = event[k]
+        if isinstance(v, str) and _GUARD.scan_text(v):
+            event[k] = "[REDACTED:PII]"
+    return event
+
+
+def configure_logging(level: str = "INFO") -> None:
+    global _configured
+    if _configured:
+        return
+    logging.basicConfig(stream=sys.stderr, level=getattr(logging, level.upper(), logging.INFO), format="%(message)s")
+    structlog.configure(
+        processors=[
+            structlog.contextvars.merge_contextvars,
+            structlog.processors.add_log_level,
+            structlog.processors.TimeStamper(fmt="iso", utc=True),
+            redact,
+            structlog.processors.format_exc_info,
+            structlog.processors.JSONRenderer(),
+        ],
+        logger_factory=structlog.PrintLoggerFactory(file=sys.stderr),
+        cache_logger_on_first_use=True,
+    )
+    _configured = True
+
+
+# --------------------------------------------------------------------------- tracing
+
+_provider: TracerProvider | None = None
+
+
+def configure_tracing(exporter: SpanExporter | None = None) -> TracerProvider:
+    """Install a tracer provider. Tests pass an in-memory exporter; OTLP is used when configured."""
+    global _provider
+    provider = TracerProvider(resource=Resource.create({"service.name": "portco-data-onboarding"}))
+    if exporter is not None:
+        provider.add_span_processor(SimpleSpanProcessor(exporter))
+    else:
+        import os
+
+        if os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT"):
+            try:
+                from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+
+                provider.add_span_processor(SimpleSpanProcessor(OTLPSpanExporter()))
+            except ImportError:  # optional dependency
+                pass
+    _provider = provider
+    return provider
+
+
+def tracer() -> trace.Tracer:
+    if _provider is None:
+        configure_tracing()
+    assert _provider is not None
+    return _provider.get_tracer("portco")
+
+
+@contextmanager
+def span(name: str, **attributes: Any) -> Iterator[trace.Span]:
+    with tracer().start_as_current_span(name) as sp:
+        for k, v in attributes.items():
+            if v is not None:
+                sp.set_attribute(k, v if isinstance(v, str | int | float | bool) else str(v))
+        yield sp

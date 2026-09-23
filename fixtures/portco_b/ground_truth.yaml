@@ -1,0 +1,144 @@
+as_of: '2025-12-31'
+canaries: []
+company_id: portco_b
+content_digest: db74a1b82578911703df13793ec8f3125896eeed9542eb34db4f84b3943b94f9
+entities:
+  sap.BSEG: gl_entry
+  sap.KNA1: customer
+  sap.MARA: product
+  sap.PA0001: employee
+  sap.SKA1: gl_account
+  sap.VBRK: invoice
+  sap.VBRP: invoice_line
+expected_metrics:
+  billings:
+    2025-01|EUR: '385494.85'
+    2025-02|EUR: '316800.00'
+    2025-03|EUR: '209421.50'
+    2025-04|EUR: '233588.60'
+    2025-05|EUR: '213571.25'
+    2025-06|EUR: '194370.60'
+    2025-07|EUR: '474911.40'
+    2025-08|EUR: '372531.25'
+    2025-09|EUR: '197849.85'
+    2025-10|EUR: '328873.55'
+    2025-11|EUR: '279016.85'
+    2025-12|EUR: '370228.10'
+  revenue_recognized:
+    2025-01: '385494.85'
+    2025-02: '316800.00'
+    2025-03: '209421.50'
+    2025-04: '233588.60'
+    2025-05: '213571.25'
+    2025-06: '194370.60'
+    2025-07: '474911.40'
+    2025-08: '372531.25'
+    2025-09: '197849.85'
+    2025-10: '328873.55'
+    2025-11: '279016.85'
+    2025-12: '370228.10'
+fiscal_year_start_month: 1
+fixture: portco_b
+joins:
+- cardinality: N:1
+  left: sap.VBRK.KUNAG
+  orphan_rate: 0.0
+  right: sap.KNA1.KUNNR
+- cardinality: N:1
+  left: sap.VBRP.VBELN
+  orphan_rate: 0.0
+  right: sap.VBRK.VBELN
+- cardinality: N:1
+  left: sap.VBRP.MATNR
+  orphan_rate: 0.0
+  right: sap.MARA.MATNR
+- cardinality: N:1
+  left: sap.BSEG.HKONT
+  orphan_rate: 0.0
+  right: sap.SKA1.SAKNR
+mappings:
+  sap.BSEG.BELNR: gl_entry.journal_id
+  sap.BSEG.BUDAT: gl_entry.posting_date
+  sap.BSEG.BUKRS: gl_entry.entity_code
+  sap.BSEG.BUZEI: gl_entry.line_number
+  sap.BSEG.DMBTR_H: gl_entry.credit_amount
+  sap.BSEG.DMBTR_S: gl_entry.debit_amount
+  sap.BSEG.HKONT: gl_entry.account_code
+  sap.KNA1.BRSCH: customer.industry
+  sap.KNA1.ERDAT: customer.created_date
+  sap.KNA1.KUNNR: customer.customer_id
+  sap.KNA1.LAND1: customer.country
+  sap.KNA1.LOEVM: customer.is_deleted
+  sap.KNA1.NAME1: customer.customer_name
+  sap.MARA.MAKTX: product.product_name
+  sap.MARA.MATNR: product.sku
+  sap.PA0001.AUSTRITT: employee.termination_date
+  sap.PA0001.EINTRITT: employee.hire_date
+  sap.PA0001.ENAME: employee.full_name
+  sap.PA0001.GBDAT: employee.date_of_birth
+  sap.PA0001.ORGEH: employee.department
+  sap.PA0001.PERNR: employee.employee_id
+  sap.SKA1.KTOKS: gl_account.account_type
+  sap.SKA1.SAKNR: gl_account.account_code
+  sap.SKA1.TXT50: gl_account.account_name
+  sap.VBRK.FKART: null
+  sap.VBRK.FKDAT: invoice.invoice_date
+  sap.VBRK.KUNAG: invoice.customer_id
+  sap.VBRK.NETWR: invoice.total_amount
+  sap.VBRK.VBELN: invoice.invoice_id
+  sap.VBRK.WAERK: invoice.currency
+  sap.VBRP.FKIMG: invoice_line.quantity
+  sap.VBRP.MATNR: invoice_line.sku
+  sap.VBRP.NETWR: invoice_line.amount
+  sap.VBRP.POSNR: invoice_line.invoice_line_id
+  sap.VBRP.VBELN: invoice_line.invoice_id
+months:
+- 2025-01
+- 2025-02
+- 2025-03
+- 2025-04
+- 2025-05
+- 2025-06
+- 2025-07
+- 2025-08
+- 2025-09
+- 2025-10
+- 2025-11
+- 2025-12
+not_applicable_metrics:
+- mrr
+- arr
+- active_customers
+- new_arr
+- expansion_arr
+- contraction_arr
+- churned_arr
+- nrr
+- grr
+- arpa
+- dso
+pii_columns:
+  sap.PA0001.ENAME: person_name
+  sap.PA0001.GBDAT: dob
+primary_keys:
+  sap.BSEG:
+  - BELNR
+  - BUZEI
+  sap.KNA1:
+  - KUNNR
+  sap.MARA:
+  - MATNR
+  sap.PA0001:
+  - PERNR
+  sap.SKA1:
+  - SAKNR
+  sap.VBRK:
+  - VBELN
+  sap.VBRP:
+  - VBELN
+  - POSNR
+row_filters:
+- column: LOEVM
+  kind: exclude_true
+  table: sap.KNA1
+traps: []

@@ -1,0 +1,13 @@
+-- Scoping model for [[ table ]]: a row is out of scope when it is excluded itself, or when the
+-- parent row it references (in a different entity) is out of scope.
+select
+    s.*,
+    (s._excluded[% for p in parents %] or coalesce(p[[ loop.index ]]._excluded_effective, false)[% endfor %]) as _excluded_effective
+from {{ ref('[[ staging_model ]]') }} as s
+[% for p in parents %]
+left join (
+    select [[ p.parent_field ]], bool_or(_excluded_effective) as _excluded_effective
+    from {{ ref('[[ p.parent_model ]]') }}
+    group by 1
+) as p[[ loop.index ]] on p[[ loop.index ]].[[ p.parent_field ]] = s.[[ p.child_field ]]
+[% endfor %]

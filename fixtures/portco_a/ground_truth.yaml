@@ -1,0 +1,406 @@
+as_of: '2026-01-31'
+canaries:
+- +1-555-013-7337
+- '4929000073377335'
+- 987-65-4329
+- Canary7f3a
+- Canary7f3a Sentinel
+- ap-canary-7f3a@canary.invalid
+- canary-7f3a@canary.invalid
+company_id: portco_a
+content_digest: 8de5a2206843e2f0dbdaf6b4aa9634226705b2309850c81129ba9a1f9d75965a
+entities:
+  billing.customers: customer
+  billing.invoice_lines: invoice_line
+  billing.invoices: invoice
+  billing.payments: payment
+  billing.subscriptions: subscription
+  crm.accounts: customer
+  crm.contacts: contact
+  crm.opportunities: opportunity
+  erp.gl_accounts: gl_account
+  erp.journal_lines: gl_entry
+  hr.employees: employee
+expected_findings:
+- DUPLICATE_ENTITIES
+- ENTITY_OVERLAP
+- POSSIBLE_MINOR_UNITS
+- MULTI_CURRENCY
+expected_metrics:
+  active_customers:
+    2024-02: 41
+    2024-03: 44
+    2024-04: 51
+    2024-05: 52
+    2024-06: 55
+    2024-07: 60
+    2024-08: 63
+    2024-09: 65
+    2024-10: 70
+    2024-11: 76
+    2024-12: 82
+    2025-01: 81
+    2025-02: 85
+    2025-03: 88
+    2025-04: 90
+    2025-05: 96
+    2025-06: 97
+    2025-07: 100
+    2025-08: 103
+    2025-09: 104
+    2025-10: 108
+    2025-11: 105
+    2025-12: 103
+    2026-01: 100
+  arr:
+    2024-02|EUR: '162300.00'
+    2024-02|GBP: '166200.00'
+    2024-02|USD: '658710.00'
+    2024-03|EUR: '165000.00'
+    2024-03|GBP: '166200.00'
+    2024-03|USD: '722910.00'
+    2024-04|EUR: '168000.00'
+    2024-04|GBP: '168750.00'
+    2024-04|USD: '766950.00'
+    2024-05|EUR: '161400.00'
+    2024-05|GBP: '168750.00'
+    2024-05|USD: '789150.00'
+    2024-06|EUR: '164400.00'
+    2024-06|GBP: '168750.00'
+    2024-06|USD: '826590.00'
+    2024-07|EUR: '164400.00'
+    2024-07|GBP: '168750.00'
+    2024-07|USD: '921090.00'
+    2024-08|EUR: '164400.00'
+    2024-08|GBP: '168750.00'
+    2024-08|USD: '978810.00'
+    2024-09|EUR: '171000.00'
+    2024-09|GBP: '168750.00'
+    2024-09|USD: '991410.00'
+    2024-10|EUR: '176940.00'
+    2024-10|GBP: '177390.00'
+    2024-10|USD: '1101480.00'
+    2024-11|EUR: '179640.00'
+    2024-11|GBP: '242190.00'
+    2024-11|USD: '1193820.00'
+    2024-12|EUR: '179640.00'
+    2024-12|GBP: '268110.00'
+    2024-12|USD: '1316700.00'
+    2025-01|EUR: '176940.00'
+    2025-01|GBP: '268110.00'
+    2025-01|USD: '1344090.00'
+    2025-02|EUR: '182340.00'
+    2025-02|GBP: '268110.00'
+    2025-02|USD: '1410270.00'
+    2025-03|EUR: '194490.00'
+    2025-03|GBP: '268110.00'
+    2025-03|USD: '1418430.00'
+    2025-04|EUR: '197400.00'
+    2025-04|GBP: '322830.00'
+    2025-04|USD: '1439190.00'
+    2025-05|EUR: '197400.00'
+    2025-05|GBP: '331470.00'
+    2025-05|USD: '1484700.00'
+    2025-06|EUR: '197400.00'
+    2025-06|GBP: '334470.00'
+    2025-06|USD: '1507740.00'
+    2025-07|EUR: '206040.00'
+    2025-07|GBP: '334470.00'
+    2025-07|USD: '1490580.00'
+    2025-08|EUR: '206040.00'
+    2025-08|GBP: '358950.00'
+    2025-08|USD: '1528980.00'
+    2025-09|EUR: '203040.00'
+    2025-09|GBP: '367560.00'
+    2025-09|USD: '1594770.00'
+    2025-10|EUR: '203040.00'
+    2025-10|GBP: '370560.00'
+    2025-10|USD: '1641930.00'
+    2025-11|EUR: '131040.00'
+    2025-11|GBP: '387840.00'
+    2025-11|USD: '1608090.00'
+    2025-12|EUR: '131040.00'
+    2025-12|GBP: '394440.00'
+    2025-12|USD: '1620000.00'
+    2026-01|EUR: '150240.00'
+    2026-01|GBP: '383760.00'
+    2026-01|USD: '1561020.00'
+  billings:
+    2024-02|EUR: '15525.00'
+    2024-02|GBP: '13850.00'
+    2024-02|USD: '59492.50'
+    2024-03|EUR: '13750.00'
+    2024-03|GBP: '13850.00'
+    2024-03|USD: '65142.50'
+    2024-04|EUR: '14000.00'
+    2024-04|GBP: '16062.50'
+    2024-04|USD: '69212.50'
+    2024-05|EUR: '19050.00'
+    2024-05|GBP: '14062.50'
+    2024-05|USD: '67462.50'
+    2024-06|EUR: '13700.00'
+    2024-06|GBP: '14062.50'
+    2024-06|USD: '69782.50'
+    2024-07|EUR: '13700.00'
+    2024-07|GBP: '17062.50'
+    2024-07|USD: '79857.50'
+    2024-08|EUR: '13700.00'
+    2024-08|GBP: '14062.50'
+    2024-08|USD: '90167.50'
+    2024-09|EUR: '16950.00'
+    2024-09|GBP: '15362.50'
+    2024-09|USD: '85717.50'
+    2024-10|EUR: '16445.00'
+    2024-10|GBP: '14782.50'
+    2024-10|USD: '102590.00'
+    2024-11|EUR: '14970.00'
+    2024-11|GBP: '21882.50'
+    2024-11|USD: '103185.00'
+    2024-12|EUR: '19570.00'
+    2024-12|GBP: '23442.50'
+    2024-12|USD: '113525.00'
+    2025-01|EUR: '20845.00'
+    2025-01|GBP: '22342.50'
+    2025-01|USD: '122757.50'
+    2025-02|EUR: '15195.00'
+    2025-02|GBP: '22342.50'
+    2025-02|USD: '120122.50'
+    2025-03|EUR: '18707.50'
+    2025-03|GBP: '29542.50'
+    2025-03|USD: '121652.50'
+    2025-04|EUR: '17750.00'
+    2025-04|GBP: '27402.50'
+    2025-04|USD: '134232.50'
+    2025-05|EUR: '20350.00'
+    2025-05|GBP: '27622.50'
+    2025-05|USD: '135825.00'
+    2025-06|EUR: '17050.00'
+    2025-06|GBP: '27872.50'
+    2025-06|USD: '131545.00'
+    2025-07|EUR: '17170.00'
+    2025-07|GBP: '31972.50'
+    2025-07|USD: '126915.00'
+    2025-08|EUR: '20170.00'
+    2025-08|GBP: '34712.50'
+    2025-08|USD: '136315.00'
+    2025-09|EUR: '19220.00'
+    2025-09|GBP: '34330.00'
+    2025-09|USD: '140597.50'
+    2025-10|EUR: '16920.00'
+    2025-10|GBP: '30880.00'
+    2025-10|USD: '150627.50'
+    2025-11|EUR: '10920.00'
+    2025-11|GBP: '33220.00'
+    2025-11|USD: '139707.50'
+    2025-12|EUR: '14520.00'
+    2025-12|GBP: '37070.00'
+    2025-12|USD: '155500.00'
+    2026-01|EUR: '12520.00'
+    2026-01|GBP: '35180.00'
+    2026-01|USD: '146285.00'
+  revenue_recognized:
+    2024-02: '93849.00'
+    2024-03: '97582.00'
+    2024-04: '104731.88'
+    2024-05: '105895.88'
+    2024-06: '102437.88'
+    2024-07: '116322.88'
+    2024-08: '122822.88'
+    2024-09: '123533.88'
+    2024-10: '139124.38'
+    2024-11: '147143.38'
+    2024-12: '164432.58'
+    2025-01: '173645.08'
+    2025-02: '164908.08'
+    2025-03: '179375.58'
+    2025-04: '188203.68'
+    2025-05: '192883.58'
+    2025-06: '185357.08'
+    2025-07: '186063.68'
+    2025-08: '202183.48'
+    2025-09: '204954.20'
+    2025-10: '208118.70'
+    2025-11: '193690.50'
+    2025-12: '218260.50'
+    2026-01: '204485.20'
+fiscal_year_start_month: 2
+fixture: portco_a
+joins:
+- cardinality: N:1
+  left: crm.contacts.acct_id
+  orphan_rate: 0.0
+  right: crm.accounts.acct_id
+- cardinality: N:1
+  left: crm.opportunities.acct_id
+  orphan_rate: 0.0
+  right: crm.accounts.acct_id
+- cardinality: N:1
+  left: billing.customers.crm_account_ref
+  orphan_rate: 0.0787
+  right: crm.accounts.acct_id
+- cardinality: N:1
+  left: billing.subscriptions.cust_id
+  orphan_rate: 0.0
+  right: billing.customers.cust_id
+- cardinality: N:1
+  left: billing.invoices.cust_id
+  orphan_rate: 0.0
+  right: billing.customers.cust_id
+- cardinality: N:1
+  left: billing.invoice_lines.inv_no
+  orphan_rate: 0.0
+  right: billing.invoices.inv_no
+- cardinality: N:1
+  left: billing.payments.inv_no
+  orphan_rate: 0.0
+  right: billing.invoices.inv_no
+- cardinality: N:1
+  left: erp.journal_lines.acct_code
+  orphan_rate: 0.0
+  right: erp.gl_accounts.acct_code
+mappings:
+  billing.customers.billing_email: customer.billing_email
+  billing.customers.country: customer.country
+  billing.customers.crm_account_ref: customer.crm_account_id
+  billing.customers.currency: customer.currency
+  billing.customers.cust_id: customer.customer_id
+  billing.customers.cust_name: customer.customer_name
+  billing.invoice_lines.amount: invoice_line.amount
+  billing.invoice_lines.inv_no: invoice_line.invoice_id
+  billing.invoice_lines.line_id: invoice_line.invoice_line_id
+  billing.invoice_lines.qty: invoice_line.quantity
+  billing.invoice_lines.sku: invoice_line.sku
+  billing.invoices.currency: invoice.currency
+  billing.invoices.cust_id: invoice.customer_id
+  billing.invoices.due_date: invoice.due_date
+  billing.invoices.inv_date: invoice.invoice_date
+  billing.invoices.inv_no: invoice.invoice_id
+  billing.invoices.status: invoice.status
+  billing.invoices.total_amt: invoice.total_amount
+  billing.payments.amount: payment.amount
+  billing.payments.card_last4: payment.card_last4
+  billing.payments.card_number: payment.card_number
+  billing.payments.inv_no: payment.invoice_id
+  billing.payments.method: payment.method
+  billing.payments.paid_at: payment.paid_at
+  billing.payments.pmt_id: payment.payment_id
+  billing.subscriptions.currency: subscription.currency
+  billing.subscriptions.cust_id: subscription.customer_id
+  billing.subscriptions.end_dt: subscription.end_date
+  billing.subscriptions.mrr_amt: subscription.mrr
+  billing.subscriptions.plan_code: subscription.plan_code
+  billing.subscriptions.start_dt: subscription.start_date
+  billing.subscriptions.status: subscription.status
+  billing.subscriptions.sub_id: subscription.subscription_id
+  crm.accounts.acct_id: customer.crm_account_id
+  crm.accounts.acct_nm: customer.customer_name
+  crm.accounts.created_dt: customer.created_date
+  crm.accounts.industry: customer.industry
+  crm.accounts.is_deleted: customer.is_deleted
+  crm.accounts.owner_email: customer.owner_email
+  crm.contacts.acct_id: contact.crm_account_id
+  crm.contacts.contact_id: contact.contact_id
+  crm.contacts.email: contact.email
+  crm.contacts.first_name: contact.first_name
+  crm.contacts.last_name: contact.last_name
+  crm.contacts.phone: contact.phone
+  crm.opportunities.acct_id: opportunity.crm_account_id
+  crm.opportunities.close_date: opportunity.close_date
+  crm.opportunities.opp_id: opportunity.opportunity_id
+  crm.opportunities.rev: opportunity.amount
+  crm.opportunities.stage: opportunity.stage
+  erp.gl_accounts.acct_code: gl_account.account_code
+  erp.gl_accounts.acct_name: gl_account.account_name
+  erp.gl_accounts.acct_type: gl_account.account_type
+  erp.journal_lines.acct_code: gl_entry.account_code
+  erp.journal_lines.credit: gl_entry.credit_amount
+  erp.journal_lines.debit: gl_entry.debit_amount
+  erp.journal_lines.entity_code: gl_entry.entity_code
+  erp.journal_lines.je_id: gl_entry.journal_id
+  erp.journal_lines.line_no: gl_entry.line_number
+  erp.journal_lines.posting_date: gl_entry.posting_date
+  hr.employees.dept: employee.department
+  hr.employees.dob: employee.date_of_birth
+  hr.employees.emp_id: employee.employee_id
+  hr.employees.full_name: employee.full_name
+  hr.employees.hire_date: employee.hire_date
+  hr.employees.salary: employee.salary
+  hr.employees.ssn: employee.national_id
+  hr.employees.term_date: employee.termination_date
+months:
+- 2024-02
+- 2024-03
+- 2024-04
+- 2024-05
+- 2024-06
+- 2024-07
+- 2024-08
+- 2024-09
+- 2024-10
+- 2024-11
+- 2024-12
+- 2025-01
+- 2025-02
+- 2025-03
+- 2025-04
+- 2025-05
+- 2025-06
+- 2025-07
+- 2025-08
+- 2025-09
+- 2025-10
+- 2025-11
+- 2025-12
+- 2026-01
+pii_columns:
+  billing.customers.billing_email: email
+  billing.payments.card_number: payment_card
+  crm.accounts.owner_email: email
+  crm.contacts.email: email
+  crm.contacts.first_name: person_name
+  crm.contacts.last_name: person_name
+  crm.contacts.phone: phone
+  hr.employees.dob: dob
+  hr.employees.full_name: person_name
+  hr.employees.ssn: national_id
+primary_keys:
+  billing.customers:
+  - cust_id
+  billing.invoice_lines:
+  - line_id
+  billing.invoices:
+  - inv_no
+  billing.payments:
+  - pmt_id
+  billing.subscriptions:
+  - sub_id
+  crm.accounts:
+  - acct_id
+  crm.contacts:
+  - contact_id
+  crm.opportunities:
+  - opp_id
+  erp.gl_accounts:
+  - acct_code
+  erp.journal_lines:
+  - je_id
+  - line_no
+  hr.employees:
+  - emp_id
+row_filters:
+- column: is_deleted
+  kind: exclude_true
+  table: crm.accounts
+- column: acct_nm
+  kind: exclude_prefix
+  table: crm.accounts
+  value: TEST
+- column: cust_name
+  kind: exclude_prefix
+  table: billing.customers
+  value: TEST
+traps:
+- column: billing.invoice_lines.amount
+  reason: UNIT_MISMATCH
+- column: crm.opportunities.rev
+  reason: SEMANTIC_TRAP

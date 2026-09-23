@@ -1,0 +1,22 @@
+-- Generated mart [[ mart ]] for entity [[ entity ]] (system of record: [[ primary_table ]]).
+select
+[% for f in fields %]
+    p.[[ f ]],
+[% endfor %]
+[% for e in enrich %]
+    e[[ e.alias ]].[[ e.field ]],
+[% endfor %]
+[% for l in lookups %]
+    l[[ l.alias ]].[[ l.field ]],
+[% endfor %]
+    true as _in_scope
+from {{ ref('[[ scoped_model ]]') }} as p
+[% for j in enrich_joins %]
+left join {{ ref('[[ j.model ]]') }} as e[[ j.alias ]]
+    on e[[ j.alias ]].[[ j.right_field ]] = p.[[ j.left_field ]] and not e[[ j.alias ]]._excluded_effective
+[% endfor %]
+[% for j in lookup_joins %]
+left join {{ ref('[[ j.model ]]') }} as l[[ j.alias ]]
+    on l[[ j.alias ]].[[ j.right_field ]] = p.[[ j.left_field ]]
+[% endfor %]
+where not p._excluded_effective

@@ -1,0 +1,9 @@
+company_id: portco_a__stale
+content_digest: c8e0814bea4dfeceb883cee84d104cfe8bdd9ba2f4fd04d5f9d2e89c85e48a84
+expected_metrics: {}
+expected_variant:
+  findings:
+  - STALE_DATA
+fixture: portco_a__stale
+variant: stale
+variant_of: portco_a

@@ -1,0 +1,58 @@
+# Token expansions applied before name matching (POD-306). Keys are lower-case tokens.
+acct: account
+accts: accounts
+amt: amount
+bal: balance
+cat: category
+ccy: currency
+cd: code
+cntry: country
+cust: customer
+curr: currency
+dept: department
+desc: description
+dob: birth date
+dt: date
+emp: employee
+inv: invoice
+je: journal
+mgr: manager
+nm: name
+no: number
+num: number
+opp: opportunity
+org: organization
+pmt: payment
+prod: product
+qty: quantity
+ref: reference
+rev: revenue
+sub: subscription
+tel: telephone
+txn: transaction
+# SAP-style technical names (fixture B)
+kunnr: customer number
+kunag: sold to party
+vbeln: billing document number
+fkdat: billing date
+netwr: net value amount
+waerk: currency
+matnr: material number
+fkimg: quantity
+posnr: item number
+belnr: document number
+buzei: line item
+hkont: account
+budat: posting date
+dmbtr: amount
+bukrs: company code
+name1: name
+land1: country
+erdat: created date
+loevm: deletion flag
+pernr: employee number
+ename: employee name
+gbdat: birth date
+orgeh: organization unit
+eintritt: hire date
+austritt: termination date

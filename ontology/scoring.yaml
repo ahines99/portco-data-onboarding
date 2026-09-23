@@ -1,0 +1,27 @@
+# Deterministic scoring weights and thresholds. Tuned against fixture ground truth; changing
+# them must keep the golden tests (tests/golden) green.
+confidence:
+  high: 0.80
+  medium: 0.55
+
+entity:
+  weights: {name: 0.40, columns: 0.45, primary_key: 0.15}
+  min_score: 0.30          # below this a table gets no entity (LOW, excluded)
+
+join:
+  min_name_score: 0.30
+  min_containment: 0.50
+  review_containment_below: 0.98
+  weights: {name: 0.5, containment: 0.5}
+  relationship_bonus: 0.10
+
+mapping:
+  weights: {name: 0.65, type: 0.25, context: 0.10}
+  min_score: 0.40          # below this a column is left unmapped (not an error)
+  conflict_margin: 0.05
+
+profiling:
+  stale_after_days: 35
+  minor_units_ratio: 20.0
+  duplicate_name_ratio: 0.01
+  low_cardinality_max: 12

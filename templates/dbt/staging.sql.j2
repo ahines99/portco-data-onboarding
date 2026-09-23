@@ -1,0 +1,16 @@
+-- Generated staging model for source [[ schema ]].[[ table ]] (entity: [[ entity ]]).
+-- Renames to canonical fields, casts types, applies reviewed transforms, hashes or drops PII,
+-- and flags (never deletes) rows excluded by reviewed row filters.
+[% for note in notes %]
+-- [[ note ]]
+[% endfor %]
+with source as (
+    select * from {{ source('[[ schema ]]', '[[ table ]]') }}
+)
+
+select
+[% for col in columns %]
+    [[ col.expr ]] as [[ col.name ]],
+[% endfor %]
+    [[ excluded_expr ]] as _excluded
+from source

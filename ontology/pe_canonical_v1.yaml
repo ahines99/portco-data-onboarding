@@ -1,0 +1,427 @@
+# Canonical private-equity portfolio-company ontology, v1.
+#
+# This file is data, not code and not prompt text. The mapper, the dbt generator, the
+# semantic-layer generator, the metric reference calculators, and the MCP resource
+# `ontology://pe/v1` all read it. Change it through review like any other contract.
+version: "1"
+
+entities:
+  legal_entity:
+    description: A reporting legal entity (company code) inside the portfolio company.
+    kind: dimension
+    mart: dim_legal_entity
+    id_fields: [entity_code]
+    table_synonyms: [legal_entities, legal_entity, entities, company_codes, t001]
+    fields:
+      entity_code: {type: string, required: true, description: Legal entity / company code.}
+      entity_name: {type: string, description: Legal entity name.}
+
+  customer:
+    description: A paying customer (system of record is billing; CRM accounts enrich it).
+    kind: dimension
+    mart: dim_customer
+    id_fields: [customer_id]
+    table_synonyms: [customers, customer, accounts, account, clients, client, debtors, kna1]
+    fields:
+      customer_id: {type: string, required: true, description: Billing customer identifier.}
+      customer_name: {type: string, required: true, description: Customer legal or trading name.}
+      crm_account_id: {type: string, description: Identifier of the matching CRM account.}
+      industry: {type: string, description: Industry classification.}
+      country: {type: string, description: Billing country code.}
+      currency: {type: string, description: Billing currency (ISO 4217).}
+      billing_email: {type: string, pii: email, description: Billing contact email.}
+      owner_email: {type: string, pii: email, description: Internal account owner email.}
+      created_date: {type: date, description: Date the customer/account was created.}
+      is_deleted: {type: boolean, description: Soft-delete flag.}
+
+  contact:
+    description: A person at a customer. Entirely PII except identifiers.
+    kind: dimension
+    mart: dim_contact
+    id_fields: [contact_id]
+    table_synonyms: [contacts, contact, people, persons, knvk]
+    fields:
+      contact_id: {type: string, required: true, description: Contact identifier.}
+      crm_account_id: {type: string, description: CRM account the contact belongs to.}
+      first_name: {type: string, pii: person_name, description: Given name.}
+      last_name: {type: string, pii: person_name, description: Family name.}
+      email: {type: string, pii: email, description: Email address.}
+      phone: {type: string, pii: phone, description: Phone number.}
+
+  opportunity:
+    description: A sales opportunity. Its amount is a BOOKING, never revenue.
+    kind: fact
+    mart: fct_opportunity
+    id_fields: [opportunity_id]
+    table_synonyms: [opportunities, opportunity, deals, deal, pipeline]
+    fields:
+      opportunity_id: {type: string, required: true, description: Opportunity identifier.}
+      crm_account_id: {type: string, description: CRM account of the opportunity.}
+      amount: {type: decimal, unit: currency_major, description: Booking value of the deal.}
+      stage: {type: string, description: Pipeline stage.}
+      close_date: {type: date, description: Expected or actual close date.}
+
+  product:
+    description: A sellable product or SKU.
+    kind: dimension
+    mart: dim_product
+    id_fields: [sku]
+    table_synonyms: [products, product, items, skus, materials, mara]
+    fields:
+      sku: {type: string, required: true, description: Product / material code.}
+      product_name: {type: string, description: Product description.}
+      list_price: {type: decimal, unit: currency_major, description: List price.}
+
+  subscription:
+    description: A recurring-revenue subscription or contract line, normalized to monthly value.
+    kind: fact
+    mart: fct_subscription
+    id_fields: [subscription_id]
+    table_synonyms: [subscriptions, subscription, contracts, contract, recurring_charges]
+    fields:
+      subscription_id: {type: string, required: true, description: Subscription identifier.}
+      customer_id: {type: string, required: true, description: Subscribing customer.}
+      plan_code: {type: string, description: Plan or tier code.}
+      mrr: {type: decimal, required: true, unit: currency_major, description: Monthly recurring revenue of the subscription.}
+      currency: {type: string, required: true, description: Subscription currency.}
+      start_date: {type: date, required: true, description: First day the subscription is active.}
+      end_date: {type: date, description: Day the subscription ends (exclusive); null if active.}
+      status: {type: string, description: Source-system status.}
+
+  invoice:
+    description: A customer invoice header (billing document).
+    kind: fact
+    mart: fct_invoice
+    id_fields: [invoice_id]
+    table_synonyms: [invoices, invoice, bills, billing_documents, vbrk]
+    fields:
+      invoice_id: {type: string, required: true, description: Invoice number.}
+      customer_id: {type: string, required: true, description: Billed customer.}
+      invoice_date: {type: date, required: true, description: Invoice (billing) date.}
+      due_date: {type: date, description: Payment due date.}
+      total_amount: {type: decimal, required: true, unit: currency_major, description: Invoice total in major currency units.}
+      currency: {type: string, required: true, description: Invoice currency.}
+      status: {type: string, description: Invoice status.}
+
+  invoice_line:
+    description: A line on a customer invoice.
+    kind: fact
+    mart: fct_invoice_line
+    id_fields: [invoice_line_id]
+    table_synonyms: [invoice_lines, invoice_line, invoice_items, lines, vbrp]
+    fields:
+      invoice_line_id: {type: string, required: true, description: Line identifier.}
+      invoice_id: {type: string, required: true, description: Parent invoice.}
+      sku: {type: string, description: Product code.}
+      quantity: {type: integer, description: Quantity billed.}
+      unit_price: {type: decimal, unit: currency_major, description: Unit price.}
+      amount: {type: decimal, required: true, unit: currency_major, description: Line amount in major currency units.}
+
+  payment:
+    description: A cash receipt applied to an invoice.
+    kind: fact
+    mart: fct_payment
+    id_fields: [payment_id]
+    table_synonyms: [payments, payment, receipts, cash_receipts]
+    fields:
+      payment_id: {type: string, required: true, description: Payment identifier.}
+      invoice_id: {type: string, required: true, description: Invoice the payment is applied to.}
+      paid_at: {type: timestamp, description: Payment timestamp.}
+      amount: {type: decimal, required: true, unit: currency_major, description: Amount received.}
+      method: {type: string, description: Payment method.}
+      card_number: {type: string, pii: payment_card, description: Full card number (PAN). Never publish.}
+      card_last4: {type: string, description: Last four digits of the card.}
+
+  gl_account:
+    description: A general-ledger account in the chart of accounts.
+    kind: dimension
+    mart: dim_gl_account
+    id_fields: [account_code]
+    table_synonyms: [gl_accounts, accounts_chart, chart_of_accounts, coa, ska1]
+    fields:
+      account_code: {type: string, required: true, description: GL account code.}
+      account_name: {type: string, description: GL account name.}
+      account_type: {type: string, required: true, description: "One of revenue, cogs, opex, da, asset, liability, equity."}
+
+  gl_entry:
+    description: A general-ledger journal line.
+    kind: fact
+    mart: fct_gl_entry
+    id_fields: [journal_id, line_number]
+    table_synonyms: [journal_lines, journal_entries, gl_entries, gl_lines, ledger_entries, bseg]
+    lookups:
+      - {field: account_type, from_entity: gl_account, join_on: account_code}
+    fields:
+      journal_id: {type: string, required: true, description: Journal entry identifier.}
+      line_number: {type: integer, required: true, description: Line within the journal entry.}
+      account_code: {type: string, required: true, description: GL account posted to.}
+      posting_date: {type: date, required: true, description: Posting date.}
+      debit_amount: {type: decimal, required: true, unit: currency_major, description: Debit amount.}
+      credit_amount: {type: decimal, required: true, unit: currency_major, description: Credit amount.}
+      entity_code: {type: string, description: Legal entity posted in.}
+
+  vendor:
+    description: A supplier.
+    kind: dimension
+    mart: dim_vendor
+    id_fields: [vendor_id]
+    table_synonyms: [vendors, vendor, suppliers, supplier, lfa1]
+    fields:
+      vendor_id: {type: string, required: true, description: Vendor identifier.}
+      vendor_name: {type: string, description: Vendor name.}
+
+  employee:
+    description: An employee. Identity fields are PII and are hashed or excluded in staging.
+    kind: dimension
+    mart: dim_employee
+    id_fields: [employee_id]
+    table_synonyms: [employees, employee, staff, workers, personnel, pa0001]
+    fields:
+      employee_id: {type: string, required: true, description: Employee identifier.}
+      full_name: {type: string, pii: person_name, description: Full name.}
+      national_id: {type: string, pii: national_id, description: National identifier (e.g. SSN).}
+      date_of_birth: {type: date, pii: dob, description: Date of birth.}
+      department: {type: string, description: Department or org unit.}
+      hire_date: {type: date, required: true, description: Hire date.}
+      termination_date: {type: date, description: Termination date; null if active.}
+      salary: {type: decimal, unit: currency_major, description: Annual base salary.}
+
+  department:
+    description: An organizational unit.
+    kind: dimension
+    mart: dim_department
+    id_fields: [department_id]
+    table_synonyms: [departments, department, org_units]
+    fields:
+      department_id: {type: string, required: true, description: Department identifier.}
+      department_name: {type: string, description: Department name.}
+
+  fiscal_period:
+    description: A fiscal period of the portfolio company's calendar.
+    kind: dimension
+    mart: dim_fiscal_period
+    id_fields: [period]
+    table_synonyms: [fiscal_periods, periods, calendar, fiscal_calendar]
+    fields:
+      period: {type: string, required: true, description: Fiscal period label.}
+      period_start: {type: date, description: First day of the period.}
+      period_end: {type: date, description: Last day of the period.}
+
+# Source-column synonyms per canonical FIELD NAME. A synonym may belong to only one field
+# name (validated), so the mapper is never ambiguous by construction; entity context then
+# decides which entity's field it is.
+synonyms:
+  entity_code: [entity_code, company_code, bukrs, legal_entity, entity_cd]
+  entity_name: [entity_name, company_name, butxt]
+  customer_id: [cust_id, customer_id, customer_no, customer_number, client_id, client_no, kunnr, cust_no, debtor_id]
+  customer_name: [cust_name, customer_name, acct_nm, client_name, name1, cust_nm]
+  crm_account_id: [acct_id, crm_account_id, crm_account_ref, crm_id, crm_account, sfdc_account_id]
+  industry: [industry, sector, brsch, vertical]
+  country: [country, country_code, land1, cntry]
+  currency: [currency, currency_code, curr, waers, waerk, ccy]
+  billing_email: [billing_email, bill_email, invoice_email]
+  owner_email: [owner_email, account_owner_email, rep_email]
+  created_date: [created_dt, created_date, created_at, create_date, erdat, created_on]
+  is_deleted: [is_deleted, deleted, del_flag, loevm, is_removed]
+  contact_id: [contact_id, cont_id, person_id]
+  first_name: [first_name, fname, given_name, first_nm]
+  last_name: [last_name, lname, surname, family_name, last_nm]
+  email: [email, email_address, e_mail, smtp_addr]
+  phone: [phone, phone_number, telephone, tel, mobile, telf1]
+  opportunity_id: [opp_id, opportunity_id, deal_id]
+  amount: [amount, amt, line_amount, line_amt, amount_usd, payment_amount, pmt_amt, deal_amount, opp_amount]
+  stage: [stage, stage_name, deal_stage]
+  close_date: [close_date, close_dt, closed_on]
+  sku: [sku, product_code, item_code, matnr]
+  product_name: [product_name, item_name, maktx]
+  list_price: [list_price, msrp]
+  subscription_id: [sub_id, subscription_id, contract_id]
+  plan_code: [plan_code, plan, plan_id, tier]
+  mrr: [mrr, mrr_amt, mrr_amount, monthly_recurring_revenue, monthly_amount]
+  start_date: [start_dt, start_date, begin_date, valid_from, contract_start]
+  end_date: [end_dt, end_date, valid_to, contract_end, cancel_date]
+  status: [status, state, sub_status, inv_status]
+  invoice_id: [inv_no, invoice_id, invoice_no, invoice_number, inv_id, vbeln, billing_doc]
+  invoice_date: [inv_date, invoice_date, invoice_dt, billing_date, fkdat, inv_dt]
+  due_date: [due_date, due_dt, payment_due]
+  total_amount: [total_amt, total_amount, invoice_total, total, gross_amt, net_value]
+  invoice_line_id: [line_id, invoice_line_id, posnr, item_no]
+  quantity: [qty, quantity, fkimg, units]
+  unit_price: [unit_price, price, unit_cost]
+  payment_id: [pmt_id, payment_id, payment_no]
+  paid_at: [paid_at, payment_date, paid_on, pmt_date]
+  method: [method, payment_method, pmt_method]
+  card_number: [card_number, card_no, pan, cc_number]
+  card_last4: [card_last4, last4, card_last_four]
+  account_code: [acct_code, account_code, gl_account, saknr, hkont, account_no]
+  account_name: [acct_name, account_name, gl_account_name, txt50]
+  account_type: [acct_type, account_type, gl_type, ktoks]
+  journal_id: [je_id, journal_id, journal_entry_id, belnr, doc_no]
+  line_number: [line_no, line_number, buzei, je_line]
+  posting_date: [posting_date, post_date, budat, gl_date, posting_dt]
+  debit_amount: [debit, debit_amt, debit_amount, dr_amount, dmbtr_s]
+  credit_amount: [credit, credit_amt, credit_amount, cr_amount, dmbtr_h]
+  vendor_id: [vendor_id, lifnr, supplier_id]
+  vendor_name: [vendor_name, supplier_name]
+  employee_id: [emp_id, employee_id, pernr, staff_id, employee_no]
+  full_name: [full_name, employee_name, emp_name, ename]
+  national_id: [ssn, national_id, social_security_number, tax_id, national_insurance_no]
+  date_of_birth: [dob, birth_date, date_of_birth, gbdat]
+  department: [dept, department, dept_name, orgeh, org_unit]
+  hire_date: [hire_date, hire_dt, eintritt]
+  termination_date: [term_date, termination_date, term_dt, exit_date, austritt]
+  salary: [salary, base_salary, annual_salary]
+  department_id: [department_id, dept_id]
+  department_name: [department_name, dept_desc]
+  period: [period, fiscal_period, gl_period, monat]
+  period_start: [period_start, period_start_date]
+  period_end: [period_end, period_end_date]
+
+relationships:
+  - {from: contact.crm_account_id, to: customer.crm_account_id, cardinality: "N:1"}
+  - {from: opportunity.crm_account_id, to: customer.crm_account_id, cardinality: "N:1"}
+  - {from: subscription.customer_id, to: customer.customer_id, cardinality: "N:1"}
+  - {from: invoice.customer_id, to: customer.customer_id, cardinality: "N:1"}
+  - {from: invoice_line.invoice_id, to: invoice.invoice_id, cardinality: "N:1"}
+  - {from: invoice_line.sku, to: product.sku, cardinality: "N:1"}
+  - {from: payment.invoice_id, to: invoice.invoice_id, cardinality: "N:1"}
+  - {from: gl_entry.account_code, to: gl_account.account_code, cardinality: "N:1"}
+  - {from: gl_entry.entity_code, to: legal_entity.entity_code, cardinality: "N:1"}
+
+# Column names that look like revenue but usually are not. Mapping them always needs review.
+semantic_traps: [rev, revenue, sales, bookings, income, turnover, booked]
+
+metrics:
+  billings:
+    description: Invoiced amount per month and currency. Billings are not revenue.
+    grain: month
+    formula: sum(invoice.total_amount) by month(invoice.invoice_date), invoice.currency
+    requires: [invoice.total_amount, invoice.invoice_date, invoice.currency]
+    semantic: {kind: simple, model: fct_invoice, measure: billings, agg: sum, expr: total_amount, time_dimension: invoice_date}
+    pitfall: Billings include prepaid annual invoices; do not present them as recognized revenue.
+
+  mrr:
+    description: Monthly recurring revenue from subscriptions active at month end.
+    grain: month
+    formula: sum(subscription.mrr) where start_date <= month_end < coalesce(end_date, +inf)
+    requires: [subscription.mrr, subscription.start_date, subscription.end_date, subscription.currency, subscription.customer_id]
+    semantic: {kind: simple, model: fct_mrr_monthly, measure: mrr, agg: sum, expr: mrr, time_dimension: month_end}
+    pitfall: Exclude one-time fees; normalize annual contracts to a monthly amount before summing.
+
+  arr:
+    description: Annual recurring revenue = 12 x month-end MRR.
+    grain: month
+    formula: 12 * mrr
+    requires: [subscription.mrr, subscription.start_date, subscription.end_date, subscription.currency, subscription.customer_id]
+    semantic: {kind: simple, model: fct_mrr_monthly, measure: arr, agg: sum, expr: mrr * 12, time_dimension: month_end}
+    pitfall: ARR is not 12 x a single month's billings; prepaid annual contracts break that shortcut.
+
+  active_customers:
+    description: Distinct customers with positive MRR at month end.
+    grain: month
+    formula: count_distinct(customer_id) where mrr > 0 at month end
+    requires: [subscription.mrr, subscription.start_date, subscription.end_date, subscription.customer_id]
+    semantic: {kind: simple, model: fct_mrr_monthly, measure: active_customers, agg: count_distinct, expr: "case when mrr > 0 then customer_id end", time_dimension: month_end}
+
+  new_arr:
+    description: ARR from customers with zero ARR in the prior month.
+    grain: month
+    formula: sum(12 * mrr_t) for customers with mrr_(t-1) = 0
+    requires: [subscription.mrr, subscription.start_date, subscription.end_date, subscription.customer_id]
+    semantic: {kind: reference_only}
+
+  expansion_arr:
+    description: ARR increase from existing customers.
+    grain: month
+    formula: sum(12 * (mrr_t - mrr_(t-1))) where both > 0 and mrr_t > mrr_(t-1)
+    requires: [subscription.mrr, subscription.start_date, subscription.end_date, subscription.customer_id]
+    semantic: {kind: reference_only}
+
+  contraction_arr:
+    description: ARR decrease from customers that remain active.
+    grain: month
+    formula: sum(12 * (mrr_(t-1) - mrr_t)) where both > 0 and mrr_t < mrr_(t-1)
+    requires: [subscription.mrr, subscription.start_date, subscription.end_date, subscription.customer_id]
+    semantic: {kind: reference_only}
+
+  churned_arr:
+    description: ARR lost from customers whose MRR fell to zero.
+    grain: month
+    formula: sum(12 * mrr_(t-1)) where mrr_t = 0
+    requires: [subscription.mrr, subscription.start_date, subscription.end_date, subscription.customer_id]
+    semantic: {kind: reference_only}
+
+  nrr:
+    description: Net revenue retention over trailing 12 months for the starting cohort.
+    grain: month
+    formula: sum(arr_t of cohort) / sum(arr_(t-12) of cohort); cohort = customers with arr_(t-12) > 0
+    requires: [subscription.mrr, subscription.start_date, subscription.end_date, subscription.customer_id]
+    semantic: {kind: reference_only}
+    pitfall: Undefined (not zero) when the starting cohort has no ARR.
+
+  grr:
+    description: Gross revenue retention over trailing 12 months (expansion capped).
+    grain: month
+    formula: sum(min(arr_t, arr_(t-12)) of cohort) / sum(arr_(t-12) of cohort)
+    requires: [subscription.mrr, subscription.start_date, subscription.end_date, subscription.customer_id]
+    semantic: {kind: reference_only}
+
+  revenue_recognized:
+    description: Recognized revenue from the general ledger (credits minus debits on revenue accounts).
+    grain: month
+    formula: sum(credit_amount - debit_amount) where gl_account.account_type = 'revenue'
+    requires: [gl_entry.debit_amount, gl_entry.credit_amount, gl_entry.account_code, gl_entry.posting_date, gl_account.account_type]
+    semantic: {kind: simple, model: fct_gl_entry, measure: revenue_recognized, agg: sum, expr: "case when account_type = 'revenue' then credit_amount - debit_amount else 0 end", time_dimension: posting_date}
+    pitfall: Only GL revenue is recognized revenue; billings and bookings are not substitutes.
+
+  cogs:
+    description: Cost of goods sold from the general ledger.
+    grain: month
+    formula: sum(debit_amount - credit_amount) where account_type = 'cogs'
+    requires: [gl_entry.debit_amount, gl_entry.credit_amount, gl_entry.account_code, gl_entry.posting_date, gl_account.account_type]
+    semantic: {kind: simple, model: fct_gl_entry, measure: cogs, agg: sum, expr: "case when account_type = 'cogs' then debit_amount - credit_amount else 0 end", time_dimension: posting_date}
+
+  opex:
+    description: Operating expenses excluding depreciation and amortization.
+    grain: month
+    formula: sum(debit_amount - credit_amount) where account_type = 'opex'
+    requires: [gl_entry.debit_amount, gl_entry.credit_amount, gl_entry.account_code, gl_entry.posting_date, gl_account.account_type]
+    semantic: {kind: simple, model: fct_gl_entry, measure: opex, agg: sum, expr: "case when account_type = 'opex' then debit_amount - credit_amount else 0 end", time_dimension: posting_date}
+
+  gross_margin_pct:
+    description: (revenue_recognized - cogs) / revenue_recognized.
+    grain: month
+    formula: (revenue_recognized - cogs) / revenue_recognized
+    requires: [gl_entry.debit_amount, gl_entry.credit_amount, gl_entry.account_code, gl_entry.posting_date, gl_account.account_type]
+    semantic: {kind: derived, expr: "(revenue_recognized - cogs) / revenue_recognized", depends_on: [revenue_recognized, cogs]}
+    pitfall: Undefined when revenue is zero.
+
+  ebitda:
+    description: revenue_recognized - cogs - opex (D&A excluded by construction).
+    grain: month
+    formula: revenue_recognized - cogs - opex
+    requires: [gl_entry.debit_amount, gl_entry.credit_amount, gl_entry.account_code, gl_entry.posting_date, gl_account.account_type]
+    semantic: {kind: derived, expr: "revenue_recognized - cogs - opex", depends_on: [revenue_recognized, cogs, opex]}
+    pitfall: Adjusted EBITDA add-backs are a human judgment and are never generated automatically.
+
+  headcount:
+    description: Employees employed at month end.
+    grain: month
+    formula: count(employee) where hire_date <= month_end and (termination_date is null or termination_date > month_end)
+    requires: [employee.employee_id, employee.hire_date, employee.termination_date]
+    semantic: {kind: reference_only}
+
+  dso:
+    description: Days sales outstanding = open receivables at month end / billings in month * days in month.
+    grain: month
+    formula: ar_open(month_end) / billings(month) * days_in_month
+    requires: [invoice.total_amount, invoice.invoice_date, invoice.invoice_id, payment.amount, payment.paid_at, payment.invoice_id]
+    semantic: {kind: reference_only}
+    pitfall: Undefined when billings in the month are zero.
+
+  arpa:
+    description: Average ARR per active customer.
+    grain: month
+    formula: arr / active_customers
+    requires: [subscription.mrr, subscription.start_date, subscription.end_date, subscription.customer_id]
+    semantic: {kind: reference_only}
