@@ -11,7 +11,22 @@ sources:
     description: Profiled source table; entity invoice_line.
   - name: invoices
     description: Profiled source table; entity invoice.
+    loaded_at_field: inv_date
+    freshness:
+      warn_after:
+        count: 35
+        period: day
   - name: payments
     description: Profiled source table; entity payment.
+    loaded_at_field: paid_at
+    freshness:
+      warn_after:
+        count: 35
+        period: day
   - name: subscriptions
     description: Profiled source table; entity subscription.
+    loaded_at_field: start_dt
+    freshness:
+      warn_after:
+        count: 35
+        period: day

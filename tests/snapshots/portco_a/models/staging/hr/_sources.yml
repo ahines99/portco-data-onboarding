@@ -7,3 +7,8 @@ sources:
   tables:
   - name: employees
     description: Profiled source table; entity employee.
+    loaded_at_field: term_date
+    freshness:
+      warn_after:
+        count: 35
+        period: day

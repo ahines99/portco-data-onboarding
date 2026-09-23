@@ -15,6 +15,7 @@ from src.domain.models import StepName
 from src.domain.project_models import EntityInference, JoinGraph, MappingSet, SchemaProfile
 from src.workflows.facade import OnboardingService
 from tests.conftest import AGENT, CompletedRun, make_service
+from tests.golden.scoring import mapping_top1, precision_recall, primary_key_scores, unexpected_proposals
 
 pytestmark = pytest.mark.golden
 THRESHOLDS = yaml.safe_load((Path(__file__).parent / "thresholds.yaml").read_text(encoding="utf-8"))
@@ -48,11 +49,9 @@ def test_primary_keys(gate_run: tuple[str, GateRun]) -> None:
     truth, t = _truth(name), THRESHOLDS[name]
     ents: EntityInference = g.get(StepName.ENTITY_INFERENCE)
     found = {c.table: c.primary_key_columns for c in ents.candidates if c.primary_key_columns}
-    hits = sum(1 for table, pk in truth["primary_keys"].items() if found.get(table) == pk)
-    recall = hits / len(truth["primary_keys"])
-    precision = hits / max(1, sum(1 for table in found if table in truth["primary_keys"]))
-    assert recall >= t["pk_recall"], found
-    assert precision >= t.get("pk_precision", 0.0)
+    scores = primary_key_scores(found, truth["primary_keys"])
+    assert scores.recall >= t["pk_recall"], found
+    assert scores.precision >= t.get("pk_precision", 0.0)
     assert {c.table: c.canonical_entity for c in ents.candidates if c.canonical_entity} == truth["entities"]
 
 
@@ -62,10 +61,10 @@ def test_joins(gate_run: tuple[str, GateRun]) -> None:
     joins: JoinGraph = g.get(StepName.JOIN_INFERENCE)
     got = {f"{j.left_table}.{j.left_columns[0]}->{j.right_table}.{j.right_columns[0]}": j for j in joins.joins}
     expected = {f"{e['left']}->{e['right']}": e for e in truth["joins"]}
-    tp = set(got) & set(expected)
-    assert len(tp) / len(expected) >= t["join_recall"], set(expected) - tp
-    assert len(tp) / max(1, len(got)) >= t["join_precision"], set(got) - tp
-    for key in tp:
+    scores = precision_recall(set(got), set(expected))
+    assert scores.recall >= t["join_recall"], set(expected) - set(got)
+    assert scores.precision >= t["join_precision"], set(got) - set(expected)
+    for key in set(got) & set(expected):
         assert got[key].cardinality == expected[key]["cardinality"]
         assert (
             abs(got[key].orphan_rate - expected[key]["orphan_rate"]) <= THRESHOLDS["portco_a"]["orphan_rate_tolerance"]
@@ -79,16 +78,10 @@ def test_mapping_accuracy_and_traps(gate_run: tuple[str, GateRun]) -> None:
     truth, t = _truth(name), THRESHOLDS[name]
     ms: MappingSet = g.get(StepName.CANONICAL_MAPPING)
     got = {p.mapping_key: p for p in ms.proposals}
-    correct = sum(
-        1
-        for col, exp in truth["mappings"].items()
-        if (exp is None and col not in got)
-        or (col in got and f"{got[col].canonical_entity}.{got[col].canonical_field}" == exp)
-    )
-    assert correct / len(truth["mappings"]) >= t["mapping_top1"]
+    targets = {k: f"{p.canonical_entity}.{p.canonical_field}" for k, p in got.items()}
+    assert mapping_top1(targets, truth["mappings"]) >= t["mapping_top1"]
     # A proposal for a column that should stay unmapped is wrong; it must at least be routed to review.
-    extras = [c for c, exp in truth["mappings"].items() if exp is None and c in got]
-    assert all(got[c].requires_review for c in extras)
+    assert all(got[c].requires_review for c in unexpected_proposals(got, truth["mappings"]))
     for trap in truth["traps"]:
         p = got[trap["column"]]
         assert p.requires_review and trap["reason"] in p.reason_codes

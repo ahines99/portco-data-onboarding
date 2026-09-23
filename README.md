@@ -26,25 +26,30 @@ uv sync --all-extras && uv run poe demo
    reviewer 'alice' recorded approval a132e212 (22 decisions, 1 override)
    generated dbt + semantic layer; sandbox build exit 0; 17/17 reconciliation checks exact to the cent
    certified (6232731a) and published v0001: active_customers, arr, billings, cogs, ebitda, gross_margin_pct, mrr, opex, revenue_recognized
-   audit log: 43 events, hash chain intact
+   audit log: 46 events, hash chain intact
 
 == 2. Controlled failure path: malformed invoice lines + an injected source timeout
    injected timeout during profiling -> retried (attempts: 2), run continued to 'mapping_review'
    sandbox tests failed: non_negative_stg_billing__invoice_lines_amount, non_negative_stg_billing__invoice_lines_quantity
    run stopped at 'test_failures' - nothing is published unless a reviewer waives or the mapping changes
+
+== 3. Prompt injection: instructions planted in a source table comment
+   1 comment(s) flagged as untrusted; they are quoted as data, never followed
+   mappings identical to the clean run: yes (68 columns)
+   planted text in any artifact or finding: NONE
 ```
 
 ## Why this is not just a chatbot
 
 | A chatbot would… | This system… |
 |---|---|
-| Keep state in the conversation | Persists every run, step attempt, output, evidence record, finding, approval and audit event in a database. Runs pause, resume, retry and rerun idempotently, and the same inputs give byte-identical outputs. |
-| Read your data to "understand" it | Never sees a row. The source adapter only returns aggregates (counts, ratios, pattern-match counts computed in SQL). A PII guard blocks any MCP response containing PII-shaped data, and planted canary values are proven never to leak. |
+| Keep state in the conversation | Persists every run, step attempt, output, evidence record, finding, approval and audit event in a database. Runs pause, resume, retry and rerun idempotently under an execution lease, and the same inputs give identical content hashes. |
+| Read your data to "understand" it | Never sees a row. The source adapter only returns aggregates (counts, ratios, pattern-match counts computed in SQL); the one exception is low-cardinality category labels, which are withheld if they look like PII, names or instructions ([ADR-0003](docs/adr/0003-aggregate-only-adapter.md)). A PII guard blocks any MCP response containing PII-shaped data, and planted canary values are proven never to leak. |
 | Do arithmetic in the prompt | Computes every number in code. Generated dbt marts are reconciled against independent Python reference calculators at zero tolerance, and against the fixture generator's own bookkeeping in golden tests. |
 | Guess when unsure | Routes low-confidence, metric-bearing, PII, conflicting, unit-mismatched and "looks like revenue but isn't" mappings to review. Metrics without evidence are `NEEDS_EVIDENCE`, never estimated. |
 | Let you type "approved" | Accepts approvals only from reviewer principals, never from the agent, and never from whoever started the run. Each approval is bound to a hash of exactly what was reviewed, and any later change revokes it. Publishing without a valid certification fails closed. |
 | Follow instructions it reads | Treats source text as untrusted data. Instruction-like comments and values are flagged and withheld, and cannot change workflow state (eval case G15). |
-| Be judged by vibes | Is gated in CI by 34 golden evaluation cases scored on the handoff's seven dimensions, plus about 250 tests, including a security suite and failure injection. |
+| Be judged by vibes | Is gated in CI by 37 golden evaluation cases scored on the handoff's seven dimensions, plus 366 tests, including a security suite and failure injection. |
 
 ## Quickstart
 
@@ -54,9 +59,10 @@ the demo, the tests or the evals.
 ```bash
 uv sync --all-extras          # environment from uv.lock
 uv run poe fixtures           # generate synthetic fixture databases into var/fixtures
-uv run poe demo               # happy path + controlled failure path (~20 s)
-uv run poe test               # full test suite (~2.5 min; dbt runs in sandboxes)
-uv run poe eval               # 34 golden cases, gating report in evals/reports/latest.md
+uv run poe demo               # happy path, controlled failure path, prompt injection (~25 s)
+uv run poe test               # full test suite (~3 min; dbt runs in sandboxes)
+uv run poe eval               # 37 golden cases; report in evals/reports/latest.md (--snapshot for a dated copy)
+uv run poe cov-metrics        # metric reference calculators at 100% branch coverage
 uv run poe lint && uv run poe typecheck
 ```
 
@@ -102,7 +108,7 @@ connection_validation → schema_profiling → entity_inference → join_inferen
 - **Ontology as data:** `ontology/pe_canonical_v1.yaml` defines 15 entities, synonyms, relationships
   and 18 metrics with PE pitfalls. Scoring weights live in `ontology/scoring.yaml`.
 - **Fixtures with answer keys:** fixture A (SaaS with planted traps), fixture B (SAP-style
-  naming), and 9 adversarial or fault variants, each with committed ground truth.
+  naming), and 10 adversarial or fault variants, each with committed ground truth.
 - **Generated dbt:** staging (rename, cast, reviewed transforms, PII hashed or dropped, filtered rows
   flagged), intermediate (cross-entity scoping), marts, MetricFlow semantic models and metrics.
 
@@ -115,7 +121,7 @@ acceptance audit: [docs/acceptance.md](docs/acceptance.md)
 
 | Measure | Result |
 |---|---|
-| Golden eval cases | 34/34 passing; every dimension at 100% |
+| Golden eval cases | 37/37 passing; every dimension at 100% |
 | Mapping top-1 accuracy | 1.00 on fixture A (68 columns); fixture B (SAP naming) 34/35 exact, with the extra one flagged for review |
 | Joins | 8/8 on fixture A and 4/4 on fixture B, no false positives; orphan rates exact |
 | Metric reconciliation | Billings, ARR, active customers and GL revenue exact to the cent against two independent references |
@@ -130,7 +136,10 @@ acceptance audit: [docs/acceptance.md](docs/acceptance.md)
   deterministic candidates or abstain, and it stays opt-in until a recorded live comparison beats the
   deterministic baseline ([ADR-0010](docs/adr/0010-llm-mapping-judge.md)).
 - HTTP auth uses static dev bearer tokens; production needs an OAuth/JWT verifier.
-- Postgres-specific tests run in CI (service container), not in the default local suite.
+- Postgres-specific tests run in CI (service container), not in the default local suite. CI is
+  configured but has not yet run on a hosted runner.
+- A recorded Claude Code session and the live with-vs-without-Skill comparison are still to do
+  (they need a model session); the static Skill checks run in the test suite.
 
 ## Project layout
 

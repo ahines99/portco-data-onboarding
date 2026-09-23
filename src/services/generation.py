@@ -16,9 +16,9 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from src.domain.errors import ApprovalRequired
 from src.domain.hashing import content_hash, sha256_text
-from src.domain.identifiers import assert_safe, assert_safe_company
+from src.domain.identifiers import assert_safe, assert_safe_company, is_safe_identifier
 from src.domain.models import Confidence, Finding, FindingType, ReviewGate, StepName
-from src.domain.ontology import Ontology
+from src.domain.ontology import Ontology, load_scoring
 from src.domain.project_models import (
     AcceptedMapping,
     ArtifactBundle,
@@ -27,8 +27,10 @@ from src.domain.project_models import (
     ResolvedMapping,
     SchemaProfile,
     SemanticType,
+    TableProfile,
 )
 from src.services.approvals import is_valid
+from src.services.pii import is_sensitive_name
 from src.settings import PROJECT_ROOT
 from src.workflows.contracts import StepContext, StepResult, make_evidence
 
@@ -210,16 +212,23 @@ class Generator:
                         "database": "src",
                         "schema": schema,
                         "description": f"Read-only source schema {schema} of {self.company_id} (sandbox attach).",
-                        "tables": [
-                            {"name": tm.name, "description": f"Profiled source table; entity {tm.entity}."}
-                            for tm in tables
-                        ],
+                        "tables": [self._source_table(tm) for tm in tables],
                     }
                 ],
             }
             self.files[f"models/staging/{_slug(schema)}/_sources.yml"] = _yaml(src)
             models = [self._staging_yaml(tm) for tm in tables]
             self.files[f"models/staging/{_slug(schema)}/_models.yml"] = _yaml({"version": 2, "models": models})
+
+    def _source_table(self, tm: TableModel) -> dict[str, Any]:
+        entry: dict[str, Any] = {"name": tm.name, "description": f"Profiled source table; entity {tm.entity}."}
+        loaded_at = _loaded_at_field(self.profile.table(tm.table))
+        if loaded_at is not None:  # `dbt source freshness` warns past the profiling staleness threshold
+            entry["loaded_at_field"] = loaded_at
+            entry["freshness"] = {
+                "warn_after": {"count": load_scoring()["profiling"]["stale_after_days"], "period": "day"}
+            }
+        return entry
 
     def _staging_yaml(self, tm: TableModel) -> dict[str, Any]:
         tp = self.profile.table(tm.table)
@@ -592,6 +601,22 @@ class Generator:
         ]
         lines += [f"- `{m}`: {why}" for m, why in sorted(self.not_generated.items())]
         return "\n".join(lines) + "\n"
+
+
+def _loaded_at_field(tp: TableProfile) -> str | None:
+    """The table's most recent non-sensitive date column (ties broken by name), if it has one."""
+    candidates = [
+        c
+        for c in tp.columns
+        if c.inferred_semantic_type in {SemanticType.DATE, SemanticType.TIMESTAMP}
+        and c.pii_class is None
+        and not is_sensitive_name(c.column)
+        and c.max_value
+        and is_safe_identifier(c.column)
+    ]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda c: (c.max_value or "", c.column)).column
 
 
 def _kind(path: str) -> str:

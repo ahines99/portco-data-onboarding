@@ -6,6 +6,8 @@
 2. Controlled failure path: fixture A with malformed invoice lines, plus an injected source timeout.
    The timeout is retried, the malformed rows fail sandbox tests, and the run stops for review
    with nothing published.
+3. Prompt injection: fixture A with instructions planted in a table comment. The comment is
+   flagged and never reaches any output, and the mappings are identical to the clean run.
 
 No Docker, no API keys. Reports are written to var/demo/.
 """
@@ -148,20 +150,64 @@ async def _failure(root: Path, script: dict[str, Any]) -> tuple[bool, str]:
     return ok, f"failure path: stopped at {run.gate}, published files {len(published)}, report {out.as_posix()}"
 
 
+async def _injection(root: Path, baseline: dict[str, str]) -> tuple[bool, str]:
+    from src.fixtures.variants import INJECTION_COLUMN_COMMENT, INJECTION_COMMENT
+
+    settings = Settings(var_root=root / "injection", fixtures_root=get_settings().fixtures_dir, log_level="WARNING")
+    svc = OnboardingService.build(settings)
+    _say()
+    _say("== 3. Prompt injection: instructions planted in a source table comment")
+    run = await svc.start_run(AGENT, "fixture:portco_a__inj_comment")
+    flagged = [f for f in svc.findings(AGENT, run.run_id) if f.code == "INJECTION_FLAGGED"]
+    _say(f"   {len(flagged)} comment(s) flagged as untrusted; they are quoted as data, never followed")
+    mappings = _mapping_targets(svc, run.run_id)
+    same = mappings == baseline
+    _say(f"   mappings identical to the clean run: {'yes' if same else 'NO'} ({len(mappings)} columns)")
+    everything = " ".join(
+        [
+            svc.artifact(AGENT, run.run_id, step).model_dump_json()
+            for step in (StepName.SCHEMA_PROFILING, StepName.CANONICAL_MAPPING)
+        ]
+        + [f.model_dump_json() for f in svc.findings(AGENT, run.run_id)]
+    )
+    leaked = [s for s in (INJECTION_COMMENT, INJECTION_COLUMN_COMMENT) if s in everything]
+    _say(f"   planted text in any artifact or finding: {'NONE' if not leaked else 'LEAKED'}")
+    _say(f"   run still stops at '{run.gate}' for a human; the agent cannot approve anything")
+    ok = bool(flagged) and same and not leaked and run.gate == "mapping_review"
+    return ok, f"injection path: {len(flagged)} flagged, mappings unchanged={same}, leaks={len(leaked)}"
+
+
+def _mapping_targets(svc: OnboardingService, run_id: Any) -> dict[str, str]:
+    ms = svc.artifact(AGENT, run_id, StepName.CANONICAL_MAPPING)
+    return {
+        f"{p.source_table}.{p.source_column}": f"{p.canonical_entity}.{p.canonical_field}"
+        for p in getattr(ms, "proposals", [])
+    }
+
+
+async def _baseline_mappings(root: Path) -> dict[str, str]:
+    settings = Settings(var_root=root / "baseline", fixtures_root=get_settings().fixtures_dir, log_level="WARNING")
+    svc = OnboardingService.build(settings)
+    run = await svc.start_run(AGENT, "fixture:portco_a", stop_after=StepName.CANONICAL_MAPPING)
+    return _mapping_targets(svc, run.run_id)
+
+
 def run_demo(out: Path) -> int:
     started = time.monotonic()
     root = out.resolve()
     if not remove_tree(root):  # e.g. a file still open from an earlier session: use a fresh directory
         root = root.with_name(f"{root.name}-{int(time.time())}")
     root.mkdir(parents=True, exist_ok=True)
-    for name in ("portco_a", "portco_a__malformed"):
+    for name in ("portco_a", "portco_a__malformed", "portco_a__inj_comment"):
         ensure_fixture(name, get_settings().fixtures_dir)
     script = yaml.safe_load((PROJECT_ROOT / "demo" / "reviews_gate_a.yaml").read_text(encoding="utf-8"))
     ok1, msg1 = anyio.run(_success, root, script)
     ok2, msg2 = anyio.run(_failure, root, script)
+    baseline = anyio.run(_baseline_mappings, root)
+    ok3, msg3 = anyio.run(_injection, root, baseline)
     _say()
     _say("== Summary")
-    _say(f"   [{'ok' if ok1 else 'UNEXPECTED'}] {msg1}")
-    _say(f"   [{'ok' if ok2 else 'UNEXPECTED'}] {msg2}")
+    for ok, msg in ((ok1, msg1), (ok2, msg2), (ok3, msg3)):
+        _say(f"   [{'ok' if ok else 'UNEXPECTED'}] {msg}")
     _say(f"   finished in {time.monotonic() - started:.0f}s")
-    return 0 if ok1 and ok2 else 1
+    return 0 if ok1 and ok2 and ok3 else 1

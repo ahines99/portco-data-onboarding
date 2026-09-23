@@ -74,6 +74,19 @@ def test_arr_bridge_new_expansion_contraction_churn_and_return() -> None:
     assert mv == ref.ArrMovement(new=D("1920.00"), expansion=D("600.00"), contraction=D("960.00"), churned=D("960.00"))
 
 
+def test_arr_bridge_edges_empty_window_and_flat_customers() -> None:
+    assert ref.arr_movements([], []) == {}
+    # A customer whose MRR is unchanged moves nothing, so the month has no bridge row at all.
+    assert ref.arr_movements([sub("flat", "100", date(2024, 1, 1))], ["2025-02"]) == {}
+
+
+def test_zero_mrr_subscriptions_count_nowhere() -> None:
+    # A free (zero-MRR) plan is neither in the retention cohort nor an account for ARPA.
+    subs = [sub("free", "0", date(2024, 1, 1)), sub("paid", "100", date(2024, 1, 1))]
+    assert ref.nrr(subs, "2025-01") == {"USD": D("1.0000")}
+    assert ref.arpa(subs, ["2025-01"]) == {("2025-01", "USD"): D("1200.00")}
+
+
 def test_retention_undefined_without_starting_cohort() -> None:
     assert ref.nrr([sub("a", "10", date(2025, 6, 1))], "2025-12") == {"USD": None}
 

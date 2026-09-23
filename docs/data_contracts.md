@@ -208,6 +208,9 @@ Output of the mapping-review gate: what artifact generation is allowed to use.
 | `waived_checks` | list[string] | yes |  |
 | `open_findings` | list[object] | yes |  |
 | `evidence_ids` | list[string (uuid)] | yes |  |
+| `certified_metrics` | list[string] |  |  |
+| `excluded_metrics` | list[string] |  |  |
+| `certification_ids` | list[string (uuid)] |  |  |
 | `schema_version` | `1` |  |  |
 
 ## `PublishReceipt` (publish_receipt)

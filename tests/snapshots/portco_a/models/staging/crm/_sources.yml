@@ -11,3 +11,8 @@ sources:
     description: Profiled source table; entity contact.
   - name: opportunities
     description: Profiled source table; entity opportunity.
+    loaded_at_field: close_date
+    freshness:
+      warn_after:
+        count: 35
+        period: day

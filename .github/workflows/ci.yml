@@ -35,6 +35,8 @@ jobs:
       - run: uv run poe fixtures
       - name: Unit, integration, golden and MCP tests (SQLite)
         run: uv run pytest -q -m "not postgres and not security"
+      - name: Metric reference calculators at 100% branch coverage
+        run: uv run poe cov-metrics
 
   security:
     runs-on: ubuntu-latest

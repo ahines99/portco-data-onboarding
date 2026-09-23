@@ -26,6 +26,16 @@ proposals below HIGH confidence that have alternatives.
 - **Replay:** the default `replay` mode answers only from recorded cassettes, so CI never calls the
   network.
 
+## Alternatives considered
+- Letting the model propose free-form targets: rejected. It could invent fields outside the
+  ontology, and its answers could not be scored.
+- Always on: rejected until the comparison below shows a gain.
+- Fine-tuning or embeddings: out of scope for the MVP.
+
+## Consequences
+With the judge on, a run costs tokens and gains a network dependency. Replay cassettes keep CI
+deterministic, and the judge can never remove a review.
+
 ## Evaluation
 `python -m evals.judge_eval --mode record` compares top-1 accuracy, abstention and calibration with
 the deterministic baseline on fixtures A and B. The rule is to enable the judge by default only if

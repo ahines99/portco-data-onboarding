@@ -9,3 +9,8 @@ sources:
     description: Profiled source table; entity gl_account.
   - name: journal_lines
     description: Profiled source table; entity gl_entry.
+    loaded_at_field: posting_date
+    freshness:
+      warn_after:
+        count: 35
+        period: day

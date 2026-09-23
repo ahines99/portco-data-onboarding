@@ -1,14 +1,28 @@
 # Roadmap: Portco Data Onboarding Agent v0.1
 
-> **Implementation status (2026-09-23): all 71 tickets implemented.** 250 tests pass, 34/34 golden eval
-> cases pass, and ruff and mypy are clean. See [acceptance.md](acceptance.md) for the checklist audit.
+> **Implementation status (2026-09-23): all 74 tickets implemented, then hardened after an independent
+> audit (P0-P2 findings fixed; see ADR-0011 and the commit history).** 366 tests pass locally (the 3
+> Postgres tests are CI-only), 37/37 golden eval cases pass, the metric reference calculators have 100%
+> branch coverage, and ruff and mypy are clean. CI is configured but has not yet run on a hosted runner.
+> POD-609 is implemented except its live parts (a recorded Claude Code session and the
+> with-vs-without-Skill comparison), which need model credentials. See [acceptance.md](acceptance.md).
 > Deviations from this plan, each recorded where noted:
 > - The MCP capability package is `src/capabilities/`, not `src/mcp/`, so it cannot shadow the `mcp` SDK import.
 > - dbt runs as a subprocess, not in-process `dbtRunner`: stdout would corrupt the stdio transport, and a
 >   subprocess can be killed on timeout (ADR-0008).
 > - There is no separate `mapping_proposals` table. The mapping set is a content-addressed step artifact,
 >   and decisions live in `approvals`.
-> - The golden dataset has 34 cases (target was 30), including an MCP tool-trace case (G31).
+> - The golden dataset has 37 cases (target was 30), including an MCP tool-trace case (G31), hostile
+>   identifiers (G35), the MCP error contract (G36) and re-certification (G37).
+> - Line length is 120, not 100: generated-SQL builders and long test names read better unwrapped.
+> - There is no `ServiceRegistry` module. `src/workflows/primary.py` registers the nine steps as an
+>   ordered `StepSpec` list, which the engine walks directly.
+> - The golden tests were not written xfail-first. The fixtures and ground truth came first, as
+>   planned, but the tests landed with the services they score.
+> - Fixture reproducibility is checked with a content digest over tables, columns, comments and rows,
+>   not a file hash, so the check does not depend on DuckDB's on-disk format.
+> - Runs execute under a lease with a status transition table (ADR-0011), which the plan did not
+>   specify.
 > - The mapping-review gate is a workflow step, and there is also a test-failure waiver gate (ADR-0005).
 > - Not executed in the build environment: the Postgres suite (runs in CI; no local Docker), the live
 >   LLM-judge comparison and the with-vs-without-Skill comparison (no model credentials). The tooling for
@@ -1327,7 +1341,7 @@ The handoff requires at least 25 representative cases, including adversarial cas
 
 **Scope**
 - Spans: `workflow.run`, then `workflow.step`, then `adapter.aggregate`, `dbt.build`, `llm.judge`. MCP tool calls are root spans with `tool_name`.
-- Attributes: `run_id`, `step`, `schema_version`, `evidence_ids_read` (count, plus IDs capped at 50), `attempt`, `outcome`.
+- Attributes: `run_id`, `step`, `schema_version`, `evidence_cited` / `evidence_reads` (counts), `attempt`, `outcome`.
 - The exporter is console in dev and OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is set.
 
 **Acceptance criteria**

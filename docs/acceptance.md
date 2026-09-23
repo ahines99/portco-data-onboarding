@@ -18,7 +18,7 @@ property breaks.
 | 10 | Every material recommendation includes evidence or says evidence is insufficient | ✅ | `Finding` validator rejects SUPPORTED findings without evidence; eval `evidence_fidelity` (every finding resolves to stored evidence or is `NEEDS_EVIDENCE`); lineage resource |
 | 11 | All irreversible actions are disabled or human-approved | ✅ | Publish is the only side effect; it needs a hash-bound certification (ADR-0004); G22, G23, G24 |
 | 12 | MCP tools have typed schemas and integration tests | ✅ | `tests/test_mcp.py` (in-process, stdio and authenticated HTTP); G31 tool trace |
-| 13 | At least one Skill is dynamically useful and not just duplicate prompt text | ✅ static / ⚠️ live | `tests/test_skills.py` checks tool, resource and prompt references against the live server, rejects near-duplicates, and requires references to exist. The live with-vs-without-Skill comparison needs a model session and has not been run ([docs/agent_walkthrough.md](agent_walkthrough.md) §4) |
+| 13 | At least one Skill is dynamically useful and not just duplicate prompt text | ✅ static / ⚠️ live (POD-609 live parts open) | `tests/test_skills.py` checks tool, resource and prompt references against the live server, rejects near-duplicates, and requires references to exist. The live with-vs-without-Skill comparison needs a model session and has not been run ([docs/agent_walkthrough.md](agent_walkthrough.md) §4) |
 | 14 | All arithmetic/financial/statistical calculations have deterministic tests | ✅ | `tests/test_metrics_reference.py` (hand-computed micro-fixtures, including edge cases); reference equals independent ground truth; G08/G09 |
 | 15 | The demo can survive one injected tool failure | ✅ | `poe demo` failure path (injected timeout retried); G18, G19 |
 
@@ -38,20 +38,33 @@ property breaks.
 
 | Requirement | Status |
 |---|---|
-| Typed MCP capabilities | ✅ 12 tools, 16 resources/templates, 3 prompts |
+| Typed MCP capabilities | ✅ 12 tools, 17 resources and resource templates (2 + 15), 3 prompts |
 | Persisted workflow state | ✅ SQLAlchemy + Alembic; SQLite locally, Postgres in CI |
 | Evidence and provenance preserved | ✅ Deterministic evidence ids, lineage resource, hash-chained audit |
 | Stops at approval boundaries | ✅ Three gates, hash-bound approvals, separation of duties |
 | At least one Agent Skill | ✅ Five, linted against the live server |
-| Integration tests | ✅ About 250 tests plus 34 gating eval cases |
+| Integration tests | ✅ 366 tests (plus 3 CI-only Postgres tests) and 37 gating eval cases |
 | End-to-end demo with success and controlled failure paths | ✅ `poe demo` |
+
+## Hardening after the independent audit
+
+| Finding class | Fixed by | Proven by |
+|---|---|---|
+| Identifier injection into generated dbt | Safe-identifier gate, minimal dbt environment | G35, `tests/security/test_audit_regressions.py` |
+| Publishing a stale or partially rejected certification | Certification bound to the packet's review hash | G24, G37, `test_h1_rejecting_a_metric_on_recertification_publishes_without_it` |
+| Sensitive values in profiles | Min/max/mean suppressed for PII and sensitive columns; dates coarsened to the month | `test_h2_profiles_never_carry_sensitive_values` |
+| Concurrent or crashed runs | Execution leases, cancellation, transition table (ADR-0011) | `tests/test_engine_leases.py` |
+| Fail-open auth, gates and overrides | Tokens need explicit tenants; the test gate fails closed; PII handling can only tighten | `tests/security/test_p1_hardening.py` |
+| Audit tampering and truncation | Canonical payload check, chain head and count on the run | `test_audit_chain_detects_tampering`, `test_audit_chain_detects_deleted_tail` |
 
 ## Known gaps (tracked for v0.2)
 
 - Live with-vs-without-Skill and LLM-judge comparisons need model credentials; the tooling is in place
   (`evals/judge_eval.py --mode record`).
 - The Postgres suite (`tests/test_postgres.py`) runs in the CI service container; it was not run in the
-  local build environment, which has no Docker.
+  local build environment, which has no Docker. CI itself has not yet run on a hosted runner.
+- POD-609's live parts (a recorded Claude Code session and the with-vs-without-Skill comparison) are
+  still open; they need a model session.
 - The `mf validate-configs` MetricFlow CLI check is not installed; semantic manifests are validated by
   `dbt parse`/`build` instead.
 - The OpenTelemetry OTLP exporter is optional; spans are verified with the in-memory exporter.
