@@ -5,12 +5,13 @@ Updated 2026-09-27. The owner approved the hiring-focused, MIT-licensed public r
 The [public project page](https://ahines99.github.io/portco-data-onboarding/) is a static presentation
 and actual scripted-output replay; it has no live backend or model API calls. Supplemental evidence
 now includes [six actual model sessions](evidence/live-study/README.md), a synthetic-voice video and
-a [prepared personal review packet](ASSISTED-ACCEPTANCE.md). These do not alter the v0.1.0 source tag.
+an [owner-approved acceptance packet](ASSISTED-ACCEPTANCE.md). These do not alter the v0.1.0 source tag.
 
-Engineering delivery is a **portfolio release candidate**. Live human approval, Skill efficacy and
-independent usability acceptance remain open. See [the exact human handoff](HUMAN-HANDOFF.md).
+Engineering delivery is a **finalized portfolio release**, explicitly approved by Alex.
+The delegated workflow and approved annotation report are complete. See [final acceptance](FINAL-ACCEPTANCE.md).
+Independent usability and general Skill efficacy remain unclaimed optional validation, not release blockers.
 The tagged GitHub release links its source commit, final CI run and distribution checksums; use that
-record for the exact candidate, rather than treating an earlier test count as a permanent guarantee.
+record for the exact shipped code, rather than treating an earlier test count as a permanent guarantee.
 
 ## Completed verification
 
@@ -55,16 +56,16 @@ own provenance. Private workspace paths are normalized; the shareable files are 
 | PF-07 Operations | Implemented; populated migration/restore rehearsal and runbook; production operations outside scope |
 | PF-08 Docs/claims | Updated; historical audit kept as a baseline, current claims linked to evidence |
 | PF-09 Evidence | Implemented; success/failure reports, metrics, certification, lineage, samples, checksums and recovery proof |
-| PF-10 Real agent session | Collected; actual agent-only sessions stop at review. All 22 decisions prepared; Alex's personal review remains separate |
-| PF-11 Skill study | Six real transcripts collected and assistant annotation candidates prepared; human confirmation pending; no efficacy claim |
+| PF-10 Real agent session | Complete; original sessions retained, then one run certified/published under explicit owner delegation with new-run checks |
+| PF-11 Skill study | Complete; six real transcripts and owner-approved annotation scores (3 without / 3 with); no efficacy claim |
 | PF-12 Optional judge | Paid/live comparison deferred as agreed; unknown rates now remain unknown through reports instead of becoming $0 |
 | PF-13 MetricFlow | Bounded investigation completed; CLI validation failed; [full runtime support explicitly deferred](metricflow-investigation.md) |
 | PF-14 Generalization/performance | Small probe and three-run timing sample completed; broader representative/external study remains a depth item |
-| PF-15 Case study | Technical case study and interview prompts published; Alex must approve his personal motivation/contribution narrative |
+| PF-15 Case study | Complete; technical case study and personal wording approved by Alex |
 | PF-16 Visuals/recording | Static site, replay, screenshots and captioned 3:51 synthetic-voice video delivered; personal narration optional |
 | PF-17 Independent usability | Automated fresh-clone check completed; independent person's feedback remains external validation |
 | PF-18 Security review | Performed; application fixes made, image findings disclosed; image remains unsuitable for untrusted production use |
-| PF-19 Publication | Public repository and Pages site delivered; tagged prerelease carries final CI and wheel/checksums |
+| PF-19 Publication | Public repository and Pages site delivered; v0.1.0 promoted to final portfolio release with immutable tag, wheel and checksums |
 | PF-20 Maintenance | Monthly/pre-release dependency review and verification runbook documented; no automatic paid tasks |
 
 ## Results that did not pass

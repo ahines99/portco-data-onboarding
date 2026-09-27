@@ -1,8 +1,9 @@
 # Live Skill comparison protocol
 
 Status: six real Claude Code sessions were collected on 2026-09-27. See the
-[transcripts, provenance and assistant review](evidence/live-study/README.md). Human annotations
-remain pending; no improvement from Skills is claimed. Only one of the three sessions with Skills
+[transcripts, provenance and assistant review](evidence/live-study/README.md). Alex approved the assistant-proposed annotations;
+[the scored report](evidence/live-study/scored.json) totals three findings per condition. This is
+owner-approved assistant annotation, not independent blinded human coding; no improvement is claimed. Only one of the three sessions with Skills
 available invoked a Skill body. Static lint and deterministic traces do not establish model efficacy.
 
 Run `uv run python scripts/compare_skills.py prepare var/skill-comparison` to create a manifest for

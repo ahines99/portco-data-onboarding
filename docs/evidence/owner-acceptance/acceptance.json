@@ -1,0 +1,29 @@
+{
+  "accepted_at": "2026-09-27T23:54:47.784886+00:00",
+  "owner": "Alex Hines",
+  "authorization": "Looks good to me. FINALIZE THIS. I APPROVE ALL",
+  "execution": "Codex submitted explicitly delegated reviewer actions; not an independent human walkthrough",
+  "run_id": "ebfcaa24-a2d9-40bd-b8ee-4de306a1253e",
+  "status": "complete",
+  "reviewer_principal": "alex:delegated-via-codex",
+  "audit_valid": true,
+  "audit_events": 46,
+  "verified_files": 58,
+  "customer_retention": {
+    "billing_customers": 124,
+    "published_dimension_customers": 124,
+    "unmatched_customers_retained": 10,
+    "policy": "Retain in-scope billing customers; LEFT JOIN CRM enrichment; missing CRM attributes allowed; no orphan-based customer deletion."
+  },
+  "published_metrics": [
+    "active_customers",
+    "arr",
+    "billings",
+    "cogs",
+    "ebitda",
+    "gross_margin_pct",
+    "mrr",
+    "opex",
+    "revenue_recognized"
+  ]
+}

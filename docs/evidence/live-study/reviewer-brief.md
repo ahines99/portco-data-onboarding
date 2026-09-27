@@ -1,6 +1,8 @@
 # Recommended decisions for the actual model run
 
-Prepared by the implementation assistant; none has been submitted as Alex or as a human review.
+Historical prepared brief. Alex subsequently approved finalization; [the separate acceptance record](../../FINAL-ACCEPTANCE.md)
+records delegated execution and the verified customer-preserving policy resolving item 22. The recommendations below
+preserve what was presented before approval.
 Run: `ebfcaa24-a2d9-40bd-b8ee-4de306a1253e`. Source: `fixture:portco_a`. Gate: `mapping_review`.
 Subject hash: `c8143be76f1cf0e929a457df83b3baa0148ae3cf720b43fd55cf3424c9e743e8`.
 

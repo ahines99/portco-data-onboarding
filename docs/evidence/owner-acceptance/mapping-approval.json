@@ -1,0 +1,147 @@
+{
+  "approval_id": "412a214a-fe24-4a6d-aab0-1eb63c02f24c",
+  "run_id": "ebfcaa24-a2d9-40bd-b8ee-4de306a1253e",
+  "gate": "mapping_review",
+  "subject_hash": "c8143be76f1cf0e929a457df83b3baa0148ae3cf720b43fd55cf3424c9e743e8",
+  "decisions": [
+    {
+      "item_key": "mapping:billing.customers.billing_email",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:billing.invoice_lines.amount",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:billing.invoices.total_amt",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:billing.payments.amount",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:billing.payments.card_number",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:billing.subscriptions.mrr_amt",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:crm.accounts.owner_email",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:crm.accounts.created_dt",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:crm.contacts.first_name",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:crm.contacts.last_name",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:crm.contacts.email",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:crm.contacts.phone",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:crm.opportunities.rev",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:erp.journal_lines.debit",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:erp.journal_lines.credit",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:hr.employees.full_name",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:hr.employees.ssn",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "mapping:hr.employees.dob",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "filter:billing.customers.cust_name:exclude_match",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "filter:crm.accounts.acct_nm:exclude_match",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "filter:crm.accounts.is_deleted:exclude_true",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner-approved fixture recommendation; executed by Codex under explicit delegation."
+    },
+    {
+      "item_key": "join:billing.customers.crm_account_ref->crm.accounts.acct_id",
+      "decision": "approve",
+      "override": null,
+      "comment": "Owner explicitly approved all prepared recommendations and finalization. Delegated execution by Codex; not a recorded manual CLI action. CRM orphan policy: retain billing customers using LEFT JOIN enrichment, allow missing CRM attributes, verify counts before certification."
+    }
+  ],
+  "reviewer": "alex:delegated-via-codex",
+  "role": "reviewer",
+  "comment": "Authorization: Alex stated \"Looks good to me. FINALIZE THIS. I APPROVE ALL\". Approve fixture mapping; certification remains contingent on new run checks.",
+  "created_at": "2026-09-27T23:53:42.603556Z",
+  "expires_at": "2026-09-30T23:53:42.603556Z",
+  "revoked_at": null,
+  "revoked_reason": null
+}

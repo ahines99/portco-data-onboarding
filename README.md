@@ -9,7 +9,8 @@
 Synthetic-data portfolio prototype by Alex Hines, developed with substantial AI assistance.
 The recorded fixture demo uses automated reviewer decisions. [Six real model sessions](docs/evidence/live-study/README.md)
 and a [captioned synthetic-voice tour](https://github.com/ahines99/portco-data-onboarding/releases/download/v0.1.0/portco-narrated-demo.mp4)
-are available. Personal review and human annotations remain explicit [handoffs](docs/HUMAN-HANDOFF.md).
+are available. Alex approved finalization; [final acceptance](docs/FINAL-ACCEPTANCE.md) records delegated
+workflow completion, accepted annotations and known scope limits. No required owner actions remain.
 
 Onboards an unfamiliar portfolio company's data into a canonical private-equity data model:
 

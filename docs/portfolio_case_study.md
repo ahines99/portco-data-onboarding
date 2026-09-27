@@ -8,8 +8,8 @@ reporting model. A plausible-looking column mapping can produce a financially wr
 
 The demonstration uses synthetic SaaS and SAP-style fixtures. It has no production customers,
 measured analyst-time savings or investment-performance claim. The implementation was developed
-with substantial AI assistance; live human review and a personal contribution narrative remain
-separate acceptance items rather than implied by the automated tests.
+with substantial AI assistance. Alex approved the personal statement and delegated final acceptance;
+[the record](FINAL-ACCEPTANCE.md) distinguishes owner approval from automated execution.
 
 ## The problem made concrete
 
@@ -74,9 +74,9 @@ MCP backend, production identity provider or live warehouse deployment. The loca
 supports a defined monthly subset; actual MetricFlow compatibility is tracked separately.
 
 Six real model sessions and a captioned synthetic-voice tour have now been collected. The
-[prepared acceptance packet](ASSISTED-ACCEPTANCE.md) reduces the remaining human work to inspecting
-mapping/certification decisions, confirming draft annotations and personal wording, and optionally
-obtaining independent first-use feedback.
+[owner-approved acceptance packet](ASSISTED-ACCEPTANCE.md) and [final acceptance](FINAL-ACCEPTANCE.md)
+record completed delegated mapping/certification and accepted annotation/personal wording. Independent
+first-use feedback is optional future validation.
 Adding another integration before that evidence would broaden the product without closing these
 acceptance gaps.
 

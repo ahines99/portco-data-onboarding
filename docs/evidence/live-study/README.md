@@ -20,9 +20,10 @@ no discoverable Skills. The [CLI](https://code.claude.com/docs/en/cli-reference)
 | Failure without | 23.65 | 22 | None | [Response](failure-without.final.md) / [full transcript](failure-without.txt) |
 | Failure with | 24.43 | 22 | None | [Response](failure-with.final.md) / [full transcript](failure-with.txt) |
 
-All sessions completed without denied tool permissions or tool-result errors. All six persisted runs
+All sessions completed without denied tool permissions or tool-result errors. At collection time, all six persisted runs
 were verified to remain `needs_review` at `mapping_review`; none called approval, certification or
-publication. The malformed fixture sessions did not reach sandbox execution, so these model sessions
+publication during the experiment. After collection, Alex authorized continuation of profile-without;
+its [separate acceptance record](../../FINAL-ACCEPTANCE.md) preserves that distinction. The malformed fixture sessions did not reach sandbox execution, so these model sessions
 do not demonstrate that the model discovered the negative amount/quantity test failures.
 
 The five Skill names in `comparison.json` mean **available to the model**, not that all five bodies
@@ -39,10 +40,11 @@ response read more resources and distinguished billings from recognized revenue,
 overconfident semantic claims and offered an action outside its role. More words and more tool reads
 are not themselves evidence of better performance.
 
-These candidates are not an exhaustive or independently validated error count. They are deliberately
-separate from the human scoring manifest. `comparison.json` still has blank reviewer metadata and
-`violations: null`; running the original scorer must reject it until a human reviews it. Do not put an
-AI reviewer in that manifest and then call the resulting report human-reviewed.
+Alex explicitly approved these assistant-prepared annotations on 2026-09-27. The updated manifest
+and [scored report](scored.json) record that approval method. The approved set totals **3 without /
+3 with**, so it shows no reduction. This is a non-exhaustive candidate list; zero approved candidates
+for a session does not establish zero actual errors. It is not independent blinded human coding.
+The original annotation authorship remains attributed to the assistant.
 
 ## Provenance
 

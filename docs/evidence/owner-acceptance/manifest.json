@@ -1,0 +1,13 @@
+{
+  "source_commit": "491db5fe81fa20eebd7759dee66246544c3e258a",
+  "authorization": "Explicit owner finalization approval in this conversation",
+  "review_execution": "Delegated to Codex; not an independent human walkthrough",
+  "files": {
+    "acceptance.json": "abb9620ec9a0303a3e21d7dd5c803b7a97f1d474c0a6e9b9dbb90589f370fcea",
+    "certification-approval.json": "4eadf1c76f1d6084956006cead6c6af06777219e9ac7c9bb72de491f54b4864c",
+    "certification.json": "9d0eee7f7f072a1cf533f43bab09bfe552491b1e59732256416b448b4770c3e6",
+    "mapping-approval.json": "db6087a16af33eafd0aa3e14f9875456ccf1c8e8133327b98a87cb8a686abd2b",
+    "reconciliation.json": "752638095a22ae29f6d7bce4d0b032b2766c5ed2194f28eb6ef63827eb6486ef",
+    "run-report.md": "d5f8b920cf13198e2fe931e0ec1606a68f4fca403a6f56eab0149fee2f9ebfb8"
+  }
+}
