@@ -4,10 +4,10 @@
    trap caught -> billing.invoice_lines.amount -> invoice_line.amount (suggest cents_to_major) [UNIT_MISMATCH]
    trap caught -> crm.opportunities.rev -> opportunity.amount [LOW_CONFIDENCE, SEMANTIC_TRAP]
    agent tried to approve its own proposals -> Forbidden
-   reviewer 'alice' recorded approval ced4d3ce (22 decisions)
+   reviewer 'alice' recorded approval 34a395a3 (22 decisions)
    generated dbt + semantic layer; sandbox build exit 0; 26/26 reconciliation checks passed (money exact to the cent)
    paused at 'certification' for human certification
-   certified (1cf84acc) and published v0001: active_customers, arr, billings, cogs, ebitda, gross_margin_pct, mrr, opex, revenue_recognized
+   certified (d0fa735e) and published v0001: active_customers, arr, billings, cogs, ebitda, gross_margin_pct, mrr, opex, revenue_recognized
    audit log: 46 events, hash chain intact
 
 == 2. Controlled failure path: malformed invoice lines + an injected source timeout
@@ -23,7 +23,7 @@
    run still stops at 'mapping_review' for a human; the agent cannot approve anything
 
 == Summary
-   [ok] success path: complete, report C:/Users/Alex Hines/AppData/Local/Temp/pr-8m9461qg/demo/success_report.md
-   [ok] failure path: stopped at test_failures, published files 0, report C:/Users/Alex Hines/AppData/Local/Temp/pr-8m9461qg/demo/failure_report.md
+   [ok] success path: complete, report <private-workspace>/demo/success_report.md
+   [ok] failure path: stopped at test_failures, published files 0, report <private-workspace>/demo/failure_report.md
    [ok] injection path: 1 flagged, mappings unchanged=True, leaks=0
-   finished in 24s
+   finished in 26s

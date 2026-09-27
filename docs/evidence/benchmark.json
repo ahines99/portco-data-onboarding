@@ -5,16 +5,16 @@
   "python": "3.12.10",
   "runs": [
     {
-      "cold_seconds": 8.993,
-      "reused_seconds": 0.46
+      "cold_seconds": 9.761,
+      "reused_seconds": 0.452
     },
     {
-      "cold_seconds": 8.926,
-      "reused_seconds": 0.441
+      "cold_seconds": 9.74,
+      "reused_seconds": 0.487
     },
     {
-      "cold_seconds": 9.178,
-      "reused_seconds": 0.473
+      "cold_seconds": 10.247,
+      "reused_seconds": 0.538
     }
   ]
 }

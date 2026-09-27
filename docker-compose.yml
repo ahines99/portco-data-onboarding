@@ -29,6 +29,8 @@ services:
   mcp:
     profiles: [full]
     build: .
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
     environment: *env
     ports: ["127.0.0.1:8000:8000"]
     volumes: ["portco-data:/data"]

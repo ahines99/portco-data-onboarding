@@ -96,7 +96,7 @@ def recovery(svc: OnboardingService, rid, workspace: Path) -> dict[str, Any]:
 
 async def main() -> None:
     initial_dirty = bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=PROJECT_ROOT, text=True).strip())
-    root = Path(tempfile.mkdtemp(prefix="pe-"))
+    root = Path(tempfile.mkdtemp(prefix="pe-")).resolve()
     print(f"Private evidence workspace: {root}", flush=True)
     out = PROJECT_ROOT / "docs" / "evidence"
     out.mkdir(parents=True, exist_ok=True)

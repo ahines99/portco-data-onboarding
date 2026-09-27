@@ -18,7 +18,7 @@ from src.settings import PROJECT_ROOT
 
 
 def main() -> None:
-    root = Path(tempfile.mkdtemp(prefix="pr-"))
+    root = Path(tempfile.mkdtemp(prefix="pr-")).resolve()
     env = {k: v for k, v in os.environ.items() if not k.startswith("PORTCO_")}
     env.update(PORTCO_VAR_ROOT=str(root), PORTCO_ENV="test", PORTCO_LOG_LEVEL="WARNING", PYTHONUNBUFFERED="1")
     frames = []

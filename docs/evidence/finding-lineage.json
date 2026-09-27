@@ -7,12 +7,12 @@
       {
         "as_of": "2026-01-31T00:00:00Z",
         "excerpt_hash": "974957afd8bcc13ab42dafd9284bfdb254812c6a22b8e455ffb89e747cd4261f",
-        "retrieved_at": "2026-09-27T22:51:38.599164Z",
-        "source_id": "6553e596-687f-5318-8dcd-95f56db01aea",
+        "retrieved_at": "2026-09-27T23:04:34.511569Z",
+        "source_id": "dca9c767-b777-5141-bcea-f88e65bcd711",
         "uri": "duckdb://portco_a/billing.customers#stat=profile"
       }
     ],
-    "finding_id": "94d7fc31-4d6b-49ac-853f-12cb7814d663",
+    "finding_id": "1aa99026-0fb4-4e9d-97f4-99745f9ebfde",
     "finding_type": "observation",
     "metadata": {
       "column": "cust_name",
@@ -30,13 +30,13 @@
     "evidence": [
       {
         "content_hash": "974957afd8bcc13ab42dafd9284bfdb254812c6a22b8e455ffb89e747cd4261f",
-        "evidence_id": "6553e596-687f-5318-8dcd-95f56db01aea",
+        "evidence_id": "dca9c767-b777-5141-bcea-f88e65bcd711",
         "relation": "supports",
         "source_type": "table_profile",
         "source_uri": "duckdb://portco_a/billing.customers#stat=profile"
       }
     ],
-    "finding_id": "94d7fc31-4d6b-49ac-853f-12cb7814d663",
+    "finding_id": "1aa99026-0fb4-4e9d-97f4-99745f9ebfde",
     "statement": "3 rows in billing.customers.cust_name start with 'TEST'.",
     "status": "supported"
   }

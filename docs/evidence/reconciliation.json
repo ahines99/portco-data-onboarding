@@ -920,7 +920,7 @@
       "unique_id": "test.portco_a.unique_stg_hr__employees_employee_id.7398847059"
     }
   ],
-  "duration_seconds": 6.84,
+  "duration_seconds": 7.44,
   "failing_checks": [],
   "manifest_hash": "5ae6742d81bea3bf619fb2c1af73308bc7911cf532e12e5ea5c33e4d6b0737df",
   "passed": true,

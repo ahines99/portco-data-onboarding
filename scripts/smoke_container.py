@@ -107,7 +107,7 @@ async def complete(base: str, token: str, reviewer: str, before: dict[str, Any])
     return publication
 
 
-def verify_publication(run_id: str) -> None:
+def verify_publication(run_id: str, database: str | None = None) -> None:
     from uuid import UUID
 
     rid = str(UUID(run_id))
@@ -132,7 +132,25 @@ for f in b.files:
     assert sha256(path.read_bytes()).hexdigest() == f.sha256
 print('PASS: published file hashes and audit chain')
 """
-    print(compose("exec", "-T", "mcp", "python", "-c", code).strip())
+    args = ["exec", "-T"]
+    if database:
+        args += ["-e", f"PORTCO_DATABASE_URL=postgresql+psycopg://portco:portco@postgres:5432/{database}"]
+    print(compose(*args, "mcp", "python", "-c", code).strip())
+
+
+def verify_database_restore(run_id: str) -> None:
+    from uuid import uuid4
+
+    name = f"portco_restore_{uuid4().hex}"
+    archive = f"/tmp/{name}.dump"  # noqa: S108 — random name inside the disposable Compose container
+    compose("exec", "-T", "postgres", "pg_dump", "-U", "portco", "-d", "portco", "-Fc", "-f", archive)
+    compose("exec", "-T", "postgres", "createdb", "-U", "portco", name)
+    try:
+        compose("exec", "-T", "postgres", "pg_restore", "-U", "portco", "-d", name, archive)
+        verify_publication(run_id, name)
+    finally:
+        compose("exec", "-T", "postgres", "dropdb", "-U", "portco", name)
+    print("PASS: PostgreSQL dump/restore with existing artifact volume")
 
 
 async def smoke(base: str, token: str, reviewer: str) -> None:
@@ -170,6 +188,7 @@ async def smoke(base: str, token: str, reviewer: str) -> None:
             raise RuntimeError(f"persisted {field} changed across container restart")
     publication = await complete(base, token, reviewer, after)
     verify_publication(str(before["run_id"]))
+    verify_database_restore(str(before["run_id"]))
     compose("down")  # Deliberately retain BOTH named volumes.
     compose("up", "-d")
     await wait_ready(base)

@@ -1,6 +1,6 @@
 # Onboarding run report: portco_a__malformed
 
-- Run: `23ecfb6e-58d9-4878-8377-6a95e7504b1c`
+- Run: `cdda65a4-f929-4ca2-ba0a-3dacfdebc2bb`
 - Connection: `fixture:portco_a__malformed`
 - Status: **needs_review** (gate: test_failures)
 - Audit chain: intact (32 events)
@@ -10,14 +10,14 @@
 
 | step | status | attempts | seconds |
 |---|---|---|---|
-| connection_validation | completed | 1 | 0.176 |
-| schema_profiling | completed | 1 | 0.834 |
-| entity_inference | completed | 1 | 0.074 |
-| join_inference | completed | 1 | 0.398 |
-| canonical_mapping | completed | 1 | 0.056 |
-| mapping_review | completed | 2 | 0.019 |
-| artifact_generation | completed | 1 | 0.089 |
-| automated_tests | needs_review | 1 | 6.418 |
+| connection_validation | completed | 1 | 0.194 |
+| schema_profiling | completed | 1 | 1.024 |
+| entity_inference | completed | 1 | 0.109 |
+| join_inference | completed | 1 | 0.507 |
+| canonical_mapping | completed | 1 | 0.057 |
+| mapping_review | completed | 2 | 0.024 |
+| artifact_generation | completed | 1 | 0.117 |
+| automated_tests | needs_review | 1 | 7.364 |
 | human_certification | pending | 0 | 0 |
 | publish | pending | 0 | 0 |
 
@@ -25,36 +25,36 @@
 
 | code | confidence | status | statement | evidence |
 |---|---|---|---|---|
-| CONNECTION_VERIFIED | high | supported | 4 schemas and 11 tables visible; write probe was rejected. | `b9b67e0f` |
-| DUPLICATE_ENTITIES | medium | supported | 4 of 127 values in billing.customers.cust_name collide after normalizing case and punctuation; the same real-world entity likely has several records. | `8d7b177c` |
-| MULTI_CURRENCY | high | supported | billing.customers.currency holds 3 currencies (EUR, GBP, USD); no FX table was found, so amounts are never summed across currencies. | `8d7b177c` |
-| TEST_RECORDS | high | supported | 3 rows in billing.customers.cust_name start with 'TEST'. | `8d7b177c` |
-| MIXED_TYPES | high | supported | 490 of 1962 values are numeric, the rest text. | `3c04d14c` |
-| MULTI_CURRENCY | high | supported | billing.invoices.currency holds 3 currencies (EUR, GBP, USD); no FX table was found, so amounts are never summed across currencies. | `3c04d14c` |
-| MULTI_CURRENCY | high | supported | billing.subscriptions.currency holds 3 currencies (EUR, GBP, USD); no FX table was found, so amounts are never summed across currencies. | `496edead` |
-| SOFT_DELETE_FLAG | high | supported | 5 rows are flagged deleted. | `e66710de` |
-| TEST_RECORDS | high | supported | 2 rows in crm.accounts.acct_nm start with 'TEST'. | `e66710de` |
-| PII_CLASSIFIED | high | supported | 10 columns classified as PII; their values never leave the adapter. | `8d7b177c`, `0698460d`, `3c04d14c` |
-| ENTITY_OVERLAP | medium | supported | billing.customers, crm.accounts all classify as customer. System of record: billing.customers; the others enrich it through a reviewed join. | `32abace4`, `617ecdcb` |
-| ORPHAN_KEYS | high | supported | 7.9% of rows reference a crm.accounts key that does not exist (containment 91.8%). | `aa3037b6` |
-| JOIN_INFERRED | high | supported | billing.customers.crm_account_ref->crm.accounts.acct_id: N:1, score 0.91, containment 91.8%. | `aa3037b6` |
-| JOIN_INFERRED | high | supported | billing.invoice_lines.inv_no->billing.invoices.inv_no: N:1, score 1.00, containment 100.0%. | `03929b48` |
-| JOIN_INFERRED | high | supported | billing.invoices.cust_id->billing.customers.cust_id: N:1, score 1.00, containment 100.0%. | `f0c4b082` |
-| JOIN_INFERRED | high | supported | billing.payments.inv_no->billing.invoices.inv_no: 1:1, score 1.00, containment 100.0%. | `fa81bd21` |
-| JOIN_INFERRED | high | supported | billing.subscriptions.cust_id->billing.customers.cust_id: N:1, score 1.00, containment 100.0%. | `2f4eaffd` |
-| JOIN_INFERRED | high | supported | crm.contacts.acct_id->crm.accounts.acct_id: N:1, score 1.00, containment 100.0%. | `b61d2d3d` |
-| JOIN_INFERRED | high | supported | crm.opportunities.acct_id->crm.accounts.acct_id: N:1, score 1.00, containment 100.0%. | `ddd19de6` |
-| JOIN_INFERRED | high | supported | erp.journal_lines.acct_code->erp.gl_accounts.acct_code: N:1, score 1.00, containment 100.0%. | `0a5fa97c` |
-| MAPPING_REVIEWED | high | supported | 22 items reviewed: 68 mappings accepted (50 automatically), 0 overridden, 0 rejected. | `4a965760` |
-| SANDBOX_FAILED | high | supported | 2 checks failed; nothing publishes unless a reviewer waives. | `0f4943b8` |
+| CONNECTION_VERIFIED | high | supported | 4 schemas and 11 tables visible; write probe was rejected. | `7ebbce53` |
+| TEST_RECORDS | high | supported | 3 rows in billing.customers.cust_name start with 'TEST'. | `907c016a` |
+| DUPLICATE_ENTITIES | medium | supported | 4 of 127 values in billing.customers.cust_name collide after normalizing case and punctuation; the same real-world entity likely has several records. | `907c016a` |
+| MULTI_CURRENCY | high | supported | billing.customers.currency holds 3 currencies (EUR, GBP, USD); no FX table was found, so amounts are never summed across currencies. | `907c016a` |
+| MIXED_TYPES | high | supported | 490 of 1962 values are numeric, the rest text. | `10aae13b` |
+| MULTI_CURRENCY | high | supported | billing.invoices.currency holds 3 currencies (EUR, GBP, USD); no FX table was found, so amounts are never summed across currencies. | `10aae13b` |
+| MULTI_CURRENCY | high | supported | billing.subscriptions.currency holds 3 currencies (EUR, GBP, USD); no FX table was found, so amounts are never summed across currencies. | `4b0036ad` |
+| TEST_RECORDS | high | supported | 2 rows in crm.accounts.acct_nm start with 'TEST'. | `8e4413ec` |
+| SOFT_DELETE_FLAG | high | supported | 5 rows are flagged deleted. | `8e4413ec` |
+| PII_CLASSIFIED | high | supported | 10 columns classified as PII; their values never leave the adapter. | `907c016a`, `115e5d72`, `10aae13b` |
+| ENTITY_OVERLAP | medium | supported | billing.customers, crm.accounts all classify as customer. System of record: billing.customers; the others enrich it through a reviewed join. | `916fe7bc`, `6206eb17` |
+| ORPHAN_KEYS | high | supported | 7.9% of rows reference a crm.accounts key that does not exist (containment 91.8%). | `d9f3e802` |
+| JOIN_INFERRED | high | supported | billing.customers.crm_account_ref->crm.accounts.acct_id: N:1, score 0.91, containment 91.8%. | `d9f3e802` |
+| JOIN_INFERRED | high | supported | billing.invoice_lines.inv_no->billing.invoices.inv_no: N:1, score 1.00, containment 100.0%. | `5b340543` |
+| JOIN_INFERRED | high | supported | billing.invoices.cust_id->billing.customers.cust_id: N:1, score 1.00, containment 100.0%. | `cc42ad2d` |
+| JOIN_INFERRED | high | supported | billing.payments.inv_no->billing.invoices.inv_no: 1:1, score 1.00, containment 100.0%. | `90fedfbb` |
+| JOIN_INFERRED | high | supported | billing.subscriptions.cust_id->billing.customers.cust_id: N:1, score 1.00, containment 100.0%. | `a8ee42f4` |
+| JOIN_INFERRED | high | supported | crm.contacts.acct_id->crm.accounts.acct_id: N:1, score 1.00, containment 100.0%. | `20341d52` |
+| JOIN_INFERRED | high | supported | crm.opportunities.acct_id->crm.accounts.acct_id: N:1, score 1.00, containment 100.0%. | `278fcd4a` |
+| JOIN_INFERRED | high | supported | erp.journal_lines.acct_code->erp.gl_accounts.acct_code: N:1, score 1.00, containment 100.0%. | `7b87dd6d` |
+| MAPPING_REVIEWED | high | supported | 22 items reviewed: 68 mappings accepted (50 automatically), 0 overridden, 0 rejected. | `eb9d0c8a` |
+| SANDBOX_FAILED | high | supported | 2 checks failed; nothing publishes unless a reviewer waives. | `a72c464f` |
 
 ## Calculations
 
 | code | confidence | status | statement | evidence |
 |---|---|---|---|---|
-| POSSIBLE_MINOR_UNITS | medium | supported | Integer money column whose mean is 90x the median of decimal money columns in the same schema; it is probably stored in cents. | `0698460d` |
-| ARTIFACTS_GENERATED | high | supported | 34 models, 9 metrics generated; 9 metrics not generated (reasons recorded). Manifest 64baf971ce58. | `917961a1` |
-| SANDBOX_TESTS | high | supported | dbt exit 1; 97 data tests; 25/25 reconciliation checks passed; 2 failing. | `0f4943b8` |
+| POSSIBLE_MINOR_UNITS | medium | supported | Integer money column whose mean is 90x the median of decimal money columns in the same schema; it is probably stored in cents. | `115e5d72` |
+| ARTIFACTS_GENERATED | high | supported | 34 models, 9 metrics generated; 9 metrics not generated (reasons recorded). Manifest 64baf971ce58. | `0c1701ba` |
+| SANDBOX_TESTS | high | supported | dbt exit 1; 97 data tests; 25/25 reconciliation checks passed; 2 failing. | `a72c464f` |
 
 ## Mapping proposals
 

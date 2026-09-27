@@ -16,6 +16,9 @@ COPY demo ./demo
 RUN uv sync --frozen --no-dev --extra postgres
 
 FROM python:3.12-slim
+# The runtime never installs packages. Remove the base image's unused global installer,
+# including its vendored dependencies; uv has already built the application environment.
+RUN python -m pip uninstall -y pip
 RUN useradd --create-home --uid 10001 portco
 WORKDIR /app
 COPY --from=build --chown=portco:portco /app /app

@@ -58,6 +58,21 @@ async def test_full_certified_publication_on_postgres(pg_url: str, tmp_path: Pat
     assert ok and events
     assert svc.get_run(AGENT, run.run_id).run_id == run.run_id
     assert uuid4() != run.run_id
+    # Rehearse the publication-state migration with actual existing certified data.
+    from alembic import command
+    from alembic.config import Config
+
+    from src.settings import PROJECT_ROOT
+
+    svc.store.engine.dispose()
+    config = Config(str(PROJECT_ROOT / "alembic.ini"))
+    config.set_main_option("script_location", str(PROJECT_ROOT / "migrations"))
+    config.set_main_option("sqlalchemy.url", pg_url.replace("%", "%%"))
+    command.downgrade(config, "0002")
+    migrate(pg_url)
+    restored = make_service(tmp_path, database_url=pg_url)
+    assert restored.get_run(AGENT, run.run_id).status is RunStatus.COMPLETE
+    assert restored.audit(AGENT, run.run_id)[1]
 
 
 def test_concurrent_audit_and_publication_recovery_on_postgres(pg_url: str, tmp_path: Path, monkeypatch) -> None:

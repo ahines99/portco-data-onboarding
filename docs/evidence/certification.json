@@ -1,10 +1,10 @@
 {
   "approvals": [
-    "c33ba792-efa7-4395-8da8-26cd75237667"
+    "ed635ca2-2159-4b1e-a14c-d8bba89a9991"
   ],
   "packet": {
     "certification_ids": [
-      "c33ba792-efa7-4395-8da8-26cd75237667"
+      "ed635ca2-2159-4b1e-a14c-d8bba89a9991"
     ],
     "certified_metrics": [
       "active_customers",
@@ -18,31 +18,31 @@
       "revenue_recognized"
     ],
     "evidence_ids": [
-      "1cbb6c6c-7b13-55d3-be40-b17306718d06",
-      "2ad2ba2c-b3bc-5e38-a303-9c09962d5c8b",
-      "391f17ef-0e93-5239-bf1d-ef6f2a89e271",
-      "39d41c70-62b9-5818-abd2-0f49dd6165d3",
-      "4aa57b1d-dd16-51ae-90f0-b6ceda51000d",
-      "518b021b-f46a-5006-b330-6bd7984c8aaf",
-      "5fdf3e58-6590-5b50-bcf2-c61ada9b63fe",
-      "62828a84-fbc1-5bda-9942-f2c99207b0d3",
-      "6553e596-687f-5318-8dcd-95f56db01aea",
-      "67244ace-ef4d-55a7-93bb-c710941f649b",
-      "6b805726-0519-584f-8113-fcf60dd17177",
-      "89b4afd2-7afd-5883-b673-f486614c031a",
-      "8abe3cb5-d0cc-56c1-b472-f1436067844f",
-      "94880de7-4710-52cf-8d71-b37838d3647b",
-      "a2fe9ada-cccf-5a9f-bd52-6d972a3bf565",
-      "a98b24e1-aeb6-529c-8457-634ef037e8cd",
-      "bdd5b036-741d-5802-9ee4-336548145a58",
-      "bdddd25c-4a79-529f-b25e-9cf17acb4134",
-      "c2eddc9b-088a-52b3-9a7c-7141a706dae7",
-      "ca48d94e-41ce-5a78-9834-ecc228f48e10",
-      "d11024a2-92d2-53ea-8907-e2aad34d3345",
-      "e3603d75-0579-540f-b196-c9c53c45fcd4",
-      "ead33491-89a8-5fba-bee5-7e83752bf5f6",
-      "f4ea0504-5896-5ddd-b66b-fd64c03f42c6",
-      "f82a69ab-a047-5b89-98d5-5ab69e37049f"
+      "02728646-ad27-55b8-8dbd-10ead97b9cbe",
+      "0cbc000b-2284-5f54-9d9d-41f41316f537",
+      "159cb078-804e-5d32-b92c-d1536e9fffc2",
+      "169886b3-68f2-5e9f-8857-e2c83358bbd5",
+      "39b986c3-7f4c-55cf-94ed-9a59041e6137",
+      "3aa4d6b3-19ea-5b18-bc2e-f3b0af22b91e",
+      "3b30cb7e-9bcd-5373-8cfd-bf8d3fef1417",
+      "4f3163f4-8a97-5792-85b3-9c7be3704513",
+      "5923f106-c63d-55b1-84b9-c2a15b60880e",
+      "76d45bc6-8568-53ce-aa5a-ab81d9d0825d",
+      "782f4bf8-7180-5d1e-9919-a79910a19c45",
+      "a958f9c7-5cfc-59da-81a9-471eb065e557",
+      "ac602197-9f9b-5630-8ad1-49c99123d2b1",
+      "b1aea701-0d46-5cdc-9cd1-527f3249328a",
+      "b3eb5193-12be-5adf-b194-f3fa364bf480",
+      "bf701c10-1336-5c1e-91e0-04c2b678945b",
+      "c232415c-c5bf-5523-8f88-4da8b765eb58",
+      "ca44482e-aabf-5fd4-b2b7-91f153c95d1d",
+      "d42e057b-ed7e-598c-9471-b784ba845d9f",
+      "d6fcbdf4-a248-5941-ba99-6be445d2ad2e",
+      "dca9c767-b777-5141-bcea-f88e65bcd711",
+      "e27ae3fc-b65e-5f4e-9712-7321f4fc85fb",
+      "f30ebd08-e24f-5982-9c0b-4d1641bacf3e",
+      "f683e567-f34b-5b41-9f6d-9aa6e780ec78",
+      "ff265de1-25ec-5fb9-8e3a-818c0699f7c3"
     ],
     "excluded_metrics": [],
     "failing_checks": [],
@@ -51,7 +51,7 @@
         "cardinality": "N:1",
         "confidence": "high",
         "containment_ratio": 0.918,
-        "evidence_id": "bdddd25c-4a79-529f-b25e-9cf17acb4134",
+        "evidence_id": "3aa4d6b3-19ea-5b18-bc2e-f3b0af22b91e",
         "join_id": "billing.customers.crm_account_ref->crm.accounts.acct_id",
         "left_columns": [
           "crm_account_ref"
@@ -74,7 +74,7 @@
         "cardinality": "N:1",
         "confidence": "high",
         "containment_ratio": 1.0,
-        "evidence_id": "67244ace-ef4d-55a7-93bb-c710941f649b",
+        "evidence_id": "3b30cb7e-9bcd-5373-8cfd-bf8d3fef1417",
         "join_id": "billing.invoice_lines.inv_no->billing.invoices.inv_no",
         "left_columns": [
           "inv_no"
@@ -94,7 +94,7 @@
         "cardinality": "N:1",
         "confidence": "high",
         "containment_ratio": 1.0,
-        "evidence_id": "ca48d94e-41ce-5a78-9834-ecc228f48e10",
+        "evidence_id": "c232415c-c5bf-5523-8f88-4da8b765eb58",
         "join_id": "billing.invoices.cust_id->billing.customers.cust_id",
         "left_columns": [
           "cust_id"
@@ -114,7 +114,7 @@
         "cardinality": "1:1",
         "confidence": "high",
         "containment_ratio": 1.0,
-        "evidence_id": "6b805726-0519-584f-8113-fcf60dd17177",
+        "evidence_id": "d42e057b-ed7e-598c-9471-b784ba845d9f",
         "join_id": "billing.payments.inv_no->billing.invoices.inv_no",
         "left_columns": [
           "inv_no"
@@ -134,7 +134,7 @@
         "cardinality": "N:1",
         "confidence": "high",
         "containment_ratio": 1.0,
-        "evidence_id": "ead33491-89a8-5fba-bee5-7e83752bf5f6",
+        "evidence_id": "ca44482e-aabf-5fd4-b2b7-91f153c95d1d",
         "join_id": "billing.subscriptions.cust_id->billing.customers.cust_id",
         "left_columns": [
           "cust_id"
@@ -154,7 +154,7 @@
         "cardinality": "N:1",
         "confidence": "high",
         "containment_ratio": 1.0,
-        "evidence_id": "c2eddc9b-088a-52b3-9a7c-7141a706dae7",
+        "evidence_id": "76d45bc6-8568-53ce-aa5a-ab81d9d0825d",
         "join_id": "crm.contacts.acct_id->crm.accounts.acct_id",
         "left_columns": [
           "acct_id"
@@ -174,7 +174,7 @@
         "cardinality": "N:1",
         "confidence": "high",
         "containment_ratio": 1.0,
-        "evidence_id": "94880de7-4710-52cf-8d71-b37838d3647b",
+        "evidence_id": "b1aea701-0d46-5cdc-9cd1-527f3249328a",
         "join_id": "crm.opportunities.acct_id->crm.accounts.acct_id",
         "left_columns": [
           "acct_id"
@@ -194,7 +194,7 @@
         "cardinality": "N:1",
         "confidence": "high",
         "containment_ratio": 1.0,
-        "evidence_id": "518b021b-f46a-5006-b330-6bd7984c8aaf",
+        "evidence_id": "f683e567-f34b-5b41-9f6d-9aa6e780ec78",
         "join_id": "erp.journal_lines.acct_code->erp.gl_accounts.acct_code",
         "left_columns": [
           "acct_code"
@@ -212,7 +212,7 @@
       }
     ],
     "manifest_hash": "5ae6742d81bea3bf619fb2c1af73308bc7911cf532e12e5ea5c33e4d6b0737df",
-    "mapping_hash": "00b6ec2475e09b673a2725f0ab6a6e5c125832ce086b0a18a93496628d3c783d",
+    "mapping_hash": "a5eb2e01948aabe0ad779368f8066da034111d31ffbb7ee313cb563c9ccdf3f8",
     "mapping_summary": {
       "accepted": 68,
       "auto": 50,
@@ -393,18 +393,18 @@
       }
     ],
     "reviewer_overrides": [],
-    "run_id": "11c60cbe-0cfe-4d34-871f-37f6c0a068d9",
+    "run_id": "a1183593-a0e9-406f-b186-7e3214998bd4",
     "schema_version": "1",
     "test_report_passed": true,
     "waived_checks": []
   },
   "receipt": {
-    "certification_id": "c33ba792-efa7-4395-8da8-26cd75237667",
+    "certification_id": "ed635ca2-2159-4b1e-a14c-d8bba89a9991",
     "company_id": "portco_a",
     "excluded_metrics": [],
     "manifest_hash": "5ae6742d81bea3bf619fb2c1af73308bc7911cf532e12e5ea5c33e4d6b0737df",
     "path": "<private-workspace>\\run0\\published\\portco_a\\v0001",
-    "published_at": "2026-09-27T22:51:47.094998Z",
+    "published_at": "2026-09-27T23:04:43.710225Z",
     "published_metrics": [
       "active_customers",
       "arr",
