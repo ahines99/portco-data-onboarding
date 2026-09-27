@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Evidence-backed data onboarding with deterministic financial reconciliation and independent review gates.">
+  <title>Portco Data Onboarding · Alex Hines</title>
+  <style>
+    :root{color-scheme:light;--ink:#172b3b;--muted:#536773;--teal:#006d68;--paper:#f4f7f6}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.65 system-ui,sans-serif}
+    main{max-width:1080px;margin:auto;padding:44px 24px 72px}a{color:var(--teal);text-underline-offset:4px}
+    nav{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:14px;margin-bottom:68px}
+    .eyebrow{font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-weight:750;color:var(--teal)}
+    h1{font-size:clamp(36px,6vw,68px);line-height:1.06;letter-spacing:-.04em;max-width:900px;margin:20px 0}
+    .lead{font-size:21px;max-width:760px;color:var(--muted)}.actions{display:flex;gap:14px;flex-wrap:wrap;margin:28px 0 44px}
+    .button,button{display:inline-block;border:1px solid var(--teal);background:white;color:var(--teal);border-radius:7px;padding:10px 16px;font:inherit;cursor:pointer;text-decoration:none}
+    .primary{background:var(--teal);color:white}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .card,section{background:white;border:1px solid #dbe3e0;border-radius:12px;padding:24px}.card strong{display:block;font-size:20px}
+    .card p{margin:8px 0 0;color:var(--muted);font-size:15px}section{margin-top:28px}h2{font-size:27px;letter-spacing:-.025em;margin:0 0 12px}
+    .note{border-left:3px solid #ba7c24;padding-left:15px;color:var(--muted);font-size:15px}.flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:20px 0}
+    .flow span{padding:9px 13px;background:#edf4f2;border-radius:6px}.flow .gate{background:#fff0d4;border:1px solid #e2bc79}
+    .controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0}input[type=range]{flex:1;min-width:140px;accent-color:var(--teal)}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#112735;color:#daf0e9;border-radius:8px;padding:20px;font:14px/1.7 ui-monospace,monospace;max-height:420px;overflow:auto}
+    .links{display:grid;grid-template-columns:1fr 1fr;gap:12px}footer{margin-top:36px;font-size:14px;color:var(--muted)}
+    @media(max-width:650px){.cards,.links{grid-template-columns:1fr}nav{margin-bottom:36px}main{padding:26px 16px}.card,section{padding:20px}}
+    :focus-visible{outline:3px solid #d88c24;outline-offset:4px}
+  </style>
+</head>
+<body><main>
+  <nav aria-label="Main"><strong>Alex Hines / Data engineering</strong><a href="https://github.com/ahines99/portco-data-onboarding">Source &amp; reproducible quickstart ↗</a></nav>
+  <div class="eyebrow">Portfolio company data onboarding</div>
+  <h1>Unfamiliar data.<br>Explainable mappings.<br>Certified metrics.</h1>
+  <p class="lead">A governed workflow that turns synthetic company schemas into tested dbt models—carrying evidence, review decisions and reconciliation through to publication.</p>
+  <div class="actions"><a class="button primary" href="#demo">Watch the scripted replay</a><a class="button" href="https://github.com/ahines99/portco-data-onboarding/blob/main/docs/portfolio_case_study.md">Read the case study</a></div>
+  <div class="cards">
+    <div class="card"><strong>Evidence before action</strong><p>Unit mismatches and ambiguous revenue meanings become review items with traceable evidence.</p></div>
+    <div class="card"><strong>Deterministic calculations</strong><p>Nine generated monthly metrics are executed and checked against independent reference calculations.</p></div>
+    <div class="card"><strong>Separate human gates</strong><p>The agent role cannot approve. Publication requires current certification for the bundle and its metrics.</p></div>
+  </div>
+  <section aria-labelledby="workflow"><h2 id="workflow">A workflow you can inspect</h2>
+    <div class="flow" aria-label="Source to profile to mapping review to dbt and reconciliation to certification to publication">
+      <span>Source profile</span> → <span>Mapping</span> → <span class="gate">Review</span> → <span>dbt + reconciliation</span> → <span class="gate">Certification</span> → <span>Publish</span>
+    </div>
+    <p>Database state survives process restarts. Content-bound approvals expire when inputs change. Publication recovers from failures between filesystem rename and database commit.</p>
+    <a href="https://github.com/ahines99/portco-data-onboarding/blob/main/docs/architecture.md">Explore architecture and design decisions →</a>
+  </section>
+  <section id="demo" aria-labelledby="demo-title"><h2 id="demo-title">Actual output. Replayable evidence.</h2>
+    <p class="note">This is recorded stdout from the automated synthetic demo. Reviewer decisions are scripted. It is not a live model session or a recording of Alex approving data. No backend or model API runs on this page.</p>
+    <div class="controls"><button id="play" type="button">Play</button><button id="reset" type="button">Restart</button><label for="seek">Time</label><input id="seek" type="range" min="0" max="1" step="0.1" value="0"><output id="time">Loading…</output></div>
+    <pre id="terminal" tabindex="0" aria-label="Recorded demo transcript">Loading the captured demo…</pre>
+    <a href="evidence/demo-transcript.txt">Read the full accessible transcript</a>
+  </section>
+  <section><h2>Follow a result back to its evidence</h2><div class="links">
+    <a href="https://github.com/ahines99/portco-data-onboarding/blob/main/docs/evidence/success-report.md">Successful run report →</a>
+    <a href="https://github.com/ahines99/portco-data-onboarding/blob/main/docs/evidence/failure-report.md">Controlled failure report →</a>
+    <a href="evidence/reconciliation.json">Metric reconciliation details →</a><a href="evidence/recovery.json">Populated upgrade and restore proof →</a>
+    <a href="https://github.com/ahines99/portco-data-onboarding/actions">Hosted CI →</a><a href="https://github.com/ahines99/portco-data-onboarding/blob/main/docs/RELEASE-STATUS.md">Release status and remaining handoffs →</a>
+  </div></section>
+  <section><h2>Deliberate boundaries</h2><p>Synthetic DuckDB sources. Versioned local publication. Development authentication. No production deployment or measured business savings. Live Skill usefulness and independent human review remain separate acceptance work.</p><p>The implementation was developed with substantial AI assistance. The case study distinguishes implemented behavior, automated verification and evidence still requiring human participation.</p></section>
+  <footer>Python · dbt · DuckDB · PostgreSQL · MCP · MIT licensed. <a href="https://github.com/ahines99">GitHub profile</a></footer>
+</main><script>
+  const terminal=document.getElementById('terminal'),seek=document.getElementById('seek'),time=document.getElementById('time'),play=document.getElementById('play');
+  let recording,position=0,running=false,last=0;
+  function draw(){if(!recording)return;terminal.textContent=recording.frames.filter(f=>f.seconds<=position).map(f=>f.text).join('\n')||'Starting the captured run…';terminal.scrollTop=terminal.scrollHeight;seek.value=position;time.textContent=position.toFixed(1)+' / '+recording.duration.toFixed(1)+' s';play.textContent=running?'Pause':'Play';}
+  function tick(now){if(running&&recording){position=Math.min(recording.duration,position+(now-last)/1000);if(position===recording.duration)running=false;draw();}last=now;requestAnimationFrame(tick);}
+  play.addEventListener('click',()=>{if(!recording)return;if(position>=recording.duration)position=0;running=!running;draw();});
+  document.getElementById('reset').addEventListener('click',()=>{position=0;running=false;draw();});
+  seek.addEventListener('input',()=>{position=Number(seek.value);draw();});
+  fetch('evidence/demo-replay.json').then(r=>{if(!r.ok)throw Error('unavailable');return r.json();}).then(data=>{recording=data;seek.max=data.duration;draw();}).catch(()=>{terminal.textContent='Replay unavailable. Use the full transcript link below.';time.textContent='Unavailable';play.disabled=true;});
+  requestAnimationFrame(tick);
+</script></body></html>

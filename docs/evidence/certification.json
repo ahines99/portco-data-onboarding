@@ -1,0 +1,424 @@
+{
+  "approvals": [
+    "c33ba792-efa7-4395-8da8-26cd75237667"
+  ],
+  "packet": {
+    "certification_ids": [
+      "c33ba792-efa7-4395-8da8-26cd75237667"
+    ],
+    "certified_metrics": [
+      "active_customers",
+      "arr",
+      "billings",
+      "cogs",
+      "ebitda",
+      "gross_margin_pct",
+      "mrr",
+      "opex",
+      "revenue_recognized"
+    ],
+    "evidence_ids": [
+      "1cbb6c6c-7b13-55d3-be40-b17306718d06",
+      "2ad2ba2c-b3bc-5e38-a303-9c09962d5c8b",
+      "391f17ef-0e93-5239-bf1d-ef6f2a89e271",
+      "39d41c70-62b9-5818-abd2-0f49dd6165d3",
+      "4aa57b1d-dd16-51ae-90f0-b6ceda51000d",
+      "518b021b-f46a-5006-b330-6bd7984c8aaf",
+      "5fdf3e58-6590-5b50-bcf2-c61ada9b63fe",
+      "62828a84-fbc1-5bda-9942-f2c99207b0d3",
+      "6553e596-687f-5318-8dcd-95f56db01aea",
+      "67244ace-ef4d-55a7-93bb-c710941f649b",
+      "6b805726-0519-584f-8113-fcf60dd17177",
+      "89b4afd2-7afd-5883-b673-f486614c031a",
+      "8abe3cb5-d0cc-56c1-b472-f1436067844f",
+      "94880de7-4710-52cf-8d71-b37838d3647b",
+      "a2fe9ada-cccf-5a9f-bd52-6d972a3bf565",
+      "a98b24e1-aeb6-529c-8457-634ef037e8cd",
+      "bdd5b036-741d-5802-9ee4-336548145a58",
+      "bdddd25c-4a79-529f-b25e-9cf17acb4134",
+      "c2eddc9b-088a-52b3-9a7c-7141a706dae7",
+      "ca48d94e-41ce-5a78-9834-ecc228f48e10",
+      "d11024a2-92d2-53ea-8907-e2aad34d3345",
+      "e3603d75-0579-540f-b196-c9c53c45fcd4",
+      "ead33491-89a8-5fba-bee5-7e83752bf5f6",
+      "f4ea0504-5896-5ddd-b66b-fd64c03f42c6",
+      "f82a69ab-a047-5b89-98d5-5ab69e37049f"
+    ],
+    "excluded_metrics": [],
+    "failing_checks": [],
+    "joins": [
+      {
+        "cardinality": "N:1",
+        "confidence": "high",
+        "containment_ratio": 0.918,
+        "evidence_id": "bdddd25c-4a79-529f-b25e-9cf17acb4134",
+        "join_id": "billing.customers.crm_account_ref->crm.accounts.acct_id",
+        "left_columns": [
+          "crm_account_ref"
+        ],
+        "left_table": "billing.customers",
+        "name_score": 0.9,
+        "orphan_rate": 0.0787,
+        "reason_codes": [
+          "ORPHANS",
+          "ENTITY_OVERLAP"
+        ],
+        "requires_review": true,
+        "right_columns": [
+          "acct_id"
+        ],
+        "right_table": "crm.accounts",
+        "score": 0.909
+      },
+      {
+        "cardinality": "N:1",
+        "confidence": "high",
+        "containment_ratio": 1.0,
+        "evidence_id": "67244ace-ef4d-55a7-93bb-c710941f649b",
+        "join_id": "billing.invoice_lines.inv_no->billing.invoices.inv_no",
+        "left_columns": [
+          "inv_no"
+        ],
+        "left_table": "billing.invoice_lines",
+        "name_score": 1.0,
+        "orphan_rate": 0.0,
+        "reason_codes": [],
+        "requires_review": false,
+        "right_columns": [
+          "inv_no"
+        ],
+        "right_table": "billing.invoices",
+        "score": 1.0
+      },
+      {
+        "cardinality": "N:1",
+        "confidence": "high",
+        "containment_ratio": 1.0,
+        "evidence_id": "ca48d94e-41ce-5a78-9834-ecc228f48e10",
+        "join_id": "billing.invoices.cust_id->billing.customers.cust_id",
+        "left_columns": [
+          "cust_id"
+        ],
+        "left_table": "billing.invoices",
+        "name_score": 1.0,
+        "orphan_rate": 0.0,
+        "reason_codes": [],
+        "requires_review": false,
+        "right_columns": [
+          "cust_id"
+        ],
+        "right_table": "billing.customers",
+        "score": 1.0
+      },
+      {
+        "cardinality": "1:1",
+        "confidence": "high",
+        "containment_ratio": 1.0,
+        "evidence_id": "6b805726-0519-584f-8113-fcf60dd17177",
+        "join_id": "billing.payments.inv_no->billing.invoices.inv_no",
+        "left_columns": [
+          "inv_no"
+        ],
+        "left_table": "billing.payments",
+        "name_score": 1.0,
+        "orphan_rate": 0.0,
+        "reason_codes": [],
+        "requires_review": false,
+        "right_columns": [
+          "inv_no"
+        ],
+        "right_table": "billing.invoices",
+        "score": 1.0
+      },
+      {
+        "cardinality": "N:1",
+        "confidence": "high",
+        "containment_ratio": 1.0,
+        "evidence_id": "ead33491-89a8-5fba-bee5-7e83752bf5f6",
+        "join_id": "billing.subscriptions.cust_id->billing.customers.cust_id",
+        "left_columns": [
+          "cust_id"
+        ],
+        "left_table": "billing.subscriptions",
+        "name_score": 1.0,
+        "orphan_rate": 0.0,
+        "reason_codes": [],
+        "requires_review": false,
+        "right_columns": [
+          "cust_id"
+        ],
+        "right_table": "billing.customers",
+        "score": 1.0
+      },
+      {
+        "cardinality": "N:1",
+        "confidence": "high",
+        "containment_ratio": 1.0,
+        "evidence_id": "c2eddc9b-088a-52b3-9a7c-7141a706dae7",
+        "join_id": "crm.contacts.acct_id->crm.accounts.acct_id",
+        "left_columns": [
+          "acct_id"
+        ],
+        "left_table": "crm.contacts",
+        "name_score": 1.0,
+        "orphan_rate": 0.0,
+        "reason_codes": [],
+        "requires_review": false,
+        "right_columns": [
+          "acct_id"
+        ],
+        "right_table": "crm.accounts",
+        "score": 1.0
+      },
+      {
+        "cardinality": "N:1",
+        "confidence": "high",
+        "containment_ratio": 1.0,
+        "evidence_id": "94880de7-4710-52cf-8d71-b37838d3647b",
+        "join_id": "crm.opportunities.acct_id->crm.accounts.acct_id",
+        "left_columns": [
+          "acct_id"
+        ],
+        "left_table": "crm.opportunities",
+        "name_score": 1.0,
+        "orphan_rate": 0.0,
+        "reason_codes": [],
+        "requires_review": false,
+        "right_columns": [
+          "acct_id"
+        ],
+        "right_table": "crm.accounts",
+        "score": 1.0
+      },
+      {
+        "cardinality": "N:1",
+        "confidence": "high",
+        "containment_ratio": 1.0,
+        "evidence_id": "518b021b-f46a-5006-b330-6bd7984c8aaf",
+        "join_id": "erp.journal_lines.acct_code->erp.gl_accounts.acct_code",
+        "left_columns": [
+          "acct_code"
+        ],
+        "left_table": "erp.journal_lines",
+        "name_score": 1.0,
+        "orphan_rate": 0.0,
+        "reason_codes": [],
+        "requires_review": false,
+        "right_columns": [
+          "acct_code"
+        ],
+        "right_table": "erp.gl_accounts",
+        "score": 1.0
+      }
+    ],
+    "manifest_hash": "5ae6742d81bea3bf619fb2c1af73308bc7911cf532e12e5ea5c33e4d6b0737df",
+    "mapping_hash": "00b6ec2475e09b673a2725f0ab6a6e5c125832ce086b0a18a93496628d3c783d",
+    "mapping_summary": {
+      "accepted": 68,
+      "auto": 50,
+      "overridden": 0,
+      "rejected": 0,
+      "reviewed": 18
+    },
+    "metrics": [
+      {
+        "description": "Distinct customers with positive MRR at month end.",
+        "formula": "count_distinct(customer_id) where mrr > 0 at month end",
+        "metric": "active_customers",
+        "reason": null,
+        "status": "generated"
+      },
+      {
+        "description": "Average ARR per active customer.",
+        "formula": "arr / active_customers",
+        "metric": "arpa",
+        "reason": "reference_only: computed by the reference service, not the semantic layer",
+        "status": "reference_only"
+      },
+      {
+        "description": "Annual recurring revenue = 12 x month-end MRR.",
+        "formula": "12 * mrr",
+        "metric": "arr",
+        "reason": null,
+        "status": "generated"
+      },
+      {
+        "description": "Invoiced amount per month and currency. Billings are not revenue.",
+        "formula": "sum(invoice.total_amount) by month(invoice.invoice_date), invoice.currency",
+        "metric": "billings",
+        "reason": null,
+        "status": "generated"
+      },
+      {
+        "description": "ARR lost from customers whose MRR fell to zero.",
+        "formula": "sum(12 * mrr_(t-1)) where mrr_t = 0",
+        "metric": "churned_arr",
+        "reason": "reference_only: computed by the reference service, not the semantic layer",
+        "status": "reference_only"
+      },
+      {
+        "description": "Cost of goods sold from the general ledger.",
+        "formula": "sum(debit_amount - credit_amount) where account_type = 'cogs'",
+        "metric": "cogs",
+        "reason": null,
+        "status": "generated"
+      },
+      {
+        "description": "ARR decrease from customers that remain active.",
+        "formula": "sum(12 * (mrr_(t-1) - mrr_t)) where both > 0 and mrr_t < mrr_(t-1)",
+        "metric": "contraction_arr",
+        "reason": "reference_only: computed by the reference service, not the semantic layer",
+        "status": "reference_only"
+      },
+      {
+        "description": "Days sales outstanding = open receivables at month end / billings in month * days in month.",
+        "formula": "ar_open(month_end) / billings(month) * days_in_month",
+        "metric": "dso",
+        "reason": "reference_only: computed by the reference service, not the semantic layer",
+        "status": "reference_only"
+      },
+      {
+        "description": "revenue_recognized - cogs - opex (D&A excluded by construction).",
+        "formula": "revenue_recognized - cogs - opex",
+        "metric": "ebitda",
+        "reason": null,
+        "status": "generated"
+      },
+      {
+        "description": "ARR increase from existing customers.",
+        "formula": "sum(12 * (mrr_t - mrr_(t-1))) where both > 0 and mrr_t > mrr_(t-1)",
+        "metric": "expansion_arr",
+        "reason": "reference_only: computed by the reference service, not the semantic layer",
+        "status": "reference_only"
+      },
+      {
+        "description": "(revenue_recognized - cogs) / revenue_recognized.",
+        "formula": "(revenue_recognized - cogs) / revenue_recognized",
+        "metric": "gross_margin_pct",
+        "reason": null,
+        "status": "generated"
+      },
+      {
+        "description": "Gross revenue retention over trailing 12 months (expansion capped).",
+        "formula": "sum(min(arr_t, arr_(t-12)) of cohort) / sum(arr_(t-12) of cohort)",
+        "metric": "grr",
+        "reason": "reference_only: computed by the reference service, not the semantic layer",
+        "status": "reference_only"
+      },
+      {
+        "description": "Employees employed at month end.",
+        "formula": "count(employee) where hire_date <= month_end and (termination_date is null or termination_date > month_end)",
+        "metric": "headcount",
+        "reason": "reference_only: computed by the reference service, not the semantic layer",
+        "status": "reference_only"
+      },
+      {
+        "description": "Monthly recurring revenue from subscriptions active at month end.",
+        "formula": "sum(subscription.mrr) where start_date <= month_end < coalesce(end_date, +inf)",
+        "metric": "mrr",
+        "reason": null,
+        "status": "generated"
+      },
+      {
+        "description": "ARR from customers with zero ARR in the prior month.",
+        "formula": "sum(12 * mrr_t) for customers with mrr_(t-1) = 0",
+        "metric": "new_arr",
+        "reason": "reference_only: computed by the reference service, not the semantic layer",
+        "status": "reference_only"
+      },
+      {
+        "description": "Net revenue retention over trailing 12 months for the starting cohort.",
+        "formula": "sum(arr_t of cohort) / sum(arr_(t-12) of cohort); cohort = customers with arr_(t-12) > 0",
+        "metric": "nrr",
+        "reason": "reference_only: computed by the reference service, not the semantic layer",
+        "status": "reference_only"
+      },
+      {
+        "description": "Operating expenses excluding depreciation and amortization.",
+        "formula": "sum(debit_amount - credit_amount) where account_type = 'opex'",
+        "metric": "opex",
+        "reason": null,
+        "status": "generated"
+      },
+      {
+        "description": "Recognized revenue from the general ledger (credits minus debits on revenue accounts).",
+        "formula": "sum(credit_amount - debit_amount) where gl_account.account_type = 'revenue'",
+        "metric": "revenue_recognized",
+        "reason": null,
+        "status": "generated"
+      }
+    ],
+    "open_findings": [
+      {
+        "code": "DUPLICATE_ENTITIES",
+        "confidence": "medium",
+        "status": "supported",
+        "title": "Probable duplicate records in billing.customers"
+      },
+      {
+        "code": "ENTITY_OVERLAP",
+        "confidence": "medium",
+        "status": "supported",
+        "title": "2 tables describe 'customer'"
+      },
+      {
+        "code": "MULTI_CURRENCY",
+        "confidence": "high",
+        "status": "supported",
+        "title": "Multiple currencies in billing.customers"
+      },
+      {
+        "code": "MULTI_CURRENCY",
+        "confidence": "high",
+        "status": "supported",
+        "title": "Multiple currencies in billing.invoices"
+      },
+      {
+        "code": "MULTI_CURRENCY",
+        "confidence": "high",
+        "status": "supported",
+        "title": "Multiple currencies in billing.subscriptions"
+      },
+      {
+        "code": "ORPHAN_KEYS",
+        "confidence": "high",
+        "status": "supported",
+        "title": "Orphan keys in billing.customers.crm_account_ref"
+      },
+      {
+        "code": "POSSIBLE_MINOR_UNITS",
+        "confidence": "medium",
+        "status": "supported",
+        "title": "billing.invoice_lines.amount looks like minor currency units"
+      }
+    ],
+    "reviewer_overrides": [],
+    "run_id": "11c60cbe-0cfe-4d34-871f-37f6c0a068d9",
+    "schema_version": "1",
+    "test_report_passed": true,
+    "waived_checks": []
+  },
+  "receipt": {
+    "certification_id": "c33ba792-efa7-4395-8da8-26cd75237667",
+    "company_id": "portco_a",
+    "excluded_metrics": [],
+    "manifest_hash": "5ae6742d81bea3bf619fb2c1af73308bc7911cf532e12e5ea5c33e4d6b0737df",
+    "path": "<private-workspace>\\run0\\published\\portco_a\\v0001",
+    "published_at": "2026-09-27T22:51:47.094998Z",
+    "published_metrics": [
+      "active_customers",
+      "arr",
+      "billings",
+      "cogs",
+      "ebitda",
+      "gross_margin_pct",
+      "mrr",
+      "opex",
+      "revenue_recognized"
+    ],
+    "publisher": "synthetic-reviewer",
+    "reused": false,
+    "schema_version": "1",
+    "version": "v0001"
+  }
+}

@@ -132,9 +132,32 @@ jobs:
           echo "PORTCO_HTTP_TOKENS=$token=agent:ci:agent:portco_a;$reviewer=ci-reviewer:reviewer:portco_a" >> "$GITHUB_ENV"
       - run: docker compose --profile full up --build -d
       - run: uv run python scripts/smoke_container.py
+      - name: Scan actual application image
+        run: |
+          image=$(docker compose --profile full images -q mcp)
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/scan" aquasec/trivy:0.74.0 image --scanners vuln --format json --output /scan/container-audit.json "$image"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: container-audit
+          path: container-audit.json
       - name: Container diagnostics
         if: always()
         run: docker compose --profile full logs --no-color
       - name: Remove isolated CI stack
         if: always()
         run: docker compose --profile full down -v
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with: {enable-cache: true}
+      - run: uv sync --all-extras --frozen
+      - run: uv tool run pip-audit --path .venv/lib/python3.12/site-packages --format json --output dependency-audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-audit
+          path: dependency-audit.json

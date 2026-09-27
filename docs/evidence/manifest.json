@@ -1,0 +1,28 @@
+{
+  "command": "uv run python -m scripts.release_evidence",
+  "commit": "b61d5599169d264a5b1616fe20cf742f9a0c8ab5",
+  "dirty": true,
+  "files": {
+    "benchmark.json": "09d5df5a6f62e99d68f25a10fde302c09ae02c6e06db98d03c64104079abbf31",
+    "certification.json": "5893b884da4eda725269961d09cd904044dd7992b29e08cc756a24e78a91e9b3",
+    "failure-report.md": "746d0a11de448b275211cc50d84dc8f7f329d0b36a11a0525607afce4bf87810",
+    "finding-lineage.json": "615897fe7d951197c44fcfd66002cb84bab4453cc56354fc63a656f095e79584",
+    "gross_margin_pct.yml": "93560546c787f0bd07decf8951527219d429061a7f579514d05ad3c6fcbb5f72",
+    "reconciliation.json": "3ab550f94436749a85f811acec832878a338d0667b1cf70494ebad8816a43def",
+    "recovery.json": "858a664cef3db118ce51ea63daca871ea04f6cf447db3e976547b4b64dff24e4",
+    "staging-example.sql": "139d9085fef27ce5a53f5db2ad392c772a2637b2e79561e01c5e34b8c9750283",
+    "success-report.md": "cdfa8afab9fae55cf4c2cf8a844d79cbd9075fa4817ef02008249a4575212458"
+  },
+  "fixture_truth_sha256": "0ebde4268857b7e13fbe5f674bbd289e2e4092e77a848ad487524c022d926adb",
+  "generated_at": "2026-09-27T22:52:16.097831+00:00",
+  "lock_sha256": "2fa78b3ced3ccf845abd21df33ededea785d872186d6ab5a19aa4d78b2d863b0",
+  "normalization": "Private workspace prefix replaced; raw runtime state retained locally. Shared metadata is not an unmodified signed audit export.",
+  "reviewer": "AUTOMATED SYNTHETIC TEST DECISIONS; not independent human review",
+  "versions": {
+    "dbt-core": "1.11.15",
+    "dbt-duckdb": "1.10.1",
+    "duckdb": "1.5.5",
+    "mcp": "2.2.0",
+    "sqlparse": "0.6.0"
+  }
+}

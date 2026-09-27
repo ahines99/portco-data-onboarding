@@ -1,6 +1,7 @@
 # Portfolio finalization roadmap
 
-Date: 2026-09-27. Status: planning complete; the tasks below have not been executed by this roadmap.
+Date: 2026-09-27. Execution authorized. See [release status](RELEASE-STATUS.md) for completed work,
+verification and remaining human handoffs. The observations below describe the planning baseline.
 Owner names: **Codex** means implementation, investigation, testing and preparation I can perform;
 **Alex** means your decisions, account access, independent human reviews and publication choices.
 

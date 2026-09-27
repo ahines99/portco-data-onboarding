@@ -1,0 +1,20 @@
+{
+  "method": "3 fresh fixture A workflows, each followed by an unchanged-input rerun; synthetic approvals; no human waiting; not a scale benchmark",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "AMD64 Family 26 Model 8 Stepping 1, AuthenticAMD",
+  "python": "3.12.10",
+  "runs": [
+    {
+      "cold_seconds": 8.993,
+      "reused_seconds": 0.46
+    },
+    {
+      "cold_seconds": 8.926,
+      "reused_seconds": 0.441
+    },
+    {
+      "cold_seconds": 9.178,
+      "reused_seconds": 0.473
+    }
+  ]
+}

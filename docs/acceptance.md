@@ -43,7 +43,7 @@ property breaks.
 | Evidence and provenance preserved | ✅ Deterministic evidence ids, lineage resource, hash-chained audit |
 | Stops at approval boundaries | ✅ Three gates, hash-bound approvals, separation of duties |
 | At least one Agent Skill | ✅ Five, linted against the live server |
-| Integration tests | ✅ 451 non-Postgres tests, four PostgreSQL 14.24 tests, and 37 gating eval cases passed locally |
+| Integration tests | ✅ 459 non-Postgres tests locally; four PostgreSQL tests in hosted CI on version 16; 37 gating eval cases |
 | End-to-end demo with success and controlled failure paths | ✅ `poe demo` |
 
 ## Hardening after the independent audit
@@ -66,16 +66,15 @@ semantics are documented in [ADR-0012](adr/0012-recoverable-publication.md).
 - Live with-vs-without-Skill and LLM-judge comparisons need model sessions/credentials. They have
   separate harnesses: `scripts/compare_skills.py` ([protocol](skill_comparison.md)) and
   `evals/judge_eval.py --mode record`. Neither harness alone proves a live comparison occurred.
-- The four Postgres tests passed against isolated PostgreSQL 14.24 on 2026-09-27, including full
-  certified publication, concurrent audit/publication and crash recovery. CI targets PostgreSQL 16;
-  CI itself has not yet run on a hosted runner.
-- `scripts/smoke_container.py` and the container CI job cover the real Compose migration revision,
-  HTTP bearer auth/refusal and state surviving an MCP container restart. Docker is unavailable
-  locally, so the container smoke remains unexecuted here. The wheel smoke runs separately.
+- The four Postgres tests passed against isolated PostgreSQL 14.24 locally and PostgreSQL 16 in hosted
+  CI, including certified publication, concurrent audit/publication and crash recovery.
+- Hosted container smoke passed migration, bearer auth/refusal, separate synthetic reviewer approval,
+  certified publication, file hashes, audit verification and full stack recreation. Minimal installed
+  wheel/sdist demos and stdio MCP passed on both Linux and Windows hosted runners.
 - POD-609's live parts (a recorded Claude Code session and the with-vs-without-Skill comparison) are
   still open; they need a model session.
-- The `mf validate-configs` MetricFlow CLI check is not installed. dbt parse/build and the local
-  semantic executor validate and execute all nine generated metrics at the supported monthly grain,
-  including zero-denominator behavior. This is not a run of the MetricFlow CLI/runtime.
+- Isolated MetricFlow 0.15.0 validation was attempted and failed with a bytes/string parsing error.
+  See [compatibility investigation](metricflow-investigation.md). The local executor still validates
+  all nine generated monthly metrics, including zero denominators; full MetricFlow is not supported.
 - The optional `telemetry` extra installs the HTTP OTLP exporter. Local HTTP collector export is
   covered by `tests/test_otlp_export.py`; deployment to an external collector remains environment-specific.

@@ -1,5 +1,15 @@
 # Portfolio Company Data Onboarding Agent
 
+[![CI](https://github.com/ahines99/portco-data-onboarding/actions/workflows/ci.yml/badge.svg)](https://github.com/ahines99/portco-data-onboarding/actions/workflows/ci.yml)
+
+**[Project page and recorded scripted replay](https://ahines99.github.io/portco-data-onboarding/)** ·
+[Case study](docs/portfolio_case_study.md) · [Sample reports](docs/evidence/README.md) ·
+[Release status](docs/RELEASE-STATUS.md)
+
+Synthetic-data portfolio prototype by Alex Hines, developed with substantial AI assistance.
+The recorded fixture demo uses automated reviewer decisions. A real agent session with independent
+human approval and the paired Skill study remain explicit [human handoffs](docs/HUMAN-HANDOFF.md).
+
 Onboards an unfamiliar portfolio company's data into a canonical private-equity data model:
 
 1. Profiles the source through aggregates and explicitly approved category domains.
@@ -49,7 +59,7 @@ uv sync --all-extras && uv run poe demo
 | Guess when unsure | Routes low-confidence, metric-bearing, PII, conflicting, unit-mismatched and "looks like revenue but isn't" mappings to review. Metrics without evidence are `NEEDS_EVIDENCE`, never estimated. |
 | Let you type "approved" | Accepts approvals only from reviewer principals, never from the agent, and never from whoever started the run. Each approval is bound to a hash of exactly what was reviewed, and any later change revokes it. Publishing without a valid certification fails closed. |
 | Follow instructions it reads | Treats source text as untrusted data. Instruction-like comments and values are flagged and withheld, and cannot change workflow state (eval case G15). |
-| Be judged by vibes | Has CI gates for 37 golden evaluation cases across seven dimensions, plus 451 local tests and four PostgreSQL tests, including security and failure injection. All passed locally; the hosted CI run remains unverified. |
+| Be judged by vibes | Has CI gates for 37 golden evaluation cases across seven dimensions, plus 459 non-Postgres tests and four PostgreSQL tests, including security and failure injection. See the dated release evidence for exact scope. |
 
 ## Quickstart
 
@@ -119,6 +129,8 @@ acceptance audit: [docs/acceptance.md](docs/acceptance.md) ·
 portfolio finalization: [docs/PORTFOLIO-ROADMAP.md](docs/PORTFOLIO-ROADMAP.md) ·
 September audit and fixes: [docs/REMEDIATION-2026-09-27.md](docs/REMEDIATION-2026-09-27.md)
 
+Setup, tokens, upgrades and recovery: [operations](docs/operations.md).
+
 ## Results (at time of writing)
 
 | Measure | Result |
@@ -139,11 +151,14 @@ September audit and fixes: [docs/REMEDIATION-2026-09-27.md](docs/REMEDIATION-202
   deterministic baseline ([ADR-0010](docs/adr/0010-llm-mapping-judge.md)).
 - HTTP auth uses static dev bearer tokens; production needs an OAuth/JWT verifier.
 - Postgres-specific tests are separate from the default local suite. Four tests passed against an
-  isolated PostgreSQL 14.24 instance on 2026-09-27, including certified publication and crash recovery.
-  Hosted CI uses PostgreSQL 16; that hosted run remains unverified.
-- Wheel and Docker smoke jobs are configured in CI. The Docker smoke verifies migrations,
-  unauthenticated refusal, authenticated MCP calls and state across an MCP container restart;
-  a local Docker run remains unverified because Docker is unavailable here.
+  isolated PostgreSQL 14.24 instance locally and PostgreSQL 16 in hosted CI on 2026-09-27.
+- Hosted CI passed minimal wheel/sdist checks on Linux and Windows, and actual Docker tests for
+  migrations, auth, certified publication, file hashes, audit integrity, MCP restart and full stack
+  recreation with both named volumes preserved. Local Docker is unavailable; the CI run is the proof.
+- An additional unfamiliar-schema probe is reported in full, including missed predictions, in
+  [heldout-probe.json](docs/evidence/heldout-probe.json). Fixture accuracy is not real-world accuracy.
+- MetricFlow 0.15.0 configuration validation failed in the isolated compatibility experiment;
+  the supported local semantic executor is not a claim of full MetricFlow runtime compatibility.
 - A recorded Claude Code session and the live with-vs-without-Skill comparison are still to do
   (they need a model session); the static Skill checks run in the test suite. The
   [three-prompt comparison harness](docs/skill_comparison.md) records and scores real transcripts

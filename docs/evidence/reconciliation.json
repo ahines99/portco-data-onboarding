@@ -1,0 +1,2076 @@
+{
+  "cached": true,
+  "dbt_exit_code": 0,
+  "dbt_results": [
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.dim_contact"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.dim_customer"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.dim_employee"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.dim_gl_account"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.fct_gl_entry"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.fct_invoice"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.fct_invoice_line"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.fct_mrr_monthly"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.fct_opportunity"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.fct_payment"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.fct_subscription"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.int_billing__customers"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.int_billing__invoice_lines"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.int_billing__invoices"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.int_billing__payments"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.int_billing__subscriptions"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.int_crm__accounts"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.int_crm__contacts"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.int_crm__opportunities"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.int_erp__gl_accounts"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.int_erp__journal_lines"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.int_hr__employees"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.metricflow_time_spine"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.stg_billing__customers"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.stg_billing__invoice_lines"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.stg_billing__invoices"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.stg_billing__payments"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.stg_billing__subscriptions"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.stg_crm__accounts"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.stg_crm__contacts"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.stg_crm__opportunities"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.stg_erp__gl_accounts"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.stg_erp__journal_lines"
+    },
+    {
+      "failures": null,
+      "message": "OK",
+      "resource_type": "model",
+      "status": "success",
+      "unique_id": "model.portco_a.stg_hr__employees"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.accepted_values_stg_billing__customers_country__DE__FR__GB__US.77faf6f5e9"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.accepted_values_stg_billing__customers_currency__EUR__GBP__USD.72193ce51f"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.accepted_values_stg_billing__invoice_lines_sku__SVC_FEE__enterprise__growth__scale__starter.5fa12f76fc"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.accepted_values_stg_billing__invoices_currency__EUR__GBP__USD.acbc8bf237"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.accepted_values_stg_billing__invoices_status__open__paid.99fe845d69"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.accepted_values_stg_billing__payments_method__ach__card__wire.19dbedcaff"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.accepted_values_stg_billing__subscriptions_currency__EUR__GBP__USD.10aebe6281"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.accepted_values_stg_billing__subscriptions_plan_code__enterprise__growth__scale__starter.6b212d466b"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.accepted_values_stg_billing__subscriptions_status__active__cancelled__downgraded__upgraded.ced6b3e754"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.accepted_values_stg_crm__accounts_industry__education__energy__financial_services__healthcare__logistics__manufacturing__media__retail.ccc92938d2"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.accepted_values_stg_crm__opportunities_stage__closed_lost__closed_won__negotiation__proposal__prospecting.48834eeec8"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.accepted_values_stg_erp__gl_accounts_account_type__asset__cogs__da__liability__opex__revenue.78a250146e"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.accepted_values_stg_erp__journal_lines_entity_code__EU01__UK01__US01.92f32cf1e8"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.accepted_values_stg_hr__employees_department__Engineering__G_A__Marketing__Product__Sales__Support.165d975788"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.non_negative_fct_mrr_monthly_mrr.8a4d125247"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.non_negative_stg_billing__invoice_lines_amount.59aa3b3951"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.non_negative_stg_billing__invoice_lines_quantity.9689620d39"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.non_negative_stg_billing__invoices_total_amount.11f64c8679"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.non_negative_stg_billing__payments_amount.8b278211f3"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.non_negative_stg_billing__subscriptions_mrr.64602993d2"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.non_negative_stg_crm__opportunities_amount.33e0ba3624"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.non_negative_stg_erp__journal_lines_credit_amount.bdbd9c4053"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.non_negative_stg_erp__journal_lines_debit_amount.fc366d76e4"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.non_negative_stg_hr__employees_salary.728629db92"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_dim_contact_contact_id.912ab2ef27"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_dim_customer_customer_id.9775012dfc"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_dim_employee_employee_id.a23f287404"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_dim_gl_account_account_code.c002f3b2ea"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_fct_gl_entry_gl_entry_key.2b54eee8dd"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_fct_invoice_invoice_id.813bd6e054"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_fct_invoice_line_invoice_line_id.f170c67a43"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_fct_mrr_monthly_mrr_snapshot_id.09e144a75a"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_fct_opportunity_opportunity_id.c8eebf9ccd"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_fct_payment_payment_id.06038c857e"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_fct_subscription_subscription_id.f82f10ff2e"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__customers_customer_id.1658725484"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__customers_customer_name.ff87fcbbd8"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__invoice_lines_amount.1b39050c08"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__invoice_lines_invoice_id.720dcb3bfb"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__invoice_lines_invoice_line_id.4d715d9853"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__invoices_currency.582ff367c6"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__invoices_customer_id.98064e3ae0"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__invoices_invoice_date.117684d86c"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__invoices_invoice_id.1f598ab0d9"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__invoices_total_amount.2090bb295a"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__payments_amount.5ddc47278b"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__payments_invoice_id.9f792c5026"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__payments_payment_id.fd4f690f8d"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__subscriptions_currency.8f55c90d5c"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__subscriptions_customer_id.e6890da955"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__subscriptions_mrr.8801c80ae2"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__subscriptions_start_date.047ecc1f24"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_billing__subscriptions_subscription_id.98f6b38026"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_crm__accounts_crm_account_id.0559f1b147"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_crm__accounts_customer_name.5f980aff31"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_crm__contacts_contact_id.3cb8d59d59"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_crm__opportunities_opportunity_id.549d90c9a3"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_erp__gl_accounts_account_code.de133088d5"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_erp__gl_accounts_account_type.f635c066ed"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_erp__journal_lines_account_code.b3a80fc398"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_erp__journal_lines_credit_amount.15d12a4880"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_erp__journal_lines_debit_amount.fdcb90e116"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_erp__journal_lines_journal_id.c3fa572327"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_erp__journal_lines_line_number.016ab94118"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_erp__journal_lines_posting_date.0d4e0273cd"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_hr__employees_employee_id.4a7055c550"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.not_null_stg_hr__employees_hire_date.1802542ee9"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.portco_unique_combination_stg_erp__journal_lines_journal_id__line_number.6613e5dd23"
+    },
+    {
+      "failures": 10,
+      "message": "Got 10 results, configured to warn if != 0",
+      "resource_type": "test",
+      "status": "warn",
+      "unique_id": "test.portco_a.relationships_stg_billing__customers_crm_account_id__crm_account_id__ref_stg_crm__accounts_.c39b58fed2"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.relationships_stg_billing__invoice_lines_invoice_id__invoice_id__ref_stg_billing__invoices_.f5e39eb6b3"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.relationships_stg_billing__invoices_customer_id__customer_id__ref_stg_billing__customers_.cd0b70f6d6"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.relationships_stg_billing__payments_invoice_id__invoice_id__ref_stg_billing__invoices_.e728ff60a9"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.relationships_stg_billing__subscriptions_customer_id__customer_id__ref_stg_billing__customers_.50c683b322"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.relationships_stg_crm__contacts_crm_account_id__crm_account_id__ref_stg_crm__accounts_.1b2bfe1f7d"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.relationships_stg_crm__opportunities_crm_account_id__crm_account_id__ref_stg_crm__accounts_.3a9c196d47"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.relationships_stg_erp__journal_lines_account_code__account_code__ref_stg_erp__gl_accounts_.bfd85a42a2"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_dim_contact_contact_id.3bd643dd14"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_dim_customer_customer_id.b42affccd1"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_dim_employee_employee_id.2ebb85abad"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_dim_gl_account_account_code.67f7532815"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_fct_gl_entry_gl_entry_key.3801c154f3"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_fct_invoice_invoice_id.63070e6089"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_fct_invoice_line_invoice_line_id.56b98bc125"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_fct_mrr_monthly_mrr_snapshot_id.7a3a1e3d9c"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_fct_opportunity_opportunity_id.a72765726b"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_fct_payment_payment_id.256adef19d"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_fct_subscription_subscription_id.6bc5fdccbc"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_stg_billing__customers_customer_id.a2cc762eb6"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_stg_billing__invoice_lines_invoice_line_id.4c64199666"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_stg_billing__invoices_invoice_id.867ca383d5"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_stg_billing__payments_payment_id.c86083f661"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_stg_billing__subscriptions_subscription_id.0651e708e4"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_stg_crm__accounts_crm_account_id.58746916b7"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_stg_crm__contacts_contact_id.e7b60d1603"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_stg_crm__opportunities_opportunity_id.e707211251"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_stg_erp__gl_accounts_account_code.e6345f3373"
+    },
+    {
+      "failures": 0,
+      "message": null,
+      "resource_type": "test",
+      "status": "pass",
+      "unique_id": "test.portco_a.unique_stg_hr__employees_employee_id.7398847059"
+    }
+  ],
+  "duration_seconds": 6.84,
+  "failing_checks": [],
+  "manifest_hash": "5ae6742d81bea3bf619fb2c1af73308bc7911cf532e12e5ea5c33e4d6b0737df",
+  "passed": true,
+  "reconciliation": [
+    {
+      "actual": {
+        "excluded": 3,
+        "rows": 127
+      },
+      "blocking": true,
+      "detail": "source 127 rows, staging 127; filtered 3 (ref 3)",
+      "expected": {
+        "excluded": 3,
+        "rows": 127
+      },
+      "name": "rowcount:billing.customers",
+      "passed": true
+    },
+    {
+      "actual": {
+        "excluded": 0,
+        "rows": 2107
+      },
+      "blocking": true,
+      "detail": "source 2107 rows, staging 2107; filtered 0 (ref 0)",
+      "expected": {
+        "excluded": 0,
+        "rows": 2107
+      },
+      "name": "rowcount:billing.invoice_lines",
+      "passed": true
+    },
+    {
+      "actual": {
+        "excluded": 0,
+        "rows": 1962
+      },
+      "blocking": true,
+      "detail": "source 1962 rows, staging 1962; filtered 0 (ref 0)",
+      "expected": {
+        "excluded": 0,
+        "rows": 1962
+      },
+      "name": "rowcount:billing.invoices",
+      "passed": true
+    },
+    {
+      "actual": {
+        "excluded": 0,
+        "rows": 1801
+      },
+      "blocking": true,
+      "detail": "source 1801 rows, staging 1801; filtered 0 (ref 0)",
+      "expected": {
+        "excluded": 0,
+        "rows": 1801
+      },
+      "name": "rowcount:billing.payments",
+      "passed": true
+    },
+    {
+      "actual": {
+        "excluded": 0,
+        "rows": 165
+      },
+      "blocking": true,
+      "detail": "source 165 rows, staging 165; filtered 0 (ref 0)",
+      "expected": {
+        "excluded": 0,
+        "rows": 165
+      },
+      "name": "rowcount:billing.subscriptions",
+      "passed": true
+    },
+    {
+      "actual": {
+        "excluded": 7,
+        "rows": 122
+      },
+      "blocking": true,
+      "detail": "source 122 rows, staging 122; filtered 7 (ref 7)",
+      "expected": {
+        "excluded": 7,
+        "rows": 122
+      },
+      "name": "rowcount:crm.accounts",
+      "passed": true
+    },
+    {
+      "actual": {
+        "excluded": 0,
+        "rows": 244
+      },
+      "blocking": true,
+      "detail": "source 244 rows, staging 244; filtered 0 (ref 0)",
+      "expected": {
+        "excluded": 0,
+        "rows": 244
+      },
+      "name": "rowcount:crm.contacts",
+      "passed": true
+    },
+    {
+      "actual": {
+        "excluded": 0,
+        "rows": 300
+      },
+      "blocking": true,
+      "detail": "source 300 rows, staging 300; filtered 0 (ref 0)",
+      "expected": {
+        "excluded": 0,
+        "rows": 300
+      },
+      "name": "rowcount:crm.opportunities",
+      "passed": true
+    },
+    {
+      "actual": {
+        "excluded": 0,
+        "rows": 12
+      },
+      "blocking": true,
+      "detail": "source 12 rows, staging 12; filtered 0 (ref 0)",
+      "expected": {
+        "excluded": 0,
+        "rows": 12
+      },
+      "name": "rowcount:erp.gl_accounts",
+      "passed": true
+    },
+    {
+      "actual": {
+        "excluded": 0,
+        "rows": 7739
+      },
+      "blocking": true,
+      "detail": "source 7739 rows, staging 7739; filtered 0 (ref 0)",
+      "expected": {
+        "excluded": 0,
+        "rows": 7739
+      },
+      "name": "rowcount:erp.journal_lines",
+      "passed": true
+    },
+    {
+      "actual": {
+        "excluded": 0,
+        "rows": 60
+      },
+      "blocking": true,
+      "detail": "source 60 rows, staging 60; filtered 0 (ref 0)",
+      "expected": {
+        "excluded": 0,
+        "rows": 60
+      },
+      "name": "rowcount:hr.employees",
+      "passed": true
+    },
+    {
+      "actual": {
+        "periods": 72
+      },
+      "blocking": true,
+      "detail": "billings by month and currency: 72 periods compared exactly",
+      "expected": {
+        "periods": 72
+      },
+      "name": "mart:billings",
+      "passed": true
+    },
+    {
+      "actual": {
+        "periods": 95
+      },
+      "blocking": true,
+      "detail": "ARR by month and currency: 95 periods compared exactly",
+      "expected": {
+        "periods": 95
+      },
+      "name": "mart:arr",
+      "passed": true
+    },
+    {
+      "actual": {
+        "periods": 32
+      },
+      "blocking": true,
+      "detail": "active customers by month: 32 periods compared exactly",
+      "expected": {
+        "periods": 32
+      },
+      "name": "mart:active_customers",
+      "passed": true
+    },
+    {
+      "actual": {
+        "periods": 24
+      },
+      "blocking": true,
+      "detail": "recognized revenue by month: 24 periods compared exactly",
+      "expected": {
+        "periods": 24
+      },
+      "name": "mart:revenue_recognized",
+      "passed": true
+    },
+    {
+      "actual": {
+        "match_ratio": 1.0
+      },
+      "blocking": true,
+      "detail": "1923 of 1923 invoices have line amounts summing to the header total (100.0%)",
+      "expected": {
+        "match_ratio": ">= 0.999"
+      },
+      "name": "consistency:invoice_lines_sum_to_header",
+      "passed": true
+    },
+    {
+      "actual": {
+        "orphan_rate": 0.0787
+      },
+      "blocking": false,
+      "detail": "orphan rate 7.87% (reviewed at 7.87%)",
+      "expected": {
+        "orphan_rate": 0.0787
+      },
+      "name": "orphans:billing.customers.crm_account_ref->crm.accounts.acct_id",
+      "passed": true
+    },
+    {
+      "actual": {
+        "2023-06": "5.00",
+        "2023-07": "8.00",
+        "2023-08": "16.00",
+        "2023-09": "22.00",
+        "2023-10": "27.00",
+        "2023-11": "32.00",
+        "2023-12": "36.00",
+        "2024-01": "41.00",
+        "2024-02": "41.00",
+        "2024-03": "44.00",
+        "2024-04": "51.00",
+        "2024-05": "52.00",
+        "2024-06": "55.00",
+        "2024-07": "60.00",
+        "2024-08": "63.00",
+        "2024-09": "65.00",
+        "2024-10": "70.00",
+        "2024-11": "76.00",
+        "2024-12": "82.00",
+        "2025-01": "81.00",
+        "2025-02": "85.00",
+        "2025-03": "88.00",
+        "2025-04": "90.00",
+        "2025-05": "96.00",
+        "2025-06": "97.00",
+        "2025-07": "100.00",
+        "2025-08": "103.00",
+        "2025-09": "104.00",
+        "2025-10": "108.00",
+        "2025-11": "105.00",
+        "2025-12": "103.00",
+        "2026-01": "100.00"
+      },
+      "blocking": true,
+      "detail": "generated semantic expression: 32 expected monthly groups, 32 actual",
+      "expected": {
+        "2023-06": "5.00",
+        "2023-07": "8.00",
+        "2023-08": "16.00",
+        "2023-09": "22.00",
+        "2023-10": "27.00",
+        "2023-11": "32.00",
+        "2023-12": "36.00",
+        "2024-01": "41.00",
+        "2024-02": "41.00",
+        "2024-03": "44.00",
+        "2024-04": "51.00",
+        "2024-05": "52.00",
+        "2024-06": "55.00",
+        "2024-07": "60.00",
+        "2024-08": "63.00",
+        "2024-09": "65.00",
+        "2024-10": "70.00",
+        "2024-11": "76.00",
+        "2024-12": "82.00",
+        "2025-01": "81.00",
+        "2025-02": "85.00",
+        "2025-03": "88.00",
+        "2025-04": "90.00",
+        "2025-05": "96.00",
+        "2025-06": "97.00",
+        "2025-07": "100.00",
+        "2025-08": "103.00",
+        "2025-09": "104.00",
+        "2025-10": "108.00",
+        "2025-11": "105.00",
+        "2025-12": "103.00",
+        "2026-01": "100.00"
+      },
+      "name": "metric:active_customers",
+      "passed": true
+    },
+    {
+      "actual": {
+        "2023-06|GBP": "9600.00",
+        "2023-06|USD": "94200.00",
+        "2023-07|EUR": "12600.00",
+        "2023-07|GBP": "9600.00",
+        "2023-07|USD": "96750.00",
+        "2023-08|EUR": "12600.00",
+        "2023-08|GBP": "81600.00",
+        "2023-08|USD": "190470.00",
+        "2023-09|EUR": "18300.00",
+        "2023-09|GBP": "153600.00",
+        "2023-09|USD": "274470.00",
+        "2023-10|EUR": "18300.00",
+        "2023-10|GBP": "163200.00",
+        "2023-10|USD": "399870.00",
+        "2023-11|EUR": "90300.00",
+        "2023-11|GBP": "163200.00",
+        "2023-11|USD": "480870.00",
+        "2023-12|EUR": "162300.00",
+        "2023-12|GBP": "163200.00",
+        "2023-12|USD": "627870.00",
+        "2024-01|EUR": "162300.00",
+        "2024-01|GBP": "166200.00",
+        "2024-01|USD": "658710.00",
+        "2024-02|EUR": "162300.00",
+        "2024-02|GBP": "166200.00",
+        "2024-02|USD": "658710.00",
+        "2024-03|EUR": "165000.00",
+        "2024-03|GBP": "166200.00",
+        "2024-03|USD": "722910.00",
+        "2024-04|EUR": "168000.00",
+        "2024-04|GBP": "168750.00",
+        "2024-04|USD": "766950.00",
+        "2024-05|EUR": "161400.00",
+        "2024-05|GBP": "168750.00",
+        "2024-05|USD": "789150.00",
+        "2024-06|EUR": "164400.00",
+        "2024-06|GBP": "168750.00",
+        "2024-06|USD": "826590.00",
+        "2024-07|EUR": "164400.00",
+        "2024-07|GBP": "168750.00",
+        "2024-07|USD": "921090.00",
+        "2024-08|EUR": "164400.00",
+        "2024-08|GBP": "168750.00",
+        "2024-08|USD": "978810.00",
+        "2024-09|EUR": "171000.00",
+        "2024-09|GBP": "168750.00",
+        "2024-09|USD": "991410.00",
+        "2024-10|EUR": "176940.00",
+        "2024-10|GBP": "177390.00",
+        "2024-10|USD": "1101480.00",
+        "2024-11|EUR": "179640.00",
+        "2024-11|GBP": "242190.00",
+        "2024-11|USD": "1193820.00",
+        "2024-12|EUR": "179640.00",
+        "2024-12|GBP": "268110.00",
+        "2024-12|USD": "1316700.00",
+        "2025-01|EUR": "176940.00",
+        "2025-01|GBP": "268110.00",
+        "2025-01|USD": "1344090.00",
+        "2025-02|EUR": "182340.00",
+        "2025-02|GBP": "268110.00",
+        "2025-02|USD": "1410270.00",
+        "2025-03|EUR": "194490.00",
+        "2025-03|GBP": "268110.00",
+        "2025-03|USD": "1418430.00",
+        "2025-04|EUR": "197400.00",
+        "2025-04|GBP": "322830.00",
+        "2025-04|USD": "1439190.00",
+        "2025-05|EUR": "197400.00",
+        "2025-05|GBP": "331470.00",
+        "2025-05|USD": "1484700.00",
+        "2025-06|EUR": "197400.00",
+        "2025-06|GBP": "334470.00",
+        "2025-06|USD": "1507740.00",
+        "2025-07|EUR": "206040.00",
+        "2025-07|GBP": "334470.00",
+        "2025-07|USD": "1490580.00",
+        "2025-08|EUR": "206040.00",
+        "2025-08|GBP": "358950.00",
+        "2025-08|USD": "1528980.00",
+        "2025-09|EUR": "203040.00",
+        "2025-09|GBP": "367560.00",
+        "2025-09|USD": "1594770.00",
+        "2025-10|EUR": "203040.00",
+        "2025-10|GBP": "370560.00",
+        "2025-10|USD": "1641930.00",
+        "2025-11|EUR": "131040.00",
+        "2025-11|GBP": "387840.00",
+        "2025-11|USD": "1608090.00",
+        "2025-12|EUR": "131040.00",
+        "2025-12|GBP": "394440.00",
+        "2025-12|USD": "1620000.00",
+        "2026-01|EUR": "150240.00",
+        "2026-01|GBP": "383760.00",
+        "2026-01|USD": "1561020.00"
+      },
+      "blocking": true,
+      "detail": "generated semantic expression: 95 expected monthly groups, 95 actual",
+      "expected": {
+        "2023-06|GBP": "9600.00",
+        "2023-06|USD": "94200.00",
+        "2023-07|EUR": "12600.00",
+        "2023-07|GBP": "9600.00",
+        "2023-07|USD": "96750.00",
+        "2023-08|EUR": "12600.00",
+        "2023-08|GBP": "81600.00",
+        "2023-08|USD": "190470.00",
+        "2023-09|EUR": "18300.00",
+        "2023-09|GBP": "153600.00",
+        "2023-09|USD": "274470.00",
+        "2023-10|EUR": "18300.00",
+        "2023-10|GBP": "163200.00",
+        "2023-10|USD": "399870.00",
+        "2023-11|EUR": "90300.00",
+        "2023-11|GBP": "163200.00",
+        "2023-11|USD": "480870.00",
+        "2023-12|EUR": "162300.00",
+        "2023-12|GBP": "163200.00",
+        "2023-12|USD": "627870.00",
+        "2024-01|EUR": "162300.00",
+        "2024-01|GBP": "166200.00",
+        "2024-01|USD": "658710.00",
+        "2024-02|EUR": "162300.00",
+        "2024-02|GBP": "166200.00",
+        "2024-02|USD": "658710.00",
+        "2024-03|EUR": "165000.00",
+        "2024-03|GBP": "166200.00",
+        "2024-03|USD": "722910.00",
+        "2024-04|EUR": "168000.00",
+        "2024-04|GBP": "168750.00",
+        "2024-04|USD": "766950.00",
+        "2024-05|EUR": "161400.00",
+        "2024-05|GBP": "168750.00",
+        "2024-05|USD": "789150.00",
+        "2024-06|EUR": "164400.00",
+        "2024-06|GBP": "168750.00",
+        "2024-06|USD": "826590.00",
+        "2024-07|EUR": "164400.00",
+        "2024-07|GBP": "168750.00",
+        "2024-07|USD": "921090.00",
+        "2024-08|EUR": "164400.00",
+        "2024-08|GBP": "168750.00",
+        "2024-08|USD": "978810.00",
+        "2024-09|EUR": "171000.00",
+        "2024-09|GBP": "168750.00",
+        "2024-09|USD": "991410.00",
+        "2024-10|EUR": "176940.00",
+        "2024-10|GBP": "177390.00",
+        "2024-10|USD": "1101480.00",
+        "2024-11|EUR": "179640.00",
+        "2024-11|GBP": "242190.00",
+        "2024-11|USD": "1193820.00",
+        "2024-12|EUR": "179640.00",
+        "2024-12|GBP": "268110.00",
+        "2024-12|USD": "1316700.00",
+        "2025-01|EUR": "176940.00",
+        "2025-01|GBP": "268110.00",
+        "2025-01|USD": "1344090.00",
+        "2025-02|EUR": "182340.00",
+        "2025-02|GBP": "268110.00",
+        "2025-02|USD": "1410270.00",
+        "2025-03|EUR": "194490.00",
+        "2025-03|GBP": "268110.00",
+        "2025-03|USD": "1418430.00",
+        "2025-04|EUR": "197400.00",
+        "2025-04|GBP": "322830.00",
+        "2025-04|USD": "1439190.00",
+        "2025-05|EUR": "197400.00",
+        "2025-05|GBP": "331470.00",
+        "2025-05|USD": "1484700.00",
+        "2025-06|EUR": "197400.00",
+        "2025-06|GBP": "334470.00",
+        "2025-06|USD": "1507740.00",
+        "2025-07|EUR": "206040.00",
+        "2025-07|GBP": "334470.00",
+        "2025-07|USD": "1490580.00",
+        "2025-08|EUR": "206040.00",
+        "2025-08|GBP": "358950.00",
+        "2025-08|USD": "1528980.00",
+        "2025-09|EUR": "203040.00",
+        "2025-09|GBP": "367560.00",
+        "2025-09|USD": "1594770.00",
+        "2025-10|EUR": "203040.00",
+        "2025-10|GBP": "370560.00",
+        "2025-10|USD": "1641930.00",
+        "2025-11|EUR": "131040.00",
+        "2025-11|GBP": "387840.00",
+        "2025-11|USD": "1608090.00",
+        "2025-12|EUR": "131040.00",
+        "2025-12|GBP": "394440.00",
+        "2025-12|USD": "1620000.00",
+        "2026-01|EUR": "150240.00",
+        "2026-01|GBP": "383760.00",
+        "2026-01|USD": "1561020.00"
+      },
+      "name": "metric:arr",
+      "passed": true
+    },
+    {
+      "actual": {
+        "2024-02|EUR": "15525.00",
+        "2024-02|GBP": "13850.00",
+        "2024-02|USD": "59492.50",
+        "2024-03|EUR": "13750.00",
+        "2024-03|GBP": "13850.00",
+        "2024-03|USD": "65142.50",
+        "2024-04|EUR": "14000.00",
+        "2024-04|GBP": "16062.50",
+        "2024-04|USD": "69212.50",
+        "2024-05|EUR": "19050.00",
+        "2024-05|GBP": "14062.50",
+        "2024-05|USD": "67462.50",
+        "2024-06|EUR": "13700.00",
+        "2024-06|GBP": "14062.50",
+        "2024-06|USD": "69782.50",
+        "2024-07|EUR": "13700.00",
+        "2024-07|GBP": "17062.50",
+        "2024-07|USD": "79857.50",
+        "2024-08|EUR": "13700.00",
+        "2024-08|GBP": "14062.50",
+        "2024-08|USD": "90167.50",
+        "2024-09|EUR": "16950.00",
+        "2024-09|GBP": "15362.50",
+        "2024-09|USD": "85717.50",
+        "2024-10|EUR": "16445.00",
+        "2024-10|GBP": "14782.50",
+        "2024-10|USD": "102590.00",
+        "2024-11|EUR": "14970.00",
+        "2024-11|GBP": "21882.50",
+        "2024-11|USD": "103185.00",
+        "2024-12|EUR": "19570.00",
+        "2024-12|GBP": "23442.50",
+        "2024-12|USD": "113525.00",
+        "2025-01|EUR": "20845.00",
+        "2025-01|GBP": "22342.50",
+        "2025-01|USD": "122757.50",
+        "2025-02|EUR": "15195.00",
+        "2025-02|GBP": "22342.50",
+        "2025-02|USD": "120122.50",
+        "2025-03|EUR": "18707.50",
+        "2025-03|GBP": "29542.50",
+        "2025-03|USD": "121652.50",
+        "2025-04|EUR": "17750.00",
+        "2025-04|GBP": "27402.50",
+        "2025-04|USD": "134232.50",
+        "2025-05|EUR": "20350.00",
+        "2025-05|GBP": "27622.50",
+        "2025-05|USD": "135825.00",
+        "2025-06|EUR": "17050.00",
+        "2025-06|GBP": "27872.50",
+        "2025-06|USD": "131545.00",
+        "2025-07|EUR": "17170.00",
+        "2025-07|GBP": "31972.50",
+        "2025-07|USD": "126915.00",
+        "2025-08|EUR": "20170.00",
+        "2025-08|GBP": "34712.50",
+        "2025-08|USD": "136315.00",
+        "2025-09|EUR": "19220.00",
+        "2025-09|GBP": "34330.00",
+        "2025-09|USD": "140597.50",
+        "2025-10|EUR": "16920.00",
+        "2025-10|GBP": "30880.00",
+        "2025-10|USD": "150627.50",
+        "2025-11|EUR": "10920.00",
+        "2025-11|GBP": "33220.00",
+        "2025-11|USD": "139707.50",
+        "2025-12|EUR": "14520.00",
+        "2025-12|GBP": "37070.00",
+        "2025-12|USD": "155500.00",
+        "2026-01|EUR": "12520.00",
+        "2026-01|GBP": "35180.00",
+        "2026-01|USD": "146285.00"
+      },
+      "blocking": true,
+      "detail": "generated semantic expression: 72 expected monthly groups, 72 actual",
+      "expected": {
+        "2024-02|EUR": "15525.00",
+        "2024-02|GBP": "13850.00",
+        "2024-02|USD": "59492.50",
+        "2024-03|EUR": "13750.00",
+        "2024-03|GBP": "13850.00",
+        "2024-03|USD": "65142.50",
+        "2024-04|EUR": "14000.00",
+        "2024-04|GBP": "16062.50",
+        "2024-04|USD": "69212.50",
+        "2024-05|EUR": "19050.00",
+        "2024-05|GBP": "14062.50",
+        "2024-05|USD": "67462.50",
+        "2024-06|EUR": "13700.00",
+        "2024-06|GBP": "14062.50",
+        "2024-06|USD": "69782.50",
+        "2024-07|EUR": "13700.00",
+        "2024-07|GBP": "17062.50",
+        "2024-07|USD": "79857.50",
+        "2024-08|EUR": "13700.00",
+        "2024-08|GBP": "14062.50",
+        "2024-08|USD": "90167.50",
+        "2024-09|EUR": "16950.00",
+        "2024-09|GBP": "15362.50",
+        "2024-09|USD": "85717.50",
+        "2024-10|EUR": "16445.00",
+        "2024-10|GBP": "14782.50",
+        "2024-10|USD": "102590.00",
+        "2024-11|EUR": "14970.00",
+        "2024-11|GBP": "21882.50",
+        "2024-11|USD": "103185.00",
+        "2024-12|EUR": "19570.00",
+        "2024-12|GBP": "23442.50",
+        "2024-12|USD": "113525.00",
+        "2025-01|EUR": "20845.00",
+        "2025-01|GBP": "22342.50",
+        "2025-01|USD": "122757.50",
+        "2025-02|EUR": "15195.00",
+        "2025-02|GBP": "22342.50",
+        "2025-02|USD": "120122.50",
+        "2025-03|EUR": "18707.50",
+        "2025-03|GBP": "29542.50",
+        "2025-03|USD": "121652.50",
+        "2025-04|EUR": "17750.00",
+        "2025-04|GBP": "27402.50",
+        "2025-04|USD": "134232.50",
+        "2025-05|EUR": "20350.00",
+        "2025-05|GBP": "27622.50",
+        "2025-05|USD": "135825.00",
+        "2025-06|EUR": "17050.00",
+        "2025-06|GBP": "27872.50",
+        "2025-06|USD": "131545.00",
+        "2025-07|EUR": "17170.00",
+        "2025-07|GBP": "31972.50",
+        "2025-07|USD": "126915.00",
+        "2025-08|EUR": "20170.00",
+        "2025-08|GBP": "34712.50",
+        "2025-08|USD": "136315.00",
+        "2025-09|EUR": "19220.00",
+        "2025-09|GBP": "34330.00",
+        "2025-09|USD": "140597.50",
+        "2025-10|EUR": "16920.00",
+        "2025-10|GBP": "30880.00",
+        "2025-10|USD": "150627.50",
+        "2025-11|EUR": "10920.00",
+        "2025-11|GBP": "33220.00",
+        "2025-11|USD": "139707.50",
+        "2025-12|EUR": "14520.00",
+        "2025-12|GBP": "37070.00",
+        "2025-12|USD": "155500.00",
+        "2026-01|EUR": "12520.00",
+        "2026-01|GBP": "35180.00",
+        "2026-01|USD": "146285.00"
+      },
+      "name": "metric:billings",
+      "passed": true
+    },
+    {
+      "actual": {
+        "2024-02": "20030.47",
+        "2024-03": "21316.86",
+        "2024-04": "22285.13",
+        "2024-05": "22574.01",
+        "2024-06": "23353.71",
+        "2024-07": "25164.96",
+        "2024-08": "26271.26",
+        "2024-09": "26649.38",
+        "2024-10": "29092.32",
+        "2024-11": "32495.40",
+        "2024-12": "35481.54",
+        "2025-01": "35950.62",
+        "2025-02": "37330.85",
+        "2025-03": "37738.76",
+        "2025-04": "39528.88",
+        "2025-05": "40611.46",
+        "2025-06": "41126.08",
+        "2025-07": "40976.04",
+        "2025-08": "42307.92",
+        "2025-09": "43716.37",
+        "2025-10": "44693.30",
+        "2025-11": "42974.93",
+        "2025-12": "43363.85",
+        "2026-01": "42370.87"
+      },
+      "blocking": true,
+      "detail": "generated semantic expression: 24 expected monthly groups, 24 actual",
+      "expected": {
+        "2024-02": "20030.47",
+        "2024-03": "21316.86",
+        "2024-04": "22285.13",
+        "2024-05": "22574.01",
+        "2024-06": "23353.71",
+        "2024-07": "25164.96",
+        "2024-08": "26271.26",
+        "2024-09": "26649.38",
+        "2024-10": "29092.32",
+        "2024-11": "32495.40",
+        "2024-12": "35481.54",
+        "2025-01": "35950.62",
+        "2025-02": "37330.85",
+        "2025-03": "37738.76",
+        "2025-04": "39528.88",
+        "2025-05": "40611.46",
+        "2025-06": "41126.08",
+        "2025-07": "40976.04",
+        "2025-08": "42307.92",
+        "2025-09": "43716.37",
+        "2025-10": "44693.30",
+        "2025-11": "42974.93",
+        "2025-12": "43363.85",
+        "2026-01": "42370.87"
+      },
+      "name": "metric:cogs",
+      "passed": true
+    },
+    {
+      "actual": {
+        "2024-02": "-60981.47",
+        "2024-03": "-62634.86",
+        "2024-04": "-60953.25",
+        "2024-05": "-39078.13",
+        "2024-06": "-67915.83",
+        "2024-07": "-49742.08",
+        "2024-08": "-27248.38",
+        "2024-09": "-38815.50",
+        "2024-10": "-28267.94",
+        "2024-11": "-22752.02",
+        "2024-12": "-1248.96",
+        "2025-01": "-405.54",
+        "2025-02": "10577.23",
+        "2025-03": "15136.82",
+        "2025-04": "19674.80",
+        "2025-05": "3572.12",
+        "2025-06": "17431.00",
+        "2025-07": "-1212.36",
+        "2025-08": "29575.56",
+        "2025-09": "39737.83",
+        "2025-10": "24725.40",
+        "2025-11": "19315.57",
+        "2025-12": "45196.65",
+        "2026-01": "30914.33"
+      },
+      "blocking": true,
+      "detail": "generated semantic expression: 24 expected monthly groups, 24 actual",
+      "expected": {
+        "2024-02": "-60981.47",
+        "2024-03": "-62634.86",
+        "2024-04": "-60953.25",
+        "2024-05": "-39078.13",
+        "2024-06": "-67915.83",
+        "2024-07": "-49742.08",
+        "2024-08": "-27248.38",
+        "2024-09": "-38815.50",
+        "2024-10": "-28267.94",
+        "2024-11": "-22752.02",
+        "2024-12": "-1248.96",
+        "2025-01": "-405.54",
+        "2025-02": "10577.23",
+        "2025-03": "15136.82",
+        "2025-04": "19674.80",
+        "2025-05": "3572.12",
+        "2025-06": "17431.00",
+        "2025-07": "-1212.36",
+        "2025-08": "29575.56",
+        "2025-09": "39737.83",
+        "2025-10": "24725.40",
+        "2025-11": "19315.57",
+        "2025-12": "45196.65",
+        "2026-01": "30914.33"
+      },
+      "name": "metric:ebitda",
+      "passed": true
+    },
+    {
+      "actual": {
+        "2024-02": "0.7866",
+        "2024-03": "0.7815",
+        "2024-04": "0.7872",
+        "2024-05": "0.7868",
+        "2024-06": "0.7720",
+        "2024-07": "0.7837",
+        "2024-08": "0.7861",
+        "2024-09": "0.7843",
+        "2024-10": "0.7909",
+        "2024-11": "0.7792",
+        "2024-12": "0.7842",
+        "2025-01": "0.7930",
+        "2025-02": "0.7736",
+        "2025-03": "0.7896",
+        "2025-04": "0.7900",
+        "2025-05": "0.7895",
+        "2025-06": "0.7781",
+        "2025-07": "0.7798",
+        "2025-08": "0.7907",
+        "2025-09": "0.7867",
+        "2025-10": "0.7853",
+        "2025-11": "0.7781",
+        "2025-12": "0.8013",
+        "2026-01": "0.7928"
+      },
+      "blocking": true,
+      "detail": "generated semantic expression: 24 expected monthly groups, 24 actual",
+      "expected": {
+        "2024-02": "0.7866",
+        "2024-03": "0.7815",
+        "2024-04": "0.7872",
+        "2024-05": "0.7868",
+        "2024-06": "0.7720",
+        "2024-07": "0.7837",
+        "2024-08": "0.7861",
+        "2024-09": "0.7843",
+        "2024-10": "0.7909",
+        "2024-11": "0.7792",
+        "2024-12": "0.7842",
+        "2025-01": "0.7930",
+        "2025-02": "0.7736",
+        "2025-03": "0.7896",
+        "2025-04": "0.7900",
+        "2025-05": "0.7895",
+        "2025-06": "0.7781",
+        "2025-07": "0.7798",
+        "2025-08": "0.7907",
+        "2025-09": "0.7867",
+        "2025-10": "0.7853",
+        "2025-11": "0.7781",
+        "2025-12": "0.8013",
+        "2026-01": "0.7928"
+      },
+      "name": "metric:gross_margin_pct",
+      "passed": true
+    },
+    {
+      "actual": {
+        "2023-06|GBP": "800.00",
+        "2023-06|USD": "7850.00",
+        "2023-07|EUR": "1050.00",
+        "2023-07|GBP": "800.00",
+        "2023-07|USD": "8062.50",
+        "2023-08|EUR": "1050.00",
+        "2023-08|GBP": "6800.00",
+        "2023-08|USD": "15872.50",
+        "2023-09|EUR": "1525.00",
+        "2023-09|GBP": "12800.00",
+        "2023-09|USD": "22872.50",
+        "2023-10|EUR": "1525.00",
+        "2023-10|GBP": "13600.00",
+        "2023-10|USD": "33322.50",
+        "2023-11|EUR": "7525.00",
+        "2023-11|GBP": "13600.00",
+        "2023-11|USD": "40072.50",
+        "2023-12|EUR": "13525.00",
+        "2023-12|GBP": "13600.00",
+        "2023-12|USD": "52322.50",
+        "2024-01|EUR": "13525.00",
+        "2024-01|GBP": "13850.00",
+        "2024-01|USD": "54892.50",
+        "2024-02|EUR": "13525.00",
+        "2024-02|GBP": "13850.00",
+        "2024-02|USD": "54892.50",
+        "2024-03|EUR": "13750.00",
+        "2024-03|GBP": "13850.00",
+        "2024-03|USD": "60242.50",
+        "2024-04|EUR": "14000.00",
+        "2024-04|GBP": "14062.50",
+        "2024-04|USD": "63912.50",
+        "2024-05|EUR": "13450.00",
+        "2024-05|GBP": "14062.50",
+        "2024-05|USD": "65762.50",
+        "2024-06|EUR": "13700.00",
+        "2024-06|GBP": "14062.50",
+        "2024-06|USD": "68882.50",
+        "2024-07|EUR": "13700.00",
+        "2024-07|GBP": "14062.50",
+        "2024-07|USD": "76757.50",
+        "2024-08|EUR": "13700.00",
+        "2024-08|GBP": "14062.50",
+        "2024-08|USD": "81567.50",
+        "2024-09|EUR": "14250.00",
+        "2024-09|GBP": "14062.50",
+        "2024-09|USD": "82617.50",
+        "2024-10|EUR": "14745.00",
+        "2024-10|GBP": "14782.50",
+        "2024-10|USD": "91790.00",
+        "2024-11|EUR": "14970.00",
+        "2024-11|GBP": "20182.50",
+        "2024-11|USD": "99485.00",
+        "2024-12|EUR": "14970.00",
+        "2024-12|GBP": "22342.50",
+        "2024-12|USD": "109725.00",
+        "2025-01|EUR": "14745.00",
+        "2025-01|GBP": "22342.50",
+        "2025-01|USD": "112007.50",
+        "2025-02|EUR": "15195.00",
+        "2025-02|GBP": "22342.50",
+        "2025-02|USD": "117522.50",
+        "2025-03|EUR": "16207.50",
+        "2025-03|GBP": "22342.50",
+        "2025-03|USD": "118202.50",
+        "2025-04|EUR": "16450.00",
+        "2025-04|GBP": "26902.50",
+        "2025-04|USD": "119932.50",
+        "2025-05|EUR": "16450.00",
+        "2025-05|GBP": "27622.50",
+        "2025-05|USD": "123725.00",
+        "2025-06|EUR": "16450.00",
+        "2025-06|GBP": "27872.50",
+        "2025-06|USD": "125645.00",
+        "2025-07|EUR": "17170.00",
+        "2025-07|GBP": "27872.50",
+        "2025-07|USD": "124215.00",
+        "2025-08|EUR": "17170.00",
+        "2025-08|GBP": "29912.50",
+        "2025-08|USD": "127415.00",
+        "2025-09|EUR": "16920.00",
+        "2025-09|GBP": "30630.00",
+        "2025-09|USD": "132897.50",
+        "2025-10|EUR": "16920.00",
+        "2025-10|GBP": "30880.00",
+        "2025-10|USD": "136827.50",
+        "2025-11|EUR": "10920.00",
+        "2025-11|GBP": "32320.00",
+        "2025-11|USD": "134007.50",
+        "2025-12|EUR": "10920.00",
+        "2025-12|GBP": "32870.00",
+        "2025-12|USD": "135000.00",
+        "2026-01|EUR": "12520.00",
+        "2026-01|GBP": "31980.00",
+        "2026-01|USD": "130085.00"
+      },
+      "blocking": true,
+      "detail": "generated semantic expression: 95 expected monthly groups, 95 actual",
+      "expected": {
+        "2023-06|GBP": "800.00",
+        "2023-06|USD": "7850.00",
+        "2023-07|EUR": "1050.00",
+        "2023-07|GBP": "800.00",
+        "2023-07|USD": "8062.50",
+        "2023-08|EUR": "1050.00",
+        "2023-08|GBP": "6800.00",
+        "2023-08|USD": "15872.50",
+        "2023-09|EUR": "1525.00",
+        "2023-09|GBP": "12800.00",
+        "2023-09|USD": "22872.50",
+        "2023-10|EUR": "1525.00",
+        "2023-10|GBP": "13600.00",
+        "2023-10|USD": "33322.50",
+        "2023-11|EUR": "7525.00",
+        "2023-11|GBP": "13600.00",
+        "2023-11|USD": "40072.50",
+        "2023-12|EUR": "13525.00",
+        "2023-12|GBP": "13600.00",
+        "2023-12|USD": "52322.50",
+        "2024-01|EUR": "13525.00",
+        "2024-01|GBP": "13850.00",
+        "2024-01|USD": "54892.50",
+        "2024-02|EUR": "13525.00",
+        "2024-02|GBP": "13850.00",
+        "2024-02|USD": "54892.50",
+        "2024-03|EUR": "13750.00",
+        "2024-03|GBP": "13850.00",
+        "2024-03|USD": "60242.50",
+        "2024-04|EUR": "14000.00",
+        "2024-04|GBP": "14062.50",
+        "2024-04|USD": "63912.50",
+        "2024-05|EUR": "13450.00",
+        "2024-05|GBP": "14062.50",
+        "2024-05|USD": "65762.50",
+        "2024-06|EUR": "13700.00",
+        "2024-06|GBP": "14062.50",
+        "2024-06|USD": "68882.50",
+        "2024-07|EUR": "13700.00",
+        "2024-07|GBP": "14062.50",
+        "2024-07|USD": "76757.50",
+        "2024-08|EUR": "13700.00",
+        "2024-08|GBP": "14062.50",
+        "2024-08|USD": "81567.50",
+        "2024-09|EUR": "14250.00",
+        "2024-09|GBP": "14062.50",
+        "2024-09|USD": "82617.50",
+        "2024-10|EUR": "14745.00",
+        "2024-10|GBP": "14782.50",
+        "2024-10|USD": "91790.00",
+        "2024-11|EUR": "14970.00",
+        "2024-11|GBP": "20182.50",
+        "2024-11|USD": "99485.00",
+        "2024-12|EUR": "14970.00",
+        "2024-12|GBP": "22342.50",
+        "2024-12|USD": "109725.00",
+        "2025-01|EUR": "14745.00",
+        "2025-01|GBP": "22342.50",
+        "2025-01|USD": "112007.50",
+        "2025-02|EUR": "15195.00",
+        "2025-02|GBP": "22342.50",
+        "2025-02|USD": "117522.50",
+        "2025-03|EUR": "16207.50",
+        "2025-03|GBP": "22342.50",
+        "2025-03|USD": "118202.50",
+        "2025-04|EUR": "16450.00",
+        "2025-04|GBP": "26902.50",
+        "2025-04|USD": "119932.50",
+        "2025-05|EUR": "16450.00",
+        "2025-05|GBP": "27622.50",
+        "2025-05|USD": "123725.00",
+        "2025-06|EUR": "16450.00",
+        "2025-06|GBP": "27872.50",
+        "2025-06|USD": "125645.00",
+        "2025-07|EUR": "17170.00",
+        "2025-07|GBP": "27872.50",
+        "2025-07|USD": "124215.00",
+        "2025-08|EUR": "17170.00",
+        "2025-08|GBP": "29912.50",
+        "2025-08|USD": "127415.00",
+        "2025-09|EUR": "16920.00",
+        "2025-09|GBP": "30630.00",
+        "2025-09|USD": "132897.50",
+        "2025-10|EUR": "16920.00",
+        "2025-10|GBP": "30880.00",
+        "2025-10|USD": "136827.50",
+        "2025-11|EUR": "10920.00",
+        "2025-11|GBP": "32320.00",
+        "2025-11|USD": "134007.50",
+        "2025-12|EUR": "10920.00",
+        "2025-12|GBP": "32870.00",
+        "2025-12|USD": "135000.00",
+        "2026-01|EUR": "12520.00",
+        "2026-01|GBP": "31980.00",
+        "2026-01|USD": "130085.00"
+      },
+      "name": "metric:mrr",
+      "passed": true
+    },
+    {
+      "actual": {
+        "2024-02": "134800.00",
+        "2024-03": "138900.00",
+        "2024-04": "143400.00",
+        "2024-05": "122400.00",
+        "2024-06": "147000.00",
+        "2024-07": "140900.00",
+        "2024-08": "123800.00",
+        "2024-09": "135700.00",
+        "2024-10": "138300.00",
+        "2024-11": "137400.00",
+        "2024-12": "130200.00",
+        "2025-01": "138100.00",
+        "2025-02": "117000.00",
+        "2025-03": "126500.00",
+        "2025-04": "129000.00",
+        "2025-05": "148700.00",
+        "2025-06": "126800.00",
+        "2025-07": "146300.00",
+        "2025-08": "130300.00",
+        "2025-09": "121500.00",
+        "2025-10": "138700.00",
+        "2025-11": "131400.00",
+        "2025-12": "129700.00",
+        "2026-01": "131200.00"
+      },
+      "blocking": true,
+      "detail": "generated semantic expression: 24 expected monthly groups, 24 actual",
+      "expected": {
+        "2024-02": "134800.00",
+        "2024-03": "138900.00",
+        "2024-04": "143400.00",
+        "2024-05": "122400.00",
+        "2024-06": "147000.00",
+        "2024-07": "140900.00",
+        "2024-08": "123800.00",
+        "2024-09": "135700.00",
+        "2024-10": "138300.00",
+        "2024-11": "137400.00",
+        "2024-12": "130200.00",
+        "2025-01": "138100.00",
+        "2025-02": "117000.00",
+        "2025-03": "126500.00",
+        "2025-04": "129000.00",
+        "2025-05": "148700.00",
+        "2025-06": "126800.00",
+        "2025-07": "146300.00",
+        "2025-08": "130300.00",
+        "2025-09": "121500.00",
+        "2025-10": "138700.00",
+        "2025-11": "131400.00",
+        "2025-12": "129700.00",
+        "2026-01": "131200.00"
+      },
+      "name": "metric:opex",
+      "passed": true
+    },
+    {
+      "actual": {
+        "2024-02": "93849.00",
+        "2024-03": "97582.00",
+        "2024-04": "104731.88",
+        "2024-05": "105895.88",
+        "2024-06": "102437.88",
+        "2024-07": "116322.88",
+        "2024-08": "122822.88",
+        "2024-09": "123533.88",
+        "2024-10": "139124.38",
+        "2024-11": "147143.38",
+        "2024-12": "164432.58",
+        "2025-01": "173645.08",
+        "2025-02": "164908.08",
+        "2025-03": "179375.58",
+        "2025-04": "188203.68",
+        "2025-05": "192883.58",
+        "2025-06": "185357.08",
+        "2025-07": "186063.68",
+        "2025-08": "202183.48",
+        "2025-09": "204954.20",
+        "2025-10": "208118.70",
+        "2025-11": "193690.50",
+        "2025-12": "218260.50",
+        "2026-01": "204485.20"
+      },
+      "blocking": true,
+      "detail": "generated semantic expression: 24 expected monthly groups, 24 actual",
+      "expected": {
+        "2024-02": "93849.00",
+        "2024-03": "97582.00",
+        "2024-04": "104731.88",
+        "2024-05": "105895.88",
+        "2024-06": "102437.88",
+        "2024-07": "116322.88",
+        "2024-08": "122822.88",
+        "2024-09": "123533.88",
+        "2024-10": "139124.38",
+        "2024-11": "147143.38",
+        "2024-12": "164432.58",
+        "2025-01": "173645.08",
+        "2025-02": "164908.08",
+        "2025-03": "179375.58",
+        "2025-04": "188203.68",
+        "2025-05": "192883.58",
+        "2025-06": "185357.08",
+        "2025-07": "186063.68",
+        "2025-08": "202183.48",
+        "2025-09": "204954.20",
+        "2025-10": "208118.70",
+        "2025-11": "193690.50",
+        "2025-12": "218260.50",
+        "2026-01": "204485.20"
+      },
+      "name": "metric:revenue_recognized",
+      "passed": true
+    }
+  ],
+  "schema_version": "1",
+  "source_fingerprint": "dfbac586f00a93231f1280789d450afe16bc8f809ca77e0e48ec6ab83810aac8",
+  "waived_checks": []
+}

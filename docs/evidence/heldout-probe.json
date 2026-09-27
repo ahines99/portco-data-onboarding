@@ -1,0 +1,97 @@
+{
+  "scope": "10 labeled columns in 3 synthetic unfamiliar tables, 8 records/table; no outcome-based mapper changes",
+  "limitations": "Small probe created by the implementation assistant, not an external blinded dataset. net_minor is cents; labels score targets only, not unit conversion correctness.",
+  "pipeline_version": "263da1f98a7e92378e6675428313a03c2a097aa4637ed91d504916e3d812ee49",
+  "commit": "b61d5599169d264a5b1616fe20cf742f9a0c8ab5",
+  "labels_sha256": "83e9fea6db5ffc9476b75426757fe53cc050f655a31e00b59dce592b41721509",
+  "correct": 0,
+  "labeled": 10,
+  "proposal_count": 0,
+  "missing_predictions": 10,
+  "wrong_without_review": 0,
+  "status": "needs_review",
+  "gate": "certification",
+  "rows": [
+    {
+      "source": "legacy.payer_registry.account_key",
+      "expected": "customer.customer_id",
+      "actual": null,
+      "correct": false,
+      "requires_review": null,
+      "confidence": null
+    },
+    {
+      "source": "legacy.payer_registry.legal_label",
+      "expected": "customer.customer_name",
+      "actual": null,
+      "correct": false,
+      "requires_review": null,
+      "confidence": null
+    },
+    {
+      "source": "legacy.payer_registry.ccy_iso",
+      "expected": "customer.currency",
+      "actual": null,
+      "correct": false,
+      "requires_review": null,
+      "confidence": null
+    },
+    {
+      "source": "legacy.sales_deals.deal_key",
+      "expected": "opportunity.opportunity_id",
+      "actual": null,
+      "correct": false,
+      "requires_review": null,
+      "confidence": null
+    },
+    {
+      "source": "legacy.sales_deals.buyer_key",
+      "expected": "opportunity.crm_account_id",
+      "actual": null,
+      "correct": false,
+      "requires_review": null,
+      "confidence": null
+    },
+    {
+      "source": "legacy.sales_deals.rev",
+      "expected": "opportunity.amount",
+      "actual": null,
+      "correct": false,
+      "requires_review": null,
+      "confidence": null
+    },
+    {
+      "source": "legacy.invoice_register.document_key",
+      "expected": "invoice.invoice_id",
+      "actual": null,
+      "correct": false,
+      "requires_review": null,
+      "confidence": null
+    },
+    {
+      "source": "legacy.invoice_register.buyer_key",
+      "expected": "invoice.customer_id",
+      "actual": null,
+      "correct": false,
+      "requires_review": null,
+      "confidence": null
+    },
+    {
+      "source": "legacy.invoice_register.net_minor",
+      "expected": "invoice.total_amount",
+      "actual": null,
+      "correct": false,
+      "requires_review": null,
+      "confidence": null
+    },
+    {
+      "source": "legacy.invoice_register.issue_date",
+      "expected": "invoice.invoice_date",
+      "actual": null,
+      "correct": false,
+      "requires_review": null,
+      "confidence": null
+    }
+  ],
+  "unlabeled_proposals": []
+}
