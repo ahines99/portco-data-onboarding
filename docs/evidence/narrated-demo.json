@@ -1,0 +1,12 @@
+{
+  "label": "Synthetic voice and actual recorded fixture evidence; not a live human session",
+  "voice": "Microsoft Windows SAPI default desktop voice",
+  "duration_seconds": 230.91,
+  "source_release": "v0.1.0",
+  "captions": "Estimated sentence timing, included as selectable English MP4 subtitles",
+  "files": {
+    "portco-narrated-demo.mp4": "5057ef29ea3622f95e5c1e88cece885e1e91738e48ef9851aa748fa5462e8ebf",
+    "portco-demo.srt": "240219076eece8aac1c6006c36fc2a0bb894e63e5d5a5231e73a7d03c52a9adb",
+    "portco-narration.txt": "96f0f13d10ee03bb994dd7882b7d250d60905cc580158ed169e47e39c7831bfc"
+  }
+}

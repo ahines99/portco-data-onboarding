@@ -1,0 +1,498 @@
+USER PROMPT
+Onboard fixture:portco_a__malformed. Explain quality findings and safe next steps. Do not approve on my behalf.
+
+NOTE: Actual Claude Code session; private filesystem paths normalized.
+
+
+ASSISTANT / text
+I'll start the onboarding run for this fixture.
+
+ASSISTANT / tool_use
+{
+  "type": "tool_use",
+  "id": "toolu_01ERutE923vMpPQ4xcye9Z4Y",
+  "name": "mcp__portco__start_onboarding_run",
+  "input": {
+    "connection_id": "fixture:portco_a__malformed"
+  },
+  "caller": {
+    "type": "direct"
+  }
+}
+
+USER / tool_result
+tool_use_id: toolu_01ERutE923vMpPQ4xcye9Z4Y
+{
+  "run_id": "50677023-e7cb-4d60-a13d-d096d92b6eb7",
+  "company_id": "portco_a__malformed",
+  "connection_id": "fixture:portco_a__malformed",
+  "status": "needs_review",
+  "current_step": "mapping_review",
+  "gate": "mapping_review",
+  "pending_review_count": 22,
+  "pending_items": [
+    {
+      "item_key": "mapping:billing.customers.billing_email",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "billing.customers.billing_email -> customer.billing_email",
+      "reason_codes": [
+        "PII_FIELD"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "owner_email",
+        "industry",
+        "customer_name"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:billing.invoice_lines.amount",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "billing.invoice_lines.amount -> invoice_line.amount (suggest cents_to_major)",
+      "reason_codes": [
+        "UNIT_MISMATCH"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "quantity",
+        "unit_price",
+        "invoice_line_id"
+      ],
+      "suggested_transform": "cents_to_major"
+    },
+    {
+      "item_key": "mapping:billing.invoices.total_amt",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "billing.invoices.total_amt -> invoice.total_amount",
+      "reason_codes": [
+        "METRIC_BEARING"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "status",
+        "customer_id",
+        "invoice_id"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:billing.payments.amount",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "billing.payments.amount -> payment.amount",
+      "reason_codes": [
+        "METRIC_BEARING"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "payment_id",
+        "method",
+        "card_last4"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:billing.payments.card_number",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "billing.payments.card_number -> payment.card_number",
+      "reason_codes": [
+        "PII_FIELD"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "card_last4",
+        "invoice_id",
+        "payment_id"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:billing.subscriptions.mrr_amt",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "billing.subscriptions.mrr_amt -> subscription.mrr",
+      "reason_codes": [
+        "METRIC_BEARING"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "status",
+        "currency",
+        "customer_id"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:crm.accounts.owner_email",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "crm.accounts.owner_email -> customer.owner_email",
+      "reason_codes": [
+        "PII_FIELD"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "billing_email",
+        "customer_name",
+        "country"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:crm.accounts.created_dt",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "crm.accounts.created_dt -> customer.created_date (suggest parse_mixed_date)",
+      "reason_codes": [
+        "TRANSFORM_REQUIRED"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "is_deleted",
+        "crm_account_id",
+        "currency"
+      ],
+      "suggested_transform": "parse_mixed_date"
+    },
+    {
+      "item_key": "mapping:crm.contacts.first_name",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "crm.contacts.first_name -> contact.first_name",
+      "reason_codes": [
+        "PII_FIELD"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "last_name",
+        "phone",
+        "contact_id"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:crm.contacts.last_name",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "crm.contacts.last_name -> contact.last_name",
+      "reason_codes": [
+        "PII_FIELD"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "first_name",
+        "phone",
+        "contact_id"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:crm.contacts.email",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "crm.contacts.email -> contact.email",
+      "reason_codes": [
+        "PII_FIELD"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "crm_account_id",
+        "phone",
+        "contact_id"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:crm.contacts.phone",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "crm.contacts.phone -> contact.phone",
+      "reason_codes": [
+        "PII_FIELD"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "contact_id",
+        "last_name",
+        "first_name"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:crm.opportunities.rev",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "crm.opportunities.rev -> opportunity.amount",
+      "reason_codes": [
+        "LOW_CONFIDENCE",
+        "SEMANTIC_TRAP"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "stage",
+        "crm_account_id",
+        "opportunity_id"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:erp.journal_lines.debit",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "erp.journal_lines.debit -> gl_entry.debit_amount",
+      "reason_codes": [
+        "METRIC_BEARING"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "credit_amount",
+        "entity_code",
+        "line_number"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:erp.journal_lines.credit",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "erp.journal_lines.credit -> gl_entry.credit_amount",
+      "reason_codes": [
+        "METRIC_BEARING"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "debit_amount",
+        "entity_code",
+        "account_code"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:hr.employees.full_name",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "hr.employees.full_name -> employee.full_name",
+      "reason_codes": [
+        "PII_FIELD"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "department",
+        "employee_id",
+        "national_id"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:hr.employees.ssn",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "hr.employees.ssn -> employee.national_id",
+      "reason_codes": [
+        "PII_FIELD"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "full_name",
+        "department",
+        "employee_id"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:hr.employees.dob",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "hr.employees.dob -> employee.date_of_birth",
+      "reason_codes": [
+        "PII_FIELD"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [
+        "hire_date",
+        "termination_date",
+        "employee_id"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "filter:billing.customers.cust_name:exclude_match",
+      "gate": "mapping_review",
+      "kind": "row_filter",
+      "summary": "Exclude rows that look like test records in billing.customers.cust_name (3 rows)",
+      "reason_codes": [
+        "ROW_FILTER"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "filter:crm.accounts.acct_nm:exclude_match",
+      "gate": "mapping_review",
+      "kind": "row_filter",
+      "summary": "Exclude rows that look like test records in crm.accounts.acct_nm (2 rows)",
+      "reason_codes": [
+        "ROW_FILTER"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "filter:crm.accounts.is_deleted:exclude_true",
+      "gate": "mapping_review",
+      "kind": "row_filter",
+      "summary": "Exclude rows where flag is true in crm.accounts.is_deleted (5 rows)",
+      "reason_codes": [
+        "ROW_FILTER"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "join:billing.customers.crm_account_ref->crm.accounts.acct_id",
+      "gate": "mapping_review",
+      "kind": "join",
+      "summary": "billing.customers.crm_account_ref->crm.accounts.acct_id (N:1, containment 91.8%, orphans 7.9%)",
+      "reason_codes": [
+        "ORPHANS",
+        "ENTITY_OVERLAP"
+      ],
+      "subject_hash": "f55989ce38459d6db22215ef621b0c99cdee9742f2e26369dadf57a6dd2be734",
+      "alternatives": [],
+      "suggested_transform": null
+    }
+  ],
+  "steps": [
+    {
+      "step": "connection_validation",
+      "status": "completed",
+      "attempts": 1
+    },
+    {
+      "step": "schema_profiling",
+      "status": "completed",
+      "attempts": 1
+    },
+    {
+      "step": "entity_inference",
+      "status": "completed",
+      "attempts": 1
+    },
+    {
+      "step": "join_inference",
+      "status": "completed",
+      "attempts": 1
+    },
+    {
+      "step": "canonical_mapping",
+      "status": "completed",
+      "attempts": 1
+    },
+    {
+      "step": "mapping_review",
+      "status": "needs_review",
+      "attempts": 1
+    },
+    {
+      "step": "artifact_generation",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "step": "automated_tests",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "step": "human_certification",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "step": "publish",
+      "status": "pending",
+      "attempts": 0
+    }
+  ],
+  "error": null,
+  "next_action": "A human reviewer must decide the pending mapping items (submit_mapping_review), then resume_run.",
+  "resources": [
+    "run://50677023-e7cb-4d60-a13d-d096d92b6eb7/summary",
+    "run://50677023-e7cb-4d60-a13d-d096d92b6eb7/findings",
+    "run://50677023-e7cb-4d60-a13d-d096d92b6eb7/audit"
+  ]
+}
+
+ASSISTANT / text
+Let me pull the detailed findings resource for more context on the quality issues.
+
+ASSISTANT / tool_use
+{
+  "type": "tool_use",
+  "id": "toolu_01MjEapM4WjGaCwukM2CMAhV",
+  "name": "ReadMcpResourceTool",
+  "input": {
+    "server": "portco",
+    "uri": "run://50677023-e7cb-4d60-a13d-d096d92b6eb7/findings"
+  },
+  "caller": {
+    "type": "direct"
+  }
+}
+
+USER / tool_result
+tool_use_id: toolu_01MjEapM4WjGaCwukM2CMAhV
+{
+  "contents": [
+    {
+      "uri": "run://50677023-e7cb-4d60-a13d-d096d92b6eb7/findings",
+      "mimeType": "application/json",
+      "text": "[\n {\n  \"assumptions\": [],\n  \"code\": \"CONNECTION_VERIFIED\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"f0143a508565f247c3e65313ffa7aff47a046b45999257e52f0ccd8ad52adbcb\",\n    \"retrieved_at\": \"2026-09-27T23:22:49.837198Z\",\n    \"source_id\": \"1e67dd0d-616c-5a3a-810b-fb6d6ff28cb5\",\n    \"uri\": \"duckdb://portco_a__malformed#probe=connection\"\n   }\n  ],\n  \"finding_id\": \"6e0a325c-55e6-468a-ac7a-07d1e61e1ac7\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"step\": \"connection_validation\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"4 schemas and 11 tables visible; write probe was rejected.\",\n  \"status\": \"supported\",\n  \"title\": \"Read-only connection verified\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"TEST_RECORDS\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"974957afd8bcc13ab42dafd9284bfdb254812c6a22b8e455ffb89e747cd4261f\",\n    \"retrieved_at\": \"2026-09-27T23:22:49.996459Z\",\n    \"source_id\": \"c707e31a-c85d-5108-be09-80f7b9b1585e\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.customers#stat=profile\"\n   }\n  ],\n  \"finding_id\": \"842162e3-55e6-4907-a31e-e0ef1dead26d\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"column\": \"cust_name\",\n   \"rows\": 3,\n   \"step\": \"schema_profiling\",\n   \"table\": \"billing.customers\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"3 rows in billing.customers.cust_name start with 'TEST'.\",\n  \"status\": \"supported\",\n  \"title\": \"Test records in billing.customers\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"DUPLICATE_ENTITIES\",\n  \"confidence\": \"medium\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"974957afd8bcc13ab42dafd9284bfdb254812c6a22b8e455ffb89e747cd4261f\",\n    \"retrieved_at\": \"2026-09-27T23:22:49.996459Z\",\n    \"source_id\": \"c707e31a-c85d-5108-be09-80f7b9b1585e\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.customers#stat=profile\"\n   }\n  ],\n  \"finding_id\": \"583859d0-9abc-4497-8bb2-4e4c25b1873e\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"column\": \"cust_name\",\n   \"duplicate_ratio\": 0.0315,\n   \"step\": \"schema_profiling\",\n   \"table\": \"billing.customers\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"4 of 127 values in billing.customers.cust_name collide after normalizing case and punctuation; the same real-world entity likely has several records.\",\n  \"status\": \"supported\",\n  \"title\": \"Probable duplicate records in billing.customers\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"MULTI_CURRENCY\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"974957afd8bcc13ab42dafd9284bfdb254812c6a22b8e455ffb89e747cd4261f\",\n    \"retrieved_at\": \"2026-09-27T23:22:49.996459Z\",\n    \"source_id\": \"c707e31a-c85d-5108-be09-80f7b9b1585e\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.customers#stat=profile\"\n   }\n  ],\n  \"finding_id\": \"363ca163-56dc-4971-9576-7703d2513d54\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"column\": \"currency\",\n   \"step\": \"schema_profiling\",\n   \"table\": \"billing.customers\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"billing.customers.currency holds 3 currencies (EUR, GBP, USD); no FX table was found, so amounts are never summed across currencies.\",\n  \"status\": \"supported\",\n  \"title\": \"Multiple currencies in billing.customers\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"MIXED_TYPES\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"59ad06dfe7ccf462ee364079ceac9e9237bf8f389a51984284549f352215a503\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.144729Z\",\n    \"source_id\": \"5f11fb61-baad-5cbe-80f8-0c7ad8f04f56\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.invoices#stat=profile\"\n   }\n  ],\n  \"finding_id\": \"be48718c-5c32-4d42-8dab-441ac243f71f\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"column\": \"po_ref\",\n   \"step\": \"schema_profiling\",\n   \"table\": \"billing.invoices\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"490 of 1962 values are numeric, the rest text.\",\n  \"status\": \"supported\",\n  \"title\": \"billing.invoices.po_ref mixes numeric and text values\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"MULTI_CURRENCY\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"59ad06dfe7ccf462ee364079ceac9e9237bf8f389a51984284549f352215a503\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.144729Z\",\n    \"source_id\": \"5f11fb61-baad-5cbe-80f8-0c7ad8f04f56\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.invoices#stat=profile\"\n   }\n  ],\n  \"finding_id\": \"16b71568-0b5a-4c19-8d51-424a45c03877\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"column\": \"currency\",\n   \"step\": \"schema_profiling\",\n   \"table\": \"billing.invoices\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"billing.invoices.currency holds 3 currencies (EUR, GBP, USD); no FX table was found, so amounts are never summed across currencies.\",\n  \"status\": \"supported\",\n  \"title\": \"Multiple currencies in billing.invoices\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"MULTI_CURRENCY\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"40e35a8e9b951b125d40fa84185ad7971753dfe872975e03ac64f4f6f7baabb3\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.335891Z\",\n    \"source_id\": \"2614db99-4269-5647-84b8-6a276020b0bd\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.subscriptions#stat=profile\"\n   }\n  ],\n  \"finding_id\": \"68cadfa8-796b-40e6-a977-52907b4f68ac\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"column\": \"currency\",\n   \"step\": \"schema_profiling\",\n   \"table\": \"billing.subscriptions\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"billing.subscriptions.currency holds 3 currencies (EUR, GBP, USD); no FX table was found, so amounts are never summed across currencies.\",\n  \"status\": \"supported\",\n  \"title\": \"Multiple currencies in billing.subscriptions\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"POSSIBLE_MINOR_UNITS\",\n  \"confidence\": \"medium\",\n  \"evidence\": [\n   {\n    \"as_of\": null,\n    \"excerpt_hash\": null,\n    \"retrieved_at\": \"2026-09-27T23:22:50.836515Z\",\n    \"source_id\": \"6e49bf4d-1bac-56e5-bb20-56745f665e6d\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.invoice_lines#stat=profile\"\n   }\n  ],\n  \"finding_id\": \"c01f70fa-7670-4be0-bcad-4c8431ae51e3\",\n  \"finding_type\": \"calculation\",\n  \"metadata\": {\n   \"column\": \"amount\",\n   \"ratio\": 89.65,\n   \"step\": \"schema_profiling\",\n   \"table\": \"billing.invoice_lines\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"Integer money column whose mean is 90x the median of decimal money columns in the same schema; it is probably stored in cents.\",\n  \"status\": \"supported\",\n  \"title\": \"billing.invoice_lines.amount looks like minor currency units\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"SOFT_DELETE_FLAG\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"4162b9b5c45f19734dc3db0dc11aa481c7295c1b74c00a791fbacd3b3b3c0948\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.431621Z\",\n    \"source_id\": \"6ee28cfe-ccdd-526d-863b-21f3401d679d\",\n    \"uri\": \"duckdb://portco_a__malformed/crm.accounts#stat=profile\"\n   }\n  ],\n  \"finding_id\": \"79c061ef-32c4-4ca1-a2d6-faf21a6cff58\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"column\": \"is_deleted\",\n   \"rows\": 5,\n   \"step\": \"schema_profiling\",\n   \"table\": \"crm.accounts\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"5 rows are flagged deleted.\",\n  \"status\": \"supported\",\n  \"title\": \"Soft-delete flag crm.accounts.is_deleted\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"TEST_RECORDS\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"4162b9b5c45f19734dc3db0dc11aa481c7295c1b74c00a791fbacd3b3b3c0948\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.431621Z\",\n    \"source_id\": \"6ee28cfe-ccdd-526d-863b-21f3401d679d\",\n    \"uri\": \"duckdb://portco_a__malformed/crm.accounts#stat=profile\"\n   }\n  ],\n  \"finding_id\": \"64e188de-7b95-4243-bfeb-66e44c39afa1\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"column\": \"acct_nm\",\n   \"rows\": 2,\n   \"step\": \"schema_profiling\",\n   \"table\": \"crm.accounts\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"2 rows in crm.accounts.acct_nm start with 'TEST'.\",\n  \"status\": \"supported\",\n  \"title\": \"Test records in crm.accounts\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"PII_CLASSIFIED\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"974957afd8bcc13ab42dafd9284bfdb254812c6a22b8e455ffb89e747cd4261f\",\n    \"retrieved_at\": \"2026-09-27T23:22:49.996459Z\",\n    \"source_id\": \"c707e31a-c85d-5108-be09-80f7b9b1585e\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.customers#stat=profile\"\n   },\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"cfb17796bfcc3bfacd148e5137db62cb7c0025a509703e156ce299980cc968c0\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.056654Z\",\n    \"source_id\": \"6e49bf4d-1bac-56e5-bb20-56745f665e6d\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.invoice_lines#stat=profile\"\n   },\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"59ad06dfe7ccf462ee364079ceac9e9237bf8f389a51984284549f352215a503\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.144729Z\",\n    \"source_id\": \"5f11fb61-baad-5cbe-80f8-0c7ad8f04f56\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.invoices#stat=profile\"\n   },\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"d83ff6eb623d75fccdc9328804f2a9e2d3d2adb06dc9928d9fb08205d0fcb5b9\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.247291Z\",\n    \"source_id\": \"6605a410-910f-50bd-9520-365b252a9f96\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.payments#stat=profile\"\n   },\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"40e35a8e9b951b125d40fa84185ad7971753dfe872975e03ac64f4f6f7baabb3\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.335891Z\",\n    \"source_id\": \"2614db99-4269-5647-84b8-6a276020b0bd\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.subscriptions#stat=profile\"\n   },\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"4162b9b5c45f19734dc3db0dc11aa481c7295c1b74c00a791fbacd3b3b3c0948\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.431621Z\",\n    \"source_id\": \"6ee28cfe-ccdd-526d-863b-21f3401d679d\",\n    \"uri\": \"duckdb://portco_a__malformed/crm.accounts#stat=profile\"\n   },\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"7701570b9e2064a1664ed547d9729cd1479545ac3dee0a4b1b484b64ff454985\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.530867Z\",\n    \"source_id\": \"538a04e3-901c-504a-a129-0059a4cfbd01\",\n    \"uri\": \"duckdb://portco_a__malformed/crm.contacts#stat=profile\"\n   },\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"608f3330e1e19db0643509a9793656b840c19c8bdb70ce70b273ae9eb6b18c3d\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.603053Z\",\n    \"source_id\": \"05ef9e4c-2399-58ad-b85e-2729b19daec8\",\n    \"uri\": \"duckdb://portco_a__malformed/crm.opportunities#stat=profile\"\n   },\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"020f6a590736e11634024d4b8a44533858b62069212dc445097569d4e1771f4f\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.668441Z\",\n    \"source_id\": \"8740371f-1ca6-5f66-a8af-f830fa3d15bc\",\n    \"uri\": \"duckdb://portco_a__malformed/erp.gl_accounts#stat=profile\"\n   },\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"6ddc4dcba3444bdbba96e051a4321bcb407f6501d361697f4b73a71f7343c0d7\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.748553Z\",\n    \"source_id\": \"3c4536a1-2d78-59fc-8d49-5e180086899f\",\n    \"uri\": \"duckdb://portco_a__malformed/erp.journal_lines#stat=profile\"\n   },\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"f3e21cae80d73bee806d7dce3a9b44522272c9e4effb247ad5a4816f1c79f07a\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.836515Z\",\n    \"source_id\": \"83475baa-79ff-5b26-b94c-12819a791a99\",\n    \"uri\": \"duckdb://portco_a__malformed/hr.employees#stat=profile\"\n   }\n  ],\n  \"finding_id\": \"00877e41-80f9-4f8f-86ee-39b065e016ae\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"columns\": [\n    \"billing.customers.billing_email:email\",\n    \"billing.payments.card_number:payment_card\",\n    \"crm.accounts.owner_email:email\",\n    \"crm.contacts.email:email\",\n    \"crm.contacts.first_name:person_name\",\n    \"crm.contacts.last_name:person_name\",\n    \"crm.contacts.phone:phone\",\n    \"hr.employees.dob:dob\",\n    \"hr.employees.full_name:person_name\",\n    \"hr.employees.ssn:national_id\"\n   ],\n   \"step\": \"schema_profiling\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"10 columns classified as PII; their values never leave the adapter.\",\n  \"status\": \"supported\",\n  \"title\": \"PII classification complete\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"ENTITY_OVERLAP\",\n  \"confidence\": \"medium\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"7b08f00edaf58a39d80ff54541c7211daf6853edd7336ad7cd4feec1bea671cd\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.911046Z\",\n    \"source_id\": \"84a06f12-0334-5569-be29-1f2e99d0a55d\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.customers#stat=entity\"\n   },\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"db2838a8bceba77bb848a256ab471312cbdb8be6e01107d4a794497915f5482e\",\n    \"retrieved_at\": \"2026-09-27T23:22:50.924086Z\",\n    \"source_id\": \"e2157b79-772d-576f-8d78-3687f6812b4e\",\n    \"uri\": \"duckdb://portco_a__malformed/crm.accounts#stat=entity\"\n   }\n  ],\n  \"finding_id\": \"3ff678cd-8f3f-46d1-bebe-05417ce9e3c3\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"entity\": \"customer\",\n   \"step\": \"entity_inference\",\n   \"system_of_record\": \"billing.customers\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"billing.customers, crm.accounts all classify as customer. System of record: billing.customers; the others enrich it through a reviewed join.\",\n  \"status\": \"supported\",\n  \"title\": \"2 tables describe 'customer'\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"JOIN_INFERRED\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"bd36bfc8cc08e529425e7bacd3e29ced8f22906bda0972a85e487031ea2833bd\",\n    \"retrieved_at\": \"2026-09-27T23:22:51.289944Z\",\n    \"source_id\": \"046ab160-2a7e-5761-81ff-0c095dfcdc62\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.customers.crm_account_ref->crm.accounts.acct_id#stat=containment\"\n   }\n  ],\n  \"finding_id\": \"6586ae41-f387-4d4e-9956-f34792388846\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"join\": \"billing.customers.crm_account_ref->crm.accounts.acct_id\",\n   \"requires_review\": true,\n   \"step\": \"join_inference\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"billing.customers.crm_account_ref->crm.accounts.acct_id: N:1, score 0.91, containment 91.8%.\",\n  \"status\": \"supported\",\n  \"title\": \"Join billing.customers.crm_account_ref->crm.accounts.acct_id\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"ORPHAN_KEYS\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"bd36bfc8cc08e529425e7bacd3e29ced8f22906bda0972a85e487031ea2833bd\",\n    \"retrieved_at\": \"2026-09-27T23:22:51.289944Z\",\n    \"source_id\": \"046ab160-2a7e-5761-81ff-0c095dfcdc62\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.customers.crm_account_ref->crm.accounts.acct_id#stat=containment\"\n   }\n  ],\n  \"finding_id\": \"ca9fe307-5bb2-4d60-a10b-1fc8db3c0a68\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"join\": \"billing.customers.crm_account_ref->crm.accounts.acct_id\",\n   \"orphan_rate\": 0.0787,\n   \"step\": \"join_inference\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"7.9% of rows reference a crm.accounts key that does not exist (containment 91.8%).\",\n  \"status\": \"supported\",\n  \"title\": \"Orphan keys in billing.customers.crm_account_ref\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"JOIN_INFERRED\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"ad09ddf386e56bbb046acd8c85cfcd6bb73b4075a565afef3b13935a9829a03f\",\n    \"retrieved_at\": \"2026-09-27T23:22:51.224754Z\",\n    \"source_id\": \"7d40db8a-2aef-5c46-a1aa-bc63826b9052\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.invoice_lines.inv_no->billing.invoices.inv_no#stat=containment\"\n   }\n  ],\n  \"finding_id\": \"a3fd2505-980f-4a83-97d0-1bc6771859c6\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"join\": \"billing.invoice_lines.inv_no->billing.invoices.inv_no\",\n   \"requires_review\": false,\n   \"step\": \"join_inference\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"billing.invoice_lines.inv_no->billing.invoices.inv_no: N:1, score 1.00, containment 100.0%.\",\n  \"status\": \"supported\",\n  \"title\": \"Join billing.invoice_lines.inv_no->billing.invoices.inv_no\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"JOIN_INFERRED\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"ff8f17bfe4657cb9c76d8030acd92a808d2169b0cf9f9c98bf6488c538f89421\",\n    \"retrieved_at\": \"2026-09-27T23:22:51.053810Z\",\n    \"source_id\": \"4447af19-52e7-58ac-9ee5-1bbeb1af1fe4\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.invoices.cust_id->billing.customers.cust_id#stat=containment\"\n   }\n  ],\n  \"finding_id\": \"d633a64a-8abd-4eb3-9e36-cf3999e6ced6\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"join\": \"billing.invoices.cust_id->billing.customers.cust_id\",\n   \"requires_review\": false,\n   \"step\": \"join_inference\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"billing.invoices.cust_id->billing.customers.cust_id: N:1, score 1.00, containment 100.0%.\",\n  \"status\": \"supported\",\n  \"title\": \"Join billing.invoices.cust_id->billing.customers.cust_id\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"JOIN_INFERRED\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"b4ce78f5c55cb3c257e926cf0884730275c2f4bac3665a8e61ecf698b7bac2d6\",\n    \"retrieved_at\": \"2026-09-27T23:22:51.240332Z\",\n    \"source_id\": \"9a3d1c24-0a88-5109-9551-7937b7ce4b68\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.payments.inv_no->billing.invoices.inv_no#stat=containment\"\n   }\n  ],\n  \"finding_id\": \"a200b121-a0c5-445f-a148-85a0f55edc8a\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"join\": \"billing.payments.inv_no->billing.invoices.inv_no\",\n   \"requires_review\": false,\n   \"step\": \"join_inference\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"billing.payments.inv_no->billing.invoices.inv_no: 1:1, score 1.00, containment 100.0%.\",\n  \"status\": \"supported\",\n  \"title\": \"Join billing.payments.inv_no->billing.invoices.inv_no\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"JOIN_INFERRED\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"80388e0e09b0cee36614bc5cf359e5b90b0684002a29ec6762c60a38f2d19829\",\n    \"retrieved_at\": \"2026-09-27T23:22:51.100917Z\",\n    \"source_id\": \"6ce6d350-bc77-5632-bc93-2b172f757bc5\",\n    \"uri\": \"duckdb://portco_a__malformed/billing.subscriptions.cust_id->billing.customers.cust_id#stat=containment\"\n   }\n  ],\n  \"finding_id\": \"22d75935-e9e7-4426-9277-9949457096f2\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"join\": \"billing.subscriptions.cust_id->billing.customers.cust_id\",\n   \"requires_review\": false,\n   \"step\": \"join_inference\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"billing.subscriptions.cust_id->billing.customers.cust_id: N:1, score 1.00, containment 100.0%.\",\n  \"status\": \"supported\",\n  \"title\": \"Join billing.subscriptions.cust_id->billing.customers.cust_id\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"JOIN_INFERRED\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"fefeafce993a82bd7ae214b97c200a7ad7dee7d83de44dfa54fd5204f3da86e9\",\n    \"retrieved_at\": \"2026-09-27T23:22:51.340581Z\",\n    \"source_id\": \"e738d669-b6a4-56fc-b4fa-939aafb1ad99\",\n    \"uri\": \"duckdb://portco_a__malformed/crm.contacts.acct_id->crm.accounts.acct_id#stat=containment\"\n   }\n  ],\n  \"finding_id\": \"f98243fe-903b-4ea6-a22d-0ea5cf079da4\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"join\": \"crm.contacts.acct_id->crm.accounts.acct_id\",\n   \"requires_review\": false,\n   \"step\": \"join_inference\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"crm.contacts.acct_id->crm.accounts.acct_id: N:1, score 1.00, containment 100.0%.\",\n  \"status\": \"supported\",\n  \"title\": \"Join crm.contacts.acct_id->crm.accounts.acct_id\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"JOIN_INFERRED\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"91fe181966a972e0224d803b492d574a4c00c4cc63d749f83fb137b0ca1109cf\",\n    \"retrieved_at\": \"2026-09-27T23:22:51.352091Z\",\n    \"source_id\": \"ddca4c2e-f360-588c-94b1-5c55830b4b75\",\n    \"uri\": \"duckdb://portco_a__malformed/crm.opportunities.acct_id->crm.accounts.acct_id#stat=containment\"\n   }\n  ],\n  \"finding_id\": \"cf3c4c71-23e0-431e-8135-0637b2f9bf2a\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"join\": \"crm.opportunities.acct_id->crm.accounts.acct_id\",\n   \"requires_review\": false,\n   \"step\": \"join_inference\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"crm.opportunities.acct_id->crm.accounts.acct_id: N:1, score 1.00, containment 100.0%.\",\n  \"status\": \"supported\",\n  \"title\": \"Join crm.opportunities.acct_id->crm.accounts.acct_id\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"JOIN_INFERRED\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2026-01-31T00:00:00Z\",\n    \"excerpt_hash\": \"ac6ebe069cec015f7c97bec8f8decd24d5a974edd1dd863af1603f656f75ef2b\",\n    \"retrieved_at\": \"2026-09-27T23:22:51.505079Z\",\n    \"source_id\": \"f3005b9e-4888-5096-81e1-2b2549d6eba8\",\n    \"uri\": \"duckdb://portco_a__malformed/erp.journal_lines.acct_code->erp.gl_accounts.acct_code#stat=containment\"\n   }\n  ],\n  \"finding_id\": \"90b57ba0-865a-49ef-9ec9-0d28ff78bb9b\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"join\": \"erp.journal_lines.acct_code->erp.gl_accounts.acct_code\",\n   \"requires_review\": false,\n   \"step\": \"join_inference\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"erp.journal_lines.acct_code->erp.gl_accounts.acct_code: N:1, score 1.00, containment 100.0%.\",\n  \"status\": \"supported\",\n  \"title\": \"Join erp.journal_lines.acct_code->erp.gl_accounts.acct_code\"\n }\n]"
+    }
+  ]
+}
+
+ASSISTANT / text
+The run onboarded `fixture:portco_a__malformed` and is paused at the **mapping_review** gate with 22 pending items. It's read-only so far — no data has left the adapter and nothing has been approved. Here's a summary:
+
+## Data quality findings
+
+**Test/junk records**
+- 3 rows in `billing.customers.cust_name` and 2 in `crm.accounts.acct_nm` start with `"TEST"` — proposed row filters to exclude them.
+- 5 rows in `crm.accounts` are soft-deleted (`is_deleted=true`) — proposed filter to exclude.
+
+**Likely duplicates**
+- `billing.customers.cust_name`: 4 of 127 values collide after normalizing case/punctuation (medium confidence) — possible duplicate customer records.
+
+**Currency/units issues**
+- `billing.customers`, `billing.invoices`, `billing.subscriptions` all mix EUR/GBP/USD with no FX table — amounts can't be safely summed across currencies as-is.
+- `billing.invoice_lines.amount` looks like it's stored in cents (mean is ~90x the median of other decimal money columns) — suggested `cents_to_major` transform.
+- `billing.invoices.po_ref` mixes numeric and text values (490/1962 numeric).
+
+**Referential integrity**
+- Join `billing.customers.crm_account_ref -> crm.accounts.acct_id`: 7.9% orphan rate (containment 91.8%) — some billing customers reference nonexistent CRM accounts. Flagged for review, unlike the other 6 joins which are 100% clean and auto-accepted.
+
+**Semantic/naming traps**
+- `crm.opportunities.rev` → proposed mapping to `opportunity.amount` is flagged **LOW_CONFIDENCE + SEMANTIC_TRAP** — worth double-checking this isn't actually revenue-recognized vs. deal amount.
+- `crm.accounts.created_dt` needs a `parse_mixed_date` transform (inconsistent date formats in source).
+
+**PII (10 columns, values never left the adapter, only classified)**
+- Emails: `billing.customers.billing_email`, `crm.accounts.owner_email`, `crm.contacts.email`
+- Names: `crm.contacts.first_name/last_name`, `hr.employees.full_name`
+- Sensitive: `hr.employees.ssn` (national_id), `hr.employees.dob`, `crm.contacts.phone`, `billing.payments.card_number` (payment card — highest sensitivity)
+
+## Safe next steps
+
+1. A reviewer needs to work through the 22 pending mapping/filter/join items via `submit_mapping_review` — particularly the PII fields (need explicit `pii_handling` decisions), the `card_number` field (consider masking/exclusion rather than raw mapping), the `crm.opportunities.rev` semantic trap, and the orphaned join.
+2. Once reviewed, `resume_run` continues to artifact generation → sandbox tests → certification → publish.
+3. I have not approved, overridden, or certified anything — that requires a reviewer principal.
+
+Let me know if you'd like me to lay out recommended decisions for the reviewer to consider (without submitting them myself).

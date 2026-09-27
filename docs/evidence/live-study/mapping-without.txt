@@ -1,0 +1,325 @@
+USER PROMPT
+Onboard fixture:portco_b. Explain uncertain mappings, units and revenue semantics with evidence. Identify every pending review item.
+
+NOTE: Actual Claude Code session; private filesystem paths normalized.
+
+
+ASSISTANT / text
+I'll start the onboarding run for fixture:portco_b.
+
+ASSISTANT / tool_use
+{
+  "type": "tool_use",
+  "id": "toolu_0126eXQ99cDxMQcTgfVoTwPY",
+  "name": "mcp__portco__start_onboarding_run",
+  "input": {
+    "connection_id": "fixture:portco_b"
+  },
+  "caller": {
+    "type": "direct"
+  }
+}
+
+USER / tool_result
+tool_use_id: toolu_0126eXQ99cDxMQcTgfVoTwPY
+{
+  "run_id": "6da283d4-d580-4810-b0fa-b36550b5c84f",
+  "company_id": "portco_b",
+  "connection_id": "fixture:portco_b",
+  "status": "needs_review",
+  "current_step": "mapping_review",
+  "gate": "mapping_review",
+  "pending_review_count": 9,
+  "pending_items": [
+    {
+      "item_key": "mapping:sap.BSEG.DMBTR_S",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "sap.BSEG.DMBTR_S -> gl_entry.debit_amount",
+      "reason_codes": [
+        "METRIC_BEARING"
+      ],
+      "subject_hash": "72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3",
+      "alternatives": [
+        "credit_amount",
+        "line_number",
+        "entity_code"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:sap.BSEG.DMBTR_H",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "sap.BSEG.DMBTR_H -> gl_entry.credit_amount",
+      "reason_codes": [
+        "METRIC_BEARING"
+      ],
+      "subject_hash": "72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3",
+      "alternatives": [
+        "debit_amount",
+        "line_number",
+        "entity_code"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:sap.PA0001.ENAME",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "sap.PA0001.ENAME -> employee.full_name",
+      "reason_codes": [
+        "PII_FIELD"
+      ],
+      "subject_hash": "72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3",
+      "alternatives": [
+        "employee_id",
+        "national_id",
+        "department"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:sap.PA0001.GBDAT",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "sap.PA0001.GBDAT -> employee.date_of_birth",
+      "reason_codes": [
+        "PII_FIELD"
+      ],
+      "subject_hash": "72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3",
+      "alternatives": [
+        "hire_date",
+        "termination_date",
+        "department"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:sap.VBRK.KUNAG",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "sap.VBRK.KUNAG -> invoice.customer_id",
+      "reason_codes": [
+        "LOW_CONFIDENCE",
+        "JOIN_INFERRED"
+      ],
+      "subject_hash": "72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3",
+      "alternatives": [
+        "currency",
+        "status",
+        "invoice_id"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:sap.VBRK.NETWR",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "sap.VBRK.NETWR -> invoice.total_amount",
+      "reason_codes": [
+        "LOW_CONFIDENCE",
+        "METRIC_BEARING"
+      ],
+      "subject_hash": "72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3",
+      "alternatives": [
+        "invoice_id",
+        "customer_id",
+        "status"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:sap.VBRK.FKART",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "sap.VBRK.FKART -> invoice.status",
+      "reason_codes": [
+        "LOW_CONFIDENCE"
+      ],
+      "subject_hash": "72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3",
+      "alternatives": [
+        "currency",
+        "customer_id",
+        "invoice_id"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "mapping:sap.VBRP.NETWR",
+      "gate": "mapping_review",
+      "kind": "mapping",
+      "summary": "sap.VBRP.NETWR -> invoice_line.amount",
+      "reason_codes": [
+        "LOW_CONFIDENCE"
+      ],
+      "subject_hash": "72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3",
+      "alternatives": [
+        "unit_price",
+        "quantity",
+        "invoice_id"
+      ],
+      "suggested_transform": null
+    },
+    {
+      "item_key": "filter:sap.KNA1.LOEVM:exclude_true",
+      "gate": "mapping_review",
+      "kind": "row_filter",
+      "summary": "Exclude rows where flag is true in sap.KNA1.LOEVM (2 rows)",
+      "reason_codes": [
+        "ROW_FILTER"
+      ],
+      "subject_hash": "72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3",
+      "alternatives": [],
+      "suggested_transform": null
+    }
+  ],
+  "steps": [
+    {
+      "step": "connection_validation",
+      "status": "completed",
+      "attempts": 1
+    },
+    {
+      "step": "schema_profiling",
+      "status": "completed",
+      "attempts": 1
+    },
+    {
+      "step": "entity_inference",
+      "status": "completed",
+      "attempts": 1
+    },
+    {
+      "step": "join_inference",
+      "status": "completed",
+      "attempts": 1
+    },
+    {
+      "step": "canonical_mapping",
+      "status": "completed",
+      "attempts": 1
+    },
+    {
+      "step": "mapping_review",
+      "status": "needs_review",
+      "attempts": 1
+    },
+    {
+      "step": "artifact_generation",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "step": "automated_tests",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "step": "human_certification",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "step": "publish",
+      "status": "pending",
+      "attempts": 0
+    }
+  ],
+  "error": null,
+  "next_action": "A human reviewer must decide the pending mapping items (submit_mapping_review), then resume_run.",
+  "resources": [
+    "run://6da283d4-d580-4810-b0fa-b36550b5c84f/summary",
+    "run://6da283d4-d580-4810-b0fa-b36550b5c84f/findings",
+    "run://6da283d4-d580-4810-b0fa-b36550b5c84f/audit"
+  ]
+}
+
+ASSISTANT / text
+The run paused at the mapping review gate with 9 pending items. Let me pull the detailed findings for evidence (units, revenue semantics, confidence scores).
+
+ASSISTANT / tool_use
+{
+  "type": "tool_use",
+  "id": "toolu_01PDyn9tZwko7Qm9GMsAjbqR",
+  "name": "ReadMcpResourceTool",
+  "input": {
+    "server": "portco",
+    "uri": "run://6da283d4-d580-4810-b0fa-b36550b5c84f/findings"
+  },
+  "caller": {
+    "type": "direct"
+  }
+}
+
+USER / tool_result
+tool_use_id: toolu_01PDyn9tZwko7Qm9GMsAjbqR
+{
+  "contents": [
+    {
+      "uri": "run://6da283d4-d580-4810-b0fa-b36550b5c84f/findings",
+      "mimeType": "application/json",
+      "text": "[\n {\n  \"assumptions\": [],\n  \"code\": \"CONNECTION_VERIFIED\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2025-12-31T00:00:00Z\",\n    \"excerpt_hash\": \"f58b19a892e8683dbde4b5b0464d4480e850d98e95b5a381f21e1f0202e19c0f\",\n    \"retrieved_at\": \"2026-09-27T23:22:21.015266Z\",\n    \"source_id\": \"92e19f8a-eab5-5800-9250-12fa16ed74cc\",\n    \"uri\": \"duckdb://portco_b#probe=connection\"\n   }\n  ],\n  \"finding_id\": \"78278582-fea8-4966-b340-99468eb461f6\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"step\": \"connection_validation\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"1 schemas and 7 tables visible; write probe was rejected.\",\n  \"status\": \"supported\",\n  \"title\": \"Read-only connection verified\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"SOFT_DELETE_FLAG\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2025-12-31T00:00:00Z\",\n    \"excerpt_hash\": \"f011875eab913af0caee580f89ede4f5f6b4588e4ae242cf3bf8f6a9de77e3be\",\n    \"retrieved_at\": \"2026-09-27T23:22:21.200411Z\",\n    \"source_id\": \"2662b208-2208-500d-bad2-9a91d04e6438\",\n    \"uri\": \"duckdb://portco_b/sap.KNA1#stat=profile\"\n   }\n  ],\n  \"finding_id\": \"c9ba7bf3-f4e8-4a4e-bd1c-249a42d23e10\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"column\": \"LOEVM\",\n   \"rows\": 2,\n   \"step\": \"schema_profiling\",\n   \"table\": \"sap.KNA1\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"2 rows are flagged deleted.\",\n  \"status\": \"supported\",\n  \"title\": \"Soft-delete flag sap.KNA1.LOEVM\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"PII_CLASSIFIED\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2025-12-31T00:00:00Z\",\n    \"excerpt_hash\": \"050e8164b28ddaa5a60a16dcbe113e21a54f61f4f5bde897c1c6ce58436c1406\",\n    \"retrieved_at\": \"2026-09-27T23:22:21.130104Z\",\n    \"source_id\": \"5717befa-bf32-55f2-939e-05888fa264c1\",\n    \"uri\": \"duckdb://portco_b/sap.BSEG#stat=profile\"\n   },\n   {\n    \"as_of\": \"2025-12-31T00:00:00Z\",\n    \"excerpt_hash\": \"f011875eab913af0caee580f89ede4f5f6b4588e4ae242cf3bf8f6a9de77e3be\",\n    \"retrieved_at\": \"2026-09-27T23:22:21.200411Z\",\n    \"source_id\": \"2662b208-2208-500d-bad2-9a91d04e6438\",\n    \"uri\": \"duckdb://portco_b/sap.KNA1#stat=profile\"\n   },\n   {\n    \"as_of\": \"2025-12-31T00:00:00Z\",\n    \"excerpt_hash\": \"ba6c2179e30af8d0f64c3c5f09f8dc5f8e18b907cd1bb07f43429a50429abc3c\",\n    \"retrieved_at\": \"2026-09-27T23:22:21.231620Z\",\n    \"source_id\": \"c427f6e4-3b4c-5738-b0b7-f5e4f6860333\",\n    \"uri\": \"duckdb://portco_b/sap.MARA#stat=profile\"\n   },\n   {\n    \"as_of\": \"2025-12-31T00:00:00Z\",\n    \"excerpt_hash\": \"3ddad80ded9f6c8f1a3dfba9226aa0a4d51dda735bdbb18d9d531b676e47685d\",\n    \"retrieved_at\": \"2026-09-27T23:22:21.281080Z\",\n    \"source_id\": \"489ef424-7b05-5d57-a3c1-6212f71706c1\",\n    \"uri\": \"duckdb://portco_b/sap.PA0001#stat=profile\"\n   },\n   {\n    \"as_of\": \"2025-12-31T00:00:00Z\",\n    \"excerpt_hash\": \"73968e3aafe8bd2351d877e5b479c0733c6450b1cca57c5a0a2c2d8b3dfd95b0\",\n    \"retrieved_at\": \"2026-09-27T23:22:21.331663Z\",\n    \"source_id\": \"33695207-f73b-54a0-87c2-58e59a95fd28\",\n    \"uri\": \"duckdb://portco_b/sap.SKA1#stat=profile\"\n   },\n   {\n    \"as_of\": \"2025-12-31T00:00:00Z\",\n    \"excerpt_hash\": \"f87131226aec8337be678078e437630c9c82383b159848bde15b73803862681f\",\n    \"retrieved_at\": \"2026-09-27T23:22:21.395174Z\",\n    \"source_id\": \"3aa89436-c143-5980-9452-ba4bf0404700\",\n    \"uri\": \"duckdb://portco_b/sap.VBRK#stat=profile\"\n   },\n   {\n    \"as_of\": \"2025-12-31T00:00:00Z\",\n    \"excerpt_hash\": \"45688534aa352b7ce76d2131c9028863286f8143d47adb8ff39142268b156754\",\n    \"retrieved_at\": \"2026-09-27T23:22:21.436174Z\",\n    \"source_id\": \"c39c2292-3486-53c3-afcb-1ea7b047a6ec\",\n    \"uri\": \"duckdb://portco_b/sap.VBRP#stat=profile\"\n   }\n  ],\n  \"finding_id\": \"27a3cf13-60d1-47f1-a4cc-88e233ec820a\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"columns\": [\n    \"sap.PA0001.ENAME:person_name\",\n    \"sap.PA0001.GBDAT:dob\"\n   ],\n   \"step\": \"schema_profiling\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"2 columns classified as PII; their values never leave the adapter.\",\n  \"status\": \"supported\",\n  \"title\": \"PII classification complete\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"JOIN_INFERRED\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2025-12-31T00:00:00Z\",\n    \"excerpt_hash\": \"e0bd6266f520bf7475bd9bf556b2079d1910a53402290e225da531edd403f177\",\n    \"retrieved_at\": \"2026-09-27T23:22:21.673404Z\",\n    \"source_id\": \"1447b360-d6ff-5977-b8f8-2eecf8351cbe\",\n    \"uri\": \"duckdb://portco_b/sap.BSEG.HKONT->sap.SKA1.SAKNR#stat=containment\"\n   }\n  ],\n  \"finding_id\": \"c89ae6fd-8ca0-427e-8642-4ec20f1c3a56\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"join\": \"sap.BSEG.HKONT->sap.SKA1.SAKNR\",\n   \"requires_review\": false,\n   \"step\": \"join_inference\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"sap.BSEG.HKONT->sap.SKA1.SAKNR: N:1, score 1.00, containment 100.0%.\",\n  \"status\": \"supported\",\n  \"title\": \"Join sap.BSEG.HKONT->sap.SKA1.SAKNR\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"JOIN_INFERRED\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2025-12-31T00:00:00Z\",\n    \"excerpt_hash\": \"4086936dcb8ef016c755b826d5f6d894daae6f9555132691044c0558853b90c3\",\n    \"retrieved_at\": \"2026-09-27T23:22:21.619265Z\",\n    \"source_id\": \"46df4654-76eb-5381-9a79-95a33c0a322e\",\n    \"uri\": \"duckdb://portco_b/sap.VBRK.KUNAG->sap.KNA1.KUNNR#stat=containment\"\n   }\n  ],\n  \"finding_id\": \"15b0b5aa-1b72-4558-bee4-8d330c345769\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"join\": \"sap.VBRK.KUNAG->sap.KNA1.KUNNR\",\n   \"requires_review\": false,\n   \"step\": \"join_inference\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"sap.VBRK.KUNAG->sap.KNA1.KUNNR: N:1, score 0.81, containment 100.0%.\",\n  \"status\": \"supported\",\n  \"title\": \"Join sap.VBRK.KUNAG->sap.KNA1.KUNNR\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"JOIN_INFERRED\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2025-12-31T00:00:00Z\",\n    \"excerpt_hash\": \"b04bf87dac05df7a955bc9b33afa09bd2df16afc8f8f810886814e086a984c95\",\n    \"retrieved_at\": \"2026-09-27T23:22:21.645773Z\",\n    \"source_id\": \"354f5ac3-7bc2-5409-a931-edb8918a0697\",\n    \"uri\": \"duckdb://portco_b/sap.VBRP.MATNR->sap.MARA.MATNR#stat=containment\"\n   }\n  ],\n  \"finding_id\": \"3a5f6bff-3f14-4a05-9f72-38b3dd8e0d9b\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"join\": \"sap.VBRP.MATNR->sap.MARA.MATNR\",\n   \"requires_review\": false,\n   \"step\": \"join_inference\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"sap.VBRP.MATNR->sap.MARA.MATNR: N:1, score 1.00, containment 100.0%.\",\n  \"status\": \"supported\",\n  \"title\": \"Join sap.VBRP.MATNR->sap.MARA.MATNR\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"JOIN_INFERRED\",\n  \"confidence\": \"high\",\n  \"evidence\": [\n   {\n    \"as_of\": \"2025-12-31T00:00:00Z\",\n    \"excerpt_hash\": \"7275b67d95fe3d908676c4d4c4d504be1d103a3d530eeac1542cbea22875327c\",\n    \"retrieved_at\": \"2026-09-27T23:22:21.700916Z\",\n    \"source_id\": \"a5cded02-63a3-5629-9cc9-11af3bb862b1\",\n    \"uri\": \"duckdb://portco_b/sap.VBRP.VBELN->sap.VBRK.VBELN#stat=containment\"\n   }\n  ],\n  \"finding_id\": \"9a805267-d2dc-41b7-93c5-79cb7ad30f65\",\n  \"finding_type\": \"observation\",\n  \"metadata\": {\n   \"join\": \"sap.VBRP.VBELN->sap.VBRK.VBELN\",\n   \"requires_review\": false,\n   \"step\": \"join_inference\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"sap.VBRP.VBELN->sap.VBRK.VBELN: N:1, score 1.00, containment 100.0%.\",\n  \"status\": \"supported\",\n  \"title\": \"Join sap.VBRP.VBELN->sap.VBRK.VBELN\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"METRIC_NEEDS_EVIDENCE\",\n  \"confidence\": \"high\",\n  \"evidence\": [],\n  \"finding_id\": \"f8c2fd3a-fd17-4851-8d2f-778318643d31\",\n  \"finding_type\": \"assumption\",\n  \"metadata\": {\n   \"metric\": \"active_customers\",\n   \"step\": \"canonical_mapping\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"active_customers needs fields with no approved source mapping; it will not be generated or estimated.\",\n  \"status\": \"needs_evidence\",\n  \"title\": \"Metric active_customers cannot be derived\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"METRIC_NEEDS_EVIDENCE\",\n  \"confidence\": \"high\",\n  \"evidence\": [],\n  \"finding_id\": \"ef74fa76-15ac-428a-b875-74fa8a27c810\",\n  \"finding_type\": \"assumption\",\n  \"metadata\": {\n   \"metric\": \"arpa\",\n   \"step\": \"canonical_mapping\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"arpa needs fields with no approved source mapping; it will not be generated or estimated.\",\n  \"status\": \"needs_evidence\",\n  \"title\": \"Metric arpa cannot be derived\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"METRIC_NEEDS_EVIDENCE\",\n  \"confidence\": \"high\",\n  \"evidence\": [],\n  \"finding_id\": \"925dd9d4-57bb-4218-ad7f-e977a2758302\",\n  \"finding_type\": \"assumption\",\n  \"metadata\": {\n   \"metric\": \"arr\",\n   \"step\": \"canonical_mapping\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"arr needs fields with no approved source mapping; it will not be generated or estimated.\",\n  \"status\": \"needs_evidence\",\n  \"title\": \"Metric arr cannot be derived\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"METRIC_NEEDS_EVIDENCE\",\n  \"confidence\": \"high\",\n  \"evidence\": [],\n  \"finding_id\": \"510c55d8-264b-498a-82aa-fe7ab4c20d80\",\n  \"finding_type\": \"assumption\",\n  \"metadata\": {\n   \"metric\": \"churned_arr\",\n   \"step\": \"canonical_mapping\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"churned_arr needs fields with no approved source mapping; it will not be generated or estimated.\",\n  \"status\": \"needs_evidence\",\n  \"title\": \"Metric churned_arr cannot be derived\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"METRIC_NEEDS_EVIDENCE\",\n  \"confidence\": \"high\",\n  \"evidence\": [],\n  \"finding_id\": \"a34a71a2-39c9-4511-8ea4-2c9b24609ba6\",\n  \"finding_type\": \"assumption\",\n  \"metadata\": {\n   \"metric\": \"contraction_arr\",\n   \"step\": \"canonical_mapping\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"contraction_arr needs fields with no approved source mapping; it will not be generated or estimated.\",\n  \"status\": \"needs_evidence\",\n  \"title\": \"Metric contraction_arr cannot be derived\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"METRIC_NEEDS_EVIDENCE\",\n  \"confidence\": \"high\",\n  \"evidence\": [],\n  \"finding_id\": \"947491df-b72c-44ee-9a65-fe23cf7bee86\",\n  \"finding_type\": \"assumption\",\n  \"metadata\": {\n   \"metric\": \"dso\",\n   \"step\": \"canonical_mapping\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"dso needs fields with no approved source mapping; it will not be generated or estimated.\",\n  \"status\": \"needs_evidence\",\n  \"title\": \"Metric dso cannot be derived\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"METRIC_NEEDS_EVIDENCE\",\n  \"confidence\": \"high\",\n  \"evidence\": [],\n  \"finding_id\": \"cb3b6921-21ff-4c6c-b78f-46b6438be16b\",\n  \"finding_type\": \"assumption\",\n  \"metadata\": {\n   \"metric\": \"expansion_arr\",\n   \"step\": \"canonical_mapping\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"expansion_arr needs fields with no approved source mapping; it will not be generated or estimated.\",\n  \"status\": \"needs_evidence\",\n  \"title\": \"Metric expansion_arr cannot be derived\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"METRIC_NEEDS_EVIDENCE\",\n  \"confidence\": \"high\",\n  \"evidence\": [],\n  \"finding_id\": \"8ef253b0-c249-4a22-89a7-171e1299701d\",\n  \"finding_type\": \"assumption\",\n  \"metadata\": {\n   \"metric\": \"grr\",\n   \"step\": \"canonical_mapping\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"grr needs fields with no approved source mapping; it will not be generated or estimated.\",\n  \"status\": \"needs_evidence\",\n  \"title\": \"Metric grr cannot be derived\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"METRIC_NEEDS_EVIDENCE\",\n  \"confidence\": \"high\",\n  \"evidence\": [],\n  \"finding_id\": \"34dac9de-115c-467e-9ae8-a1c10efcacd7\",\n  \"finding_type\": \"assumption\",\n  \"metadata\": {\n   \"metric\": \"mrr\",\n   \"step\": \"canonical_mapping\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"mrr needs fields with no approved source mapping; it will not be generated or estimated.\",\n  \"status\": \"needs_evidence\",\n  \"title\": \"Metric mrr cannot be derived\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"METRIC_NEEDS_EVIDENCE\",\n  \"confidence\": \"high\",\n  \"evidence\": [],\n  \"finding_id\": \"2849ef95-1b2b-41e8-9ecb-434de543fd4a\",\n  \"finding_type\": \"assumption\",\n  \"metadata\": {\n   \"metric\": \"new_arr\",\n   \"step\": \"canonical_mapping\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"new_arr needs fields with no approved source mapping; it will not be generated or estimated.\",\n  \"status\": \"needs_evidence\",\n  \"title\": \"Metric new_arr cannot be derived\"\n },\n {\n  \"assumptions\": [],\n  \"code\": \"METRIC_NEEDS_EVIDENCE\",\n  \"confidence\": \"high\",\n  \"evidence\": [],\n  \"finding_id\": \"e4ba9048-6cfb-43b2-8b8f-2b8589749610\",\n  \"finding_type\": \"assumption\",\n  \"metadata\": {\n   \"metric\": \"nrr\",\n   \"step\": \"canonical_mapping\"\n  },\n  \"schema_version\": \"1\",\n  \"statement\": \"nrr needs fields with no approved source mapping; it will not be generated or estimated.\",\n  \"status\": \"needs_evidence\",\n  \"title\": \"Metric nrr cannot be derived\"\n }\n]"
+    }
+  ]
+}
+
+ASSISTANT / tool_use
+{
+  "type": "tool_use",
+  "id": "toolu_01NJd1xYyFrQqEJAP8TPuR4c",
+  "name": "ReadMcpResourceTool",
+  "input": {
+    "server": "portco",
+    "uri": "run://6da283d4-d580-4810-b0fa-b36550b5c84f/summary"
+  },
+  "caller": {
+    "type": "direct"
+  }
+}
+
+USER / tool_result
+tool_use_id: toolu_01NJd1xYyFrQqEJAP8TPuR4c
+{
+  "contents": [
+    {
+      "uri": "run://6da283d4-d580-4810-b0fa-b36550b5c84f/summary",
+      "mimeType": "application/json",
+      "text": "{\n \"company_id\": \"portco_b\",\n \"connection_id\": \"fixture:portco_b\",\n \"current_step\": \"mapping_review\",\n \"error\": null,\n \"gate\": \"mapping_review\",\n \"next_action\": \"A human reviewer must decide the pending mapping items (submit_mapping_review), then resume_run.\",\n \"pending_items\": [\n  {\n   \"alternatives\": [\n    \"credit_amount\",\n    \"line_number\",\n    \"entity_code\"\n   ],\n   \"gate\": \"mapping_review\",\n   \"item_key\": \"mapping:sap.BSEG.DMBTR_S\",\n   \"kind\": \"mapping\",\n   \"reason_codes\": [\n    \"METRIC_BEARING\"\n   ],\n   \"subject_hash\": \"72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3\",\n   \"suggested_transform\": null,\n   \"summary\": \"sap.BSEG.DMBTR_S -> gl_entry.debit_amount\"\n  },\n  {\n   \"alternatives\": [\n    \"debit_amount\",\n    \"line_number\",\n    \"entity_code\"\n   ],\n   \"gate\": \"mapping_review\",\n   \"item_key\": \"mapping:sap.BSEG.DMBTR_H\",\n   \"kind\": \"mapping\",\n   \"reason_codes\": [\n    \"METRIC_BEARING\"\n   ],\n   \"subject_hash\": \"72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3\",\n   \"suggested_transform\": null,\n   \"summary\": \"sap.BSEG.DMBTR_H -> gl_entry.credit_amount\"\n  },\n  {\n   \"alternatives\": [\n    \"employee_id\",\n    \"national_id\",\n    \"department\"\n   ],\n   \"gate\": \"mapping_review\",\n   \"item_key\": \"mapping:sap.PA0001.ENAME\",\n   \"kind\": \"mapping\",\n   \"reason_codes\": [\n    \"PII_FIELD\"\n   ],\n   \"subject_hash\": \"72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3\",\n   \"suggested_transform\": null,\n   \"summary\": \"sap.PA0001.ENAME -> employee.full_name\"\n  },\n  {\n   \"alternatives\": [\n    \"hire_date\",\n    \"termination_date\",\n    \"department\"\n   ],\n   \"gate\": \"mapping_review\",\n   \"item_key\": \"mapping:sap.PA0001.GBDAT\",\n   \"kind\": \"mapping\",\n   \"reason_codes\": [\n    \"PII_FIELD\"\n   ],\n   \"subject_hash\": \"72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3\",\n   \"suggested_transform\": null,\n   \"summary\": \"sap.PA0001.GBDAT -> employee.date_of_birth\"\n  },\n  {\n   \"alternatives\": [\n    \"currency\",\n    \"status\",\n    \"invoice_id\"\n   ],\n   \"gate\": \"mapping_review\",\n   \"item_key\": \"mapping:sap.VBRK.KUNAG\",\n   \"kind\": \"mapping\",\n   \"reason_codes\": [\n    \"LOW_CONFIDENCE\",\n    \"JOIN_INFERRED\"\n   ],\n   \"subject_hash\": \"72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3\",\n   \"suggested_transform\": null,\n   \"summary\": \"sap.VBRK.KUNAG -> invoice.customer_id\"\n  },\n  {\n   \"alternatives\": [\n    \"invoice_id\",\n    \"customer_id\",\n    \"status\"\n   ],\n   \"gate\": \"mapping_review\",\n   \"item_key\": \"mapping:sap.VBRK.NETWR\",\n   \"kind\": \"mapping\",\n   \"reason_codes\": [\n    \"LOW_CONFIDENCE\",\n    \"METRIC_BEARING\"\n   ],\n   \"subject_hash\": \"72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3\",\n   \"suggested_transform\": null,\n   \"summary\": \"sap.VBRK.NETWR -> invoice.total_amount\"\n  },\n  {\n   \"alternatives\": [\n    \"currency\",\n    \"customer_id\",\n    \"invoice_id\"\n   ],\n   \"gate\": \"mapping_review\",\n   \"item_key\": \"mapping:sap.VBRK.FKART\",\n   \"kind\": \"mapping\",\n   \"reason_codes\": [\n    \"LOW_CONFIDENCE\"\n   ],\n   \"subject_hash\": \"72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3\",\n   \"suggested_transform\": null,\n   \"summary\": \"sap.VBRK.FKART -> invoice.status\"\n  },\n  {\n   \"alternatives\": [\n    \"unit_price\",\n    \"quantity\",\n    \"invoice_id\"\n   ],\n   \"gate\": \"mapping_review\",\n   \"item_key\": \"mapping:sap.VBRP.NETWR\",\n   \"kind\": \"mapping\",\n   \"reason_codes\": [\n    \"LOW_CONFIDENCE\"\n   ],\n   \"subject_hash\": \"72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3\",\n   \"suggested_transform\": null,\n   \"summary\": \"sap.VBRP.NETWR -> invoice_line.amount\"\n  },\n  {\n   \"alternatives\": [],\n   \"gate\": \"mapping_review\",\n   \"item_key\": \"filter:sap.KNA1.LOEVM:exclude_true\",\n   \"kind\": \"row_filter\",\n   \"reason_codes\": [\n    \"ROW_FILTER\"\n   ],\n   \"subject_hash\": \"72dc356b3943e0fbad6fad973bcfb97ea07c4ad76e897e96a401b7c157c51ff3\",\n   \"suggested_transform\": null,\n   \"summary\": \"Exclude rows where flag is true in sap.KNA1.LOEVM (2 rows)\"\n  }\n ],\n \"pending_review_count\": 9,\n \"resources\": [\n  \"run://6da283d4-d580-4810-b0fa-b36550b5c84f/summary\",\n  \"run://6da283d4-d580-4810-b0fa-b36550b5c84f/findings\",\n  \"run://6da283d4-d580-4810-b0fa-b36550b5c84f/audit\"\n ],\n \"run_id\": \"6da283d4-d580-4810-b0fa-b36550b5c84f\",\n \"status\": \"needs_review\",\n \"steps\": [\n  {\n   \"attempts\": 1,\n   \"status\": \"completed\",\n   \"step\": \"connection_validation\"\n  },\n  {\n   \"attempts\": 1,\n   \"status\": \"completed\",\n   \"step\": \"schema_profiling\"\n  },\n  {\n   \"attempts\": 1,\n   \"status\": \"completed\",\n   \"step\": \"entity_inference\"\n  },\n  {\n   \"attempts\": 1,\n   \"status\": \"completed\",\n   \"step\": \"join_inference\"\n  },\n  {\n   \"attempts\": 1,\n   \"status\": \"completed\",\n   \"step\": \"canonical_mapping\"\n  },\n  {\n   \"attempts\": 1,\n   \"status\": \"needs_review\",\n   \"step\": \"mapping_review\"\n  },\n  {\n   \"attempts\": 0,\n   \"status\": \"pending\",\n   \"step\": \"artifact_generation\"\n  },\n  {\n   \"attempts\": 0,\n   \"status\": \"pending\",\n   \"step\": \"automated_tests\"\n  },\n  {\n   \"attempts\": 0,\n   \"status\": \"pending\",\n   \"step\": \"human_certification\"\n  },\n  {\n   \"attempts\": 0,\n   \"status\": \"pending\",\n   \"step\": \"publish\"\n  }\n ]\n}"
+    }
+  ]
+}
+
+ASSISTANT / text
+Onboarding for `fixture:portco_b` (run `6da283d4-d580-4810-b0fa-b36550b5c84f`) is paused at the **mapping_review** gate with **9 pending items**, requiring a human reviewer to decide before I can resume. Here's the full breakdown with evidence:
+
+## Pending review items (9)
+
+**Metric-bearing GL amounts (SAP FI)**
+1. `sap.BSEG.DMBTR_S` → `gl_entry.debit_amount` — flagged `METRIC_BEARING`. Alternatives offered: `credit_amount`, `line_number`, `entity_code`.
+2. `sap.BSEG.DMBTR_H` → `gl_entry.credit_amount` — flagged `METRIC_BEARING`. Alternatives: `debit_amount`, `line_number`, `entity_code`.
+   - SAP convention: `DMBTR_S` (Soll/debit) and `DMBTR_H` (Haben/credit) are standard debit/credit amount fields in local currency — mapping looks sound, but flagged for review purely because it feeds financial metrics, not because of ambiguity. Joined via `sap.BSEG.HKONT -> sap.SKA1.SAKNR` (score 1.00, 100% containment, high confidence, no review needed on the join itself).
+
+**PII fields (SAP HR/PA0001)**
+3. `sap.PA0001.ENAME` → `employee.full_name` — flagged `PII_FIELD`. Alternatives: `employee_id`, `national_id`, `department`.
+4. `sap.PA0001.GBDAT` → `employee.date_of_birth` — flagged `PII_FIELD`. Alternatives: `hire_date`, `termination_date`, `department`.
+   - Profiling classified these as PII (`person_name`, `dob` categories) — values never left the adapter; only category labels were exposed as evidence.
+
+**Low-confidence billing mappings (SAP SD, VBRK/VBRP)**
+5. `sap.VBRK.KUNAG` → `invoice.customer_id` — `LOW_CONFIDENCE`, `JOIN_INFERRED`. The underlying join `VBRK.KUNAG -> KNA1.KUNNR` scored 0.81 (100% containment) — lower confidence than the other joins (which scored 1.00), which is likely why this mapping itself needs review even though the join was auto-accepted.
+6. `sap.VBRK.NETWR` → `invoice.total_amount` — `LOW_CONFIDENCE`, `METRIC_BEARING`. This is the **revenue semantics question**: `NETWR` in VBRK is net invoice value at header level — the reviewer needs to confirm this is really "total_amount" (net vs. gross, currency/unit assumptions unverified) rather than assume it.
+7. `sap.VBRK.FKART` → `invoice.status` — `LOW_CONFIDENCE`. `FKART` is actually the SAP **billing document type** (e.g., invoice vs. credit memo vs. debit memo), not a status field per se — this mapping is questionable and worth scrutiny; it may need `pii_handling`/transform overrides or a different canonical target.
+8. `sap.VBRP.NETWR` → `invoice_line.amount` — `LOW_CONFIDENCE`. Line-level net value; no evidence yet distinguishing whether this is unit price × quantity or a rolled-up line amount — units/semantics unverified.
+
+**Row filter**
+9. `filter:sap.KNA1.LOEVM:exclude_true` — excludes 2 customer rows flagged as soft-deleted (`LOEVM` = deletion flag in SAP customer master, high confidence, 2 rows affected).
+
+## Metrics that cannot be derived (informational, not gated)
+The canonical mapping step also found **10 SaaS-style metrics have no approved source mapping** and will not be generated or estimated (per `METRIC_NEEDS_EVIDENCE`, all high confidence in that determination): `active_customers`, `arpa`, `arr`, `churned_arr`, `contraction_arr`, `dso`, `expansion_arr`, `grr`, `mrr`, `new_arr`, `nrr`. This makes sense — portco_b's source data is SAP FI/SD/HR (GL entries, invoices, customers, employees), not a subscription billing system, so there's no basis for ARR/MRR-style recurring-revenue metrics here.
+
+## Summary of revenue-semantics uncertainty
+The two biggest open questions for revenue semantics are:
+- **VBRK.NETWR → invoice.total_amount**: is this gross or net, and in what currency/unit — needs confirmation before trusting it as "total."
+- **VBRP.NETWR → invoice_line.amount**: line-level net value semantics also unconfirmed (could represent extended price, not unit price).
+
+I can't approve, override, or waive any of these — a reviewer principal needs to call `submit_mapping_review` with decisions on all 9 items (and optionally override canonical_field/transform/pii_handling) before I can `resume_run`. Let me know if you'd like me to proceed once you've made those calls, or if you want more detail on any specific item.

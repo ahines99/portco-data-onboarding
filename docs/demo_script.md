@@ -1,6 +1,8 @@
 # Four-minute narrated demonstration
 
-Status: script and automated replay prepared; Alex's live session and narration remain pending.
+Status: script, automated replay and a captioned synthetic-voice evidence tour are available in the
+[release](https://github.com/ahines99/portco-data-onboarding/releases/tag/v0.1.0). Personal narration
+is optional; the human-approval beat below must use an actual human decision if recorded.
 Use a readable terminal font and hide unrelated windows/credentials. Generate fixtures first with
 `uv sync --all-extras --frozen` and `uv run poe fixtures`. Use a fresh, explicitly chosen demo output
 folder with `uv run portco demo --out var/recording-demo`; that command resets its demo directory.

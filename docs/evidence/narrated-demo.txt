@@ -1,0 +1,23 @@
+A governed onboarding prototype
+This is a narrated evidence tour of Portfolio Company Data Onboarding, a portfolio prototype developed with substantial AI assistance. The voice is computer generated. The reports and terminal output come from actual scripted fixture runs. Reviewer actions in those runs are automated test decisions, not Alex making a live approval. The project explores how to turn unfamiliar financial schemas into tested metrics without treating a plausible model answer as proof.
+
+The meaning matters
+Two deliberately difficult examples make the problem concrete. Invoice line amounts are stored in cents while invoice totals use major currency units. A customer relationship management field named rev represents opportunity bookings, not recognized revenue. The workflow proposes a unit conversion and a separate opportunity mapping, then stops for review. Its evidence can support a recommendation, but schema names alone cannot establish financial meaning.
+
+A real review boundary
+The successful fixture run presents twenty two review items. These cover eighteen column decisions and additional relationship or filtering decisions. Sensitive fields, money, date transformations, orphaned relationships and semantic ambiguity need attention. The agent principal is denied when it attempts approval. A separate reviewer must decide. This demonstration uses a synthetic reviewer to test that path; it does not claim that a person inspected these decisions.
+
+Execute and reconcile
+After the scripted review, the generated database transformation project is built and tested in a disposable sandbox. The recorded report has ninety seven data tests and twenty six passing reconciliation checks. Nine monthly metrics are generated, including annual and monthly recurring revenue, billings, recognized revenue, costs, earnings, gross margin and active customers. Monetary checks compare deterministic calculations. Reference-only metrics are distinguished from those actually generated and published.
+
+Publish what was certified
+Certification binds the reviewed content and metric decisions. Publication verifies the expected files and records a recoverable receipt. The evidence includes an intact audit chain and a populated database upgrade and restore rehearsal. Hosted container tests also cover service restart, full stack recreation and a PostgreSQL backup restore. These are observed development tests. They do not establish production security, high availability or performance under customer-scale workloads.
+
+Failures remain visible
+The failure fixture contains malformed invoice lines. A transient source timeout is retried, but negative amount and quantity checks stop the workflow at the test failure gate. Nothing is published. Another fixture plants an instruction in a table comment. The recorded demo flags it as untrusted, keeps the mappings unchanged and does not copy the planted text into generated findings or artifacts. These are targeted cases, not a universal injection defense claim.
+
+The limits are part of the result
+A separate probe with unfamiliar table aliases produced no mapping proposals and matched zero of ten labeled targets. It remained unapproved and unpublished. That exposes reliance on recognized vocabulary and limits any generalization claim. Full MetricFlow runtime compatibility is also unresolved. Application dependency auditing passed, while the container scan retains unfixed Debian findings. This release is a local synthetic portfolio candidate, not a production deployment or evidence of business time savings.
+
+Inspect the evidence
+The public project page links the interactive terminal replay, reports, case study and repository. The release includes downloadable Python packages, checksums and the container scan. All ten release checks passed, including Windows and Linux packaging, PostgreSQL, security tests and the golden evaluation. Six real model sessions have also been collected. Only one invoked a Skill body, so no general improvement is claimed. Personal motivation and contribution wording remains a proposed statement until Alex confirms it.

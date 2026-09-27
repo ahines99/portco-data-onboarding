@@ -1,0 +1,188 @@
+{
+  "status": "six real sessions collected; human annotations pending",
+  "source_commit": "43920a34ce868b7ead5ebd2e47fdd80eb53be23d",
+  "cli_version": "2.1.280",
+  "model": "claude-sonnet-5",
+  "normalization": "Private filesystem paths only; raw streams retained locally. Full normalized tool transcripts are versioned.",
+  "sessions": [
+    {
+      "prompt_id": "profile",
+      "condition": "without",
+      "exit_code": 0,
+      "duration_seconds": 24.34,
+      "prompt": "Onboard fixture:portco_a. Explain the profile findings and PII handling, with evidence, then stop for review.",
+      "model": "claude-sonnet-5",
+      "cli_version": "2.1.280",
+      "skills_available": [],
+      "skills_invoked": [],
+      "tools_called": [
+        "mcp__portco__start_onboarding_run",
+        "ReadMcpResourceTool",
+        "ReadMcpResourceTool"
+      ],
+      "run_id": "ebfcaa24-a2d9-40bd-b8ee-4de306a1253e",
+      "gate": "mapping_review",
+      "pending_items": 22,
+      "permissions_denied": [],
+      "transcript": "profile-without.txt",
+      "sha256": "7e7e14a5f21eea55d1bc5ee6b2ecd28066b8361eeaee2fcc8e26053b90e64915",
+      "raw_sha256": "7916df9b4679cd4a30a0be1a674d1f43b443de1f891092eb74c56ddaa271e050"
+    },
+    {
+      "prompt_id": "profile",
+      "condition": "with",
+      "exit_code": 0,
+      "duration_seconds": 28.55,
+      "prompt": "Onboard fixture:portco_a. Explain the profile findings and PII handling, with evidence, then stop for review.",
+      "model": "claude-sonnet-5",
+      "cli_version": "2.1.280",
+      "skills_available": [
+        "canonical-pe-ontology",
+        "data-quality",
+        "dbt-modeling",
+        "schema-profiling",
+        "semantic-layer-generation"
+      ],
+      "skills_invoked": [],
+      "tools_called": [
+        "mcp__portco__start_onboarding_run",
+        "ReadMcpResourceTool",
+        "ReadMcpResourceTool"
+      ],
+      "run_id": "09601423-428a-4b0c-a14c-cddf8c3430b4",
+      "gate": "mapping_review",
+      "pending_items": 22,
+      "permissions_denied": [],
+      "transcript": "profile-with.txt",
+      "sha256": "06698bc3a09d1049485242e27990f3d2e935f851f9c7f66118381bc3ff7a83a1",
+      "raw_sha256": "05f82af5bcabab75912428949d7f105e4359f5511ad24dd3f68b98501c6e2983"
+    },
+    {
+      "prompt_id": "mapping",
+      "condition": "with",
+      "exit_code": 0,
+      "duration_seconds": 44.48,
+      "prompt": "Onboard fixture:portco_b. Explain uncertain mappings, units and revenue semantics with evidence. Identify every pending review item.",
+      "model": "claude-sonnet-5",
+      "cli_version": "2.1.280",
+      "skills_available": [
+        "canonical-pe-ontology",
+        "data-quality",
+        "dbt-modeling",
+        "schema-profiling",
+        "semantic-layer-generation"
+      ],
+      "skills_invoked": [
+        "canonical-pe-ontology"
+      ],
+      "tools_called": [
+        "mcp__portco__start_onboarding_run",
+        "ReadMcpResourceTool",
+        "ReadMcpResourceTool",
+        "Skill",
+        "ReadMcpResourceTool",
+        "ReadMcpResourceTool",
+        "ReadMcpResourceTool"
+      ],
+      "run_id": "cfb53406-a43d-4e4a-a729-ab7d2062c1af",
+      "gate": "mapping_review",
+      "pending_items": 9,
+      "permissions_denied": [],
+      "transcript": "mapping-with.txt",
+      "sha256": "3871de90fd536c76ffa8ae70cce1235a541a4b9626404c7ccc37eab1c9d9c66e",
+      "raw_sha256": "55a22eb8e35bb4efa5ca0e81ed8db66f0a121ad38f0d4c2392b0fee13cd972a6"
+    },
+    {
+      "prompt_id": "mapping",
+      "condition": "without",
+      "exit_code": 0,
+      "duration_seconds": 28.44,
+      "prompt": "Onboard fixture:portco_b. Explain uncertain mappings, units and revenue semantics with evidence. Identify every pending review item.",
+      "model": "claude-sonnet-5",
+      "cli_version": "2.1.280",
+      "skills_available": [],
+      "skills_invoked": [],
+      "tools_called": [
+        "mcp__portco__start_onboarding_run",
+        "ReadMcpResourceTool",
+        "ReadMcpResourceTool"
+      ],
+      "run_id": "6da283d4-d580-4810-b0fa-b36550b5c84f",
+      "gate": "mapping_review",
+      "pending_items": 9,
+      "permissions_denied": [],
+      "transcript": "mapping-without.txt",
+      "sha256": "2d0f233853a61a0de87d66bbcf6208f227dc54dd09ec9bf082550c5cca9901e5",
+      "raw_sha256": "513f7ec63297dca178748250121d58ab59a56986ee3d5b2fd065e8dfb51a92a7"
+    },
+    {
+      "prompt_id": "failure",
+      "condition": "without",
+      "exit_code": 0,
+      "duration_seconds": 23.65,
+      "prompt": "Onboard fixture:portco_a__malformed. Explain quality findings and safe next steps. Do not approve on my behalf.",
+      "model": "claude-sonnet-5",
+      "cli_version": "2.1.280",
+      "skills_available": [],
+      "skills_invoked": [],
+      "tools_called": [
+        "mcp__portco__start_onboarding_run",
+        "ReadMcpResourceTool"
+      ],
+      "run_id": "50677023-e7cb-4d60-a13d-d096d92b6eb7",
+      "gate": "mapping_review",
+      "pending_items": 22,
+      "permissions_denied": [],
+      "transcript": "failure-without.txt",
+      "sha256": "ce3d4790711f5f14bdfbfea69c5266531f3a6b8dc27eb69612116fcb6d11d582",
+      "raw_sha256": "d0e7ac24009d603502d989b28a089fe643962400f61754742816efed0fab789c"
+    },
+    {
+      "prompt_id": "failure",
+      "condition": "with",
+      "exit_code": 0,
+      "duration_seconds": 24.43,
+      "prompt": "Onboard fixture:portco_a__malformed. Explain quality findings and safe next steps. Do not approve on my behalf.",
+      "model": "claude-sonnet-5",
+      "cli_version": "2.1.280",
+      "skills_available": [
+        "canonical-pe-ontology",
+        "data-quality",
+        "dbt-modeling",
+        "schema-profiling",
+        "semantic-layer-generation"
+      ],
+      "skills_invoked": [],
+      "tools_called": [
+        "mcp__portco__start_onboarding_run",
+        "ReadMcpResourceTool"
+      ],
+      "run_id": "04c866df-abc2-48cc-9a03-bc8994aa286d",
+      "gate": "mapping_review",
+      "pending_items": 22,
+      "permissions_denied": [],
+      "transcript": "failure-with.txt",
+      "sha256": "961c3b308eae391f21cbf723b1a9fb8e3ec22af1484e3cf0d37c639b0a4741fa",
+      "raw_sha256": "e21fe496eeb595667543ff19ec2a573c2f8c4ab622189069a15c48147eb54e31"
+    }
+  ],
+  "fixture_sha256": {
+    "portco_a.duckdb": "79c6e12e2efa79c199d9716327ceadb8b56d9a93508a273d8eb372ead51c2a93",
+    "portco_a__malformed.duckdb": "2bd3914506d793c2091547daadd02c98a880ba6eafd48fa4dfe29ae8adaa2d1d",
+    "portco_b.duckdb": "bade8a9dfdbb1ba54ac7b558d48e03283c25c39fe47b6c639a22ea04632639d3"
+  },
+  "skill_file_sha256": {
+    "canonical-pe-ontology/references/reviewing_mappings.md": "9e861c509b95f81a522bad1c664ab8d336314c376b3b9f8cbf548c0ab2f48733",
+    "canonical-pe-ontology/SKILL.md": "02d74e28c57616aec77fe7289319f4863023d9e9b90d8342ea7ea0e13f54919f",
+    "data-quality/references/triage_examples.md": "46f6c7f49137c635ec490aa197227b9f479c7d194d78c10d742c0651baf50f90",
+    "data-quality/SKILL.md": "7fc4019f90f4a60b9365666d2964823c3c6f3db5d716fdb4111dfc93640f7788",
+    "dbt-modeling/references/model_conventions.md": "0bfa4f2229071f4ecb49d576c6ba0a901a594cd9f8a492d004968ed20f99f3c9",
+    "dbt-modeling/SKILL.md": "5e49efd22159ddacfd13a0566e62b2f98d49c6189a977ccf822abcf39aaa7e56",
+    "schema-profiling/references/pii_taxonomy.md": "06234c4187e1c81ab5a280eab77655ffc2d116c6510c63efb7c0067cd3d69fcb",
+    "schema-profiling/references/profiling_thresholds.md": "f50221f643c32df3124a63e6ea27ec4525c7ede2566999ac49f423379d889070",
+    "schema-profiling/references/worked_example_portco_a.md": "84a86b3cf0118e6224589fcfec5734dd6cf912e13d43b45032de0ec1f0c7b11c",
+    "schema-profiling/SKILL.md": "3edbca39b70c90d9886867dbdefa07497f8637c0ea8bb3e64463161f4fb0559a",
+    "semantic-layer-generation/references/metric_status_examples.md": "e51da1ed0b35c7e85f029845e5184a986b432eea2ebf9fd99125b36cbeb1c0a3",
+    "semantic-layer-generation/SKILL.md": "95fc738ac6e9502349b1db461e88f501aee05e8648bedcc6962850a3996a35a9"
+  }
+}

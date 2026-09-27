@@ -1,8 +1,9 @@
 # Inspectable evidence
 
-These artifacts come from actual deterministic fixture runs. All reviewer decisions in this
-directory are **automated synthetic test decisions**, not independent approvals by Alex or a live
-model study. Private workspace prefixes are replaced in shareable outputs. The raw local state
+The top-level artifacts come from actual deterministic fixture runs. Their reviewer decisions are
+**automated synthetic test decisions**, not independent approvals by Alex. The separate
+[live-study collection](live-study/README.md) contains six actual model sessions with no approvals.
+Private workspace prefixes are replaced in shareable outputs. The raw local state
 remains outside Git. The manifest hashes the normalized shared files; it is not a signed audit export.
 
 Start with [success](success-report.md), [controlled failure](failure-report.md),

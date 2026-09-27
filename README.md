@@ -7,8 +7,9 @@
 [Release status](docs/RELEASE-STATUS.md)
 
 Synthetic-data portfolio prototype by Alex Hines, developed with substantial AI assistance.
-The recorded fixture demo uses automated reviewer decisions. A real agent session with independent
-human approval and the paired Skill study remain explicit [human handoffs](docs/HUMAN-HANDOFF.md).
+The recorded fixture demo uses automated reviewer decisions. [Six real model sessions](docs/evidence/live-study/README.md)
+and a [captioned synthetic-voice tour](https://github.com/ahines99/portco-data-onboarding/releases/download/v0.1.0/portco-narrated-demo.mp4)
+are available. Personal review and human annotations remain explicit [handoffs](docs/HUMAN-HANDOFF.md).
 
 Onboards an unfamiliar portfolio company's data into a canonical private-equity data model:
 
@@ -65,6 +66,8 @@ uv sync --all-extras && uv run poe demo
 
 Requires Python 3.12 and [uv](https://docs.astral.sh/uv/). No Docker and no API keys are needed for
 the demo, the tests or the evals.
+
+If uv is installed as a Python module but is not on PATH, replace `uv` below with `python -m uv`.
 
 ```bash
 uv sync --all-extras          # environment from uv.lock

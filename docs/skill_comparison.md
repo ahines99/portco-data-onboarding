@@ -1,8 +1,9 @@
 # Live Skill comparison protocol
 
-Status: harness implemented and unit tested; no live transcripts have been collected and no
-improvement from Skills is claimed. Static Skill lint and deterministic MCP traces do not establish
-that an agent behaves better with Skills.
+Status: six real Claude Code sessions were collected on 2026-09-27. See the
+[transcripts, provenance and assistant review](evidence/live-study/README.md). Human annotations
+remain pending; no improvement from Skills is claimed. Only one of the three sessions with Skills
+available invoked a Skill body. Static lint and deterministic traces do not establish model efficacy.
 
 Run `uv run python scripts/compare_skills.py prepare var/skill-comparison` to create a manifest for
 three fixed prompts, each run twice (without and with Skills). The prompts cover profiling/PII,

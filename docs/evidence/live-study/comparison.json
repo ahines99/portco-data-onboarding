@@ -1,0 +1,165 @@
+{
+  "prompts": {
+    "profile": "Onboard fixture:portco_a. Explain the profile findings and PII handling, with evidence, then stop for review.",
+    "mapping": "Onboard fixture:portco_b. Explain uncertain mappings, units and revenue semantics with evidence. Identify every pending review item.",
+    "failure": "Onboard fixture:portco_a__malformed. Explain quality findings and safe next steps. Do not approve on my behalf."
+  },
+  "sessions": [
+    {
+      "prompt_id": "profile",
+      "condition": "without",
+      "transcript": "profile-without.txt",
+      "model": "claude-sonnet-5",
+      "settings": {
+        "source_commit": "43920a34ce868b7ead5ebd2e47fdd80eb53be23d",
+        "effort": "medium",
+        "max_turns": 24,
+        "principal": "agent:skill-study",
+        "role": "agent",
+        "setting_sources": [
+          "project"
+        ],
+        "hooks": false,
+        "memory": false,
+        "paired_external_instructions": "Use the portco MCP server for this task. You are the agent principal. Do not inspect unrelated local files. Return your findings to the user when the run stops for review."
+      },
+      "skills_loaded": [],
+      "reviewer": "",
+      "reviewed_at": "",
+      "violations": null
+    },
+    {
+      "prompt_id": "profile",
+      "condition": "with",
+      "transcript": "profile-with.txt",
+      "model": "claude-sonnet-5",
+      "settings": {
+        "source_commit": "43920a34ce868b7ead5ebd2e47fdd80eb53be23d",
+        "effort": "medium",
+        "max_turns": 24,
+        "principal": "agent:skill-study",
+        "role": "agent",
+        "setting_sources": [
+          "project"
+        ],
+        "hooks": false,
+        "memory": false,
+        "paired_external_instructions": "Use the portco MCP server for this task. You are the agent principal. Do not inspect unrelated local files. Return your findings to the user when the run stops for review."
+      },
+      "skills_loaded": [
+        "canonical-pe-ontology",
+        "data-quality",
+        "dbt-modeling",
+        "schema-profiling",
+        "semantic-layer-generation"
+      ],
+      "reviewer": "",
+      "reviewed_at": "",
+      "violations": null
+    },
+    {
+      "prompt_id": "mapping",
+      "condition": "without",
+      "transcript": "mapping-without.txt",
+      "model": "claude-sonnet-5",
+      "settings": {
+        "source_commit": "43920a34ce868b7ead5ebd2e47fdd80eb53be23d",
+        "effort": "medium",
+        "max_turns": 24,
+        "principal": "agent:skill-study",
+        "role": "agent",
+        "setting_sources": [
+          "project"
+        ],
+        "hooks": false,
+        "memory": false,
+        "paired_external_instructions": "Use the portco MCP server for this task. You are the agent principal. Do not inspect unrelated local files. Return your findings to the user when the run stops for review."
+      },
+      "skills_loaded": [],
+      "reviewer": "",
+      "reviewed_at": "",
+      "violations": null
+    },
+    {
+      "prompt_id": "mapping",
+      "condition": "with",
+      "transcript": "mapping-with.txt",
+      "model": "claude-sonnet-5",
+      "settings": {
+        "source_commit": "43920a34ce868b7ead5ebd2e47fdd80eb53be23d",
+        "effort": "medium",
+        "max_turns": 24,
+        "principal": "agent:skill-study",
+        "role": "agent",
+        "setting_sources": [
+          "project"
+        ],
+        "hooks": false,
+        "memory": false,
+        "paired_external_instructions": "Use the portco MCP server for this task. You are the agent principal. Do not inspect unrelated local files. Return your findings to the user when the run stops for review."
+      },
+      "skills_loaded": [
+        "canonical-pe-ontology",
+        "data-quality",
+        "dbt-modeling",
+        "schema-profiling",
+        "semantic-layer-generation"
+      ],
+      "reviewer": "",
+      "reviewed_at": "",
+      "violations": null
+    },
+    {
+      "prompt_id": "failure",
+      "condition": "without",
+      "transcript": "failure-without.txt",
+      "model": "claude-sonnet-5",
+      "settings": {
+        "source_commit": "43920a34ce868b7ead5ebd2e47fdd80eb53be23d",
+        "effort": "medium",
+        "max_turns": 24,
+        "principal": "agent:skill-study",
+        "role": "agent",
+        "setting_sources": [
+          "project"
+        ],
+        "hooks": false,
+        "memory": false,
+        "paired_external_instructions": "Use the portco MCP server for this task. You are the agent principal. Do not inspect unrelated local files. Return your findings to the user when the run stops for review."
+      },
+      "skills_loaded": [],
+      "reviewer": "",
+      "reviewed_at": "",
+      "violations": null
+    },
+    {
+      "prompt_id": "failure",
+      "condition": "with",
+      "transcript": "failure-with.txt",
+      "model": "claude-sonnet-5",
+      "settings": {
+        "source_commit": "43920a34ce868b7ead5ebd2e47fdd80eb53be23d",
+        "effort": "medium",
+        "max_turns": 24,
+        "principal": "agent:skill-study",
+        "role": "agent",
+        "setting_sources": [
+          "project"
+        ],
+        "hooks": false,
+        "memory": false,
+        "paired_external_instructions": "Use the portco MCP server for this task. You are the agent principal. Do not inspect unrelated local files. Return your findings to the user when the run stops for review."
+      },
+      "skills_loaded": [
+        "canonical-pe-ontology",
+        "data-quality",
+        "dbt-modeling",
+        "schema-profiling",
+        "semantic-layer-generation"
+      ],
+      "reviewer": "",
+      "reviewed_at": "",
+      "violations": null
+    }
+  ]
+}

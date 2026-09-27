@@ -73,8 +73,10 @@ tokens and trusted local reviewer identities are development controls. There is 
 MCP backend, production identity provider or live warehouse deployment. The local semantic executor
 supports a defined monthly subset; actual MetricFlow compatibility is tracked separately.
 
-The highest-value remaining human work is to drive a real model session, inspect and approve the
-mapping/certification gates, annotate the paired Skill study and independently try the quickstart.
+Six real model sessions and a captioned synthetic-voice tour have now been collected. The
+[prepared acceptance packet](ASSISTED-ACCEPTANCE.md) reduces the remaining human work to inspecting
+mapping/certification decisions, confirming draft annotations and personal wording, and optionally
+obtaining independent first-use feedback.
 Adding another integration before that evidence would broaden the product without closing these
 acceptance gaps.
 
