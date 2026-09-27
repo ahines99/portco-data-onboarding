@@ -11,6 +11,7 @@ from uuid import UUID
 
 from src.adapters.faults import FaultInjector
 from src.adapters.repositories import RunRecord
+from src.domain.hashing import content_hash
 from src.domain.models import Principal, ReviewDecision, Role, RunStatus
 from src.domain.project_models import ItemDecision, ReviewItem
 from src.settings import Settings, get_settings
@@ -101,7 +102,16 @@ async def drive(
 
 
 async def run_case(case: dict[str, Any], workdir: Path, cache: dict[str, CaseRun]) -> CaseRun:
-    key = f"{case['fixture']}|{case.get('driver', 'gate_a')}|{case.get('faults', '')}|{case.get('overrides')}"
+    # Include every input except reporting/check metadata. New driver options are isolated by default.
+    inputs = {k: v for k, v in case.items() if k not in {"id", "title", "checks", "evidences", "fresh"}}
+    inputs.update(
+        driver=case.get("driver", "gate_a"),
+        faults=case.get("faults", ""),
+        overrides=DEFAULT_OVERRIDES if case.get("overrides") is None else case["overrides"],
+        reject=sorted(set(case.get("reject", []))),
+        waive=case.get("waive", False),
+    )
+    key = content_hash(inputs)
     if key in cache and not case.get("fresh"):
         return cache[key]
     root = workdir / case["id"]

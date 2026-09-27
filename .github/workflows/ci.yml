@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -62,6 +66,7 @@ jobs:
           --health-cmd "pg_isready -U portco" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       PORTCO_TEST_POSTGRES_URL: postgresql+psycopg://portco:portco@localhost:5432/portco
+      PORTCO_TEST_POSTGRES_ALLOW_CREATE: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -96,3 +101,40 @@ jobs:
         with: {enable-cache: true}
       - run: uv sync --all-extras --frozen
       - run: uv run poe demo
+
+  wheel-smoke:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with: {enable-cache: true}
+      - run: uv sync --all-extras --frozen
+      - run: uv run python scripts/smoke_wheel.py
+
+  container-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with: {enable-cache: true}
+      - run: uv sync --all-extras --frozen
+      - name: Generate an ephemeral test bearer token
+        run: |
+          token=$(openssl rand -hex 32)
+          reviewer=$(openssl rand -hex 32)
+          echo "::add-mask::$token"
+          echo "::add-mask::$reviewer"
+          echo "PORTCO_SMOKE_TOKEN=$token" >> "$GITHUB_ENV"
+          echo "PORTCO_SMOKE_REVIEWER_TOKEN=$reviewer" >> "$GITHUB_ENV"
+          echo "PORTCO_HTTP_TOKENS=$token=agent:ci:agent:portco_a;$reviewer=ci-reviewer:reviewer:portco_a" >> "$GITHUB_ENV"
+      - run: docker compose --profile full up --build -d
+      - run: uv run python scripts/smoke_container.py
+      - name: Container diagnostics
+        if: always()
+        run: docker compose --profile full logs --no-color
+      - name: Remove isolated CI stack
+        if: always()
+        run: docker compose --profile full down -v

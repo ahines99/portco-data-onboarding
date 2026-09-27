@@ -9,14 +9,16 @@ from typing import Literal
 from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+from src.paths import RESOURCE_ROOT, default_var_root
+
+PROJECT_ROOT = RESOURCE_ROOT
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="PORTCO_", env_file=".env", extra="ignore")
 
     env: Literal["dev", "test", "production"] = "dev"
-    var_root: Path = PROJECT_ROOT / "var"
+    var_root: Path = Field(default_factory=default_var_root)
     fixtures_root: Path | None = None  # defaults to <var_root>/fixtures
     database_url: str = ""
     log_level: str = "INFO"
@@ -83,7 +85,7 @@ class Settings(BaseSettings):
 
     @property
     def llm_cassette_dir(self) -> Path:
-        return PROJECT_ROOT / "evals" / "cassettes"
+        return self.var_root / "llm_cassettes"
 
 
 @lru_cache(maxsize=1)

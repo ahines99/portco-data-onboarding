@@ -34,7 +34,9 @@ from src.observability import span
 
 log = structlog.get_logger(__name__)
 PROMPT_VERSION = "judge-v1"
-PRICES_PER_MTOK = {"claude-opus-5": (5.00, 25.00), "claude-sonnet-5": (2.00, 10.00), "claude-haiku-4-5": (1.00, 5.00)}
+# Populate only with verified, dated provider prices before an explicitly authorized live study.
+# An absent price is unknown, never a claim that an API call is free.
+PRICES_PER_MTOK: dict[str, tuple[float, float]] = {}
 SYSTEM = (
     "You review how a column from a portfolio company's database maps onto a canonical private-equity data model. "
     "You receive aggregate statistics about the column (never row values) and a short list of candidate target "
@@ -154,15 +156,21 @@ class ClaudeJudge:
             text = next((b.text for b in response.content if b.type == "text"), "{}")
             result = json.loads(text)
         usage = response.usage
-        in_price, out_price = PRICES_PER_MTOK.get(self.model, (0.0, 0.0))
+        actual_model = getattr(response, "model", self.model)
+        prices = PRICES_PER_MTOK.get(actual_model)
         result |= {
-            "model": getattr(response, "model", self.model),
+            "model": actual_model,
             "prompt_version": PROMPT_VERSION,
             "latency_s": latency,
             "usage": {
                 "input_tokens": usage.input_tokens,
                 "output_tokens": usage.output_tokens,
-                "cost_usd": round((usage.input_tokens * in_price + usage.output_tokens * out_price) / 1e6, 6),
+                "cost_usd": (
+                    round((usage.input_tokens * prices[0] + usage.output_tokens * prices[1]) / 1e6, 6)
+                    if prices is not None
+                    else None
+                ),
+                "cost_status": "estimated" if prices is not None else "unknown_price",
             },
         }
         if self.mode == "record":

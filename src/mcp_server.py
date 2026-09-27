@@ -24,7 +24,7 @@ from src.settings import Settings, get_settings
 
 INSTRUCTIONS = """\
 Governed onboarding of portfolio-company data into a canonical PE ontology.
-- Discovery is read-only and aggregate-only; you will never see row values or PII.
+- Discovery is read-only; profiles expose aggregates and explicitly approved category labels, not source rows.
 - Deterministic services compute every number. Do not estimate metrics marked NEEDS_EVIDENCE.
 - Runs stop at human review gates. You cannot approve, certify or waive anything: only reviewer
   principals can. Explain pending items to the human instead.

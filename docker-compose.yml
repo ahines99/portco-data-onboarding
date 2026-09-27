@@ -3,11 +3,12 @@
 services:
   postgres:
     image: postgres:16
+    volumes: ["portco-postgres:/var/lib/postgresql/data"]
     environment:
       POSTGRES_USER: portco
       POSTGRES_PASSWORD: portco
       POSTGRES_DB: portco
-    ports: ["5432:5432"]
+    ports: ["127.0.0.1:5432:5432"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U portco"]
       interval: 5s
@@ -20,7 +21,7 @@ services:
     command: ["alembic", "upgrade", "head"]
     environment: &env
       PORTCO_DATABASE_URL: postgresql+psycopg://portco:portco@postgres:5432/portco
-      PORTCO_HTTP_TOKENS: ${PORTCO_HTTP_TOKENS:-dev-agent=agent:claude:agent:*;dev-reviewer=alice:reviewer:*}
+      PORTCO_HTTP_TOKENS: ${PORTCO_HTTP_TOKENS:-}
       PORTCO_HTTP_BASE_URL: http://localhost:8000
     depends_on:
       postgres: {condition: service_healthy}
@@ -29,10 +30,11 @@ services:
     profiles: [full]
     build: .
     environment: *env
-    ports: ["8000:8000"]
+    ports: ["127.0.0.1:8000:8000"]
     volumes: ["portco-data:/data"]
     depends_on:
       migrate: {condition: service_completed_successfully}
 
 volumes:
   portco-data:
+  portco-postgres:

@@ -16,7 +16,7 @@ from src.workflows.base import StepSpec, WorkflowEngine
 from src.workflows.contracts import StepContext, StepResult
 from src.workflows.facade import OnboardingService
 from src.workflows.versioning import pipeline_version
-from tests.conftest import ADMIN, AGENT, REVIEWER, make_settings
+from tests.conftest import ADMIN, AGENT, REVIEWER, decide_all, make_settings
 
 pytestmark = [pytest.mark.unit, pytest.mark.anyio]
 
@@ -157,3 +157,54 @@ def test_pipeline_version_tracks_code_and_ignores_line_endings(tmp_path: Path) -
     assert pipeline_version.__wrapped__(tmp_path) == v1
     f.write_bytes(b"a: 2\n")
     assert pipeline_version.__wrapped__(tmp_path) != v1
+
+
+@pytest.mark.parametrize("change", ["schema_policy", "configuration"])
+async def test_resume_revalidates_skipped_upstream_inputs(service: OnboardingService, change: str) -> None:
+    run = await service.start_run(AGENT, "fixture:portco_a", stop_after=StepName.SCHEMA_PROFILING)
+    before = service.artifact(AGENT, run.run_id, StepName.SCHEMA_PROFILING)
+    assert {table.schema_name for table in before.tables} != {"crm"}
+    with service.store.tx() as tx:
+        old = tx.steps.active(run.run_id, StepName.SCHEMA_PROFILING.value)
+        assert old is not None
+    if change == "schema_policy":
+        spec = service.connections.resolve("fixture:portco_a")
+        service.connections.register(spec.model_copy(update={"schemas": ["crm"]}))
+    else:
+        service.settings.fiscal_year_start_month = 3
+    resumed = await service.resume(AGENT, run.run_id, stop_after=StepName.SCHEMA_PROFILING)
+    assert resumed.status is S.PENDING and resumed.current_step == StepName.ENTITY_INFERENCE.value
+    after = service.artifact(AGENT, run.run_id, StepName.SCHEMA_PROFILING)
+    if change == "schema_policy":
+        assert {table.schema_name for table in after.tables} == {"crm"}
+    with service.store.tx() as tx:
+        fresh = tx.steps.active(run.run_id, StepName.SCHEMA_PROFILING.value)
+        assert fresh is not None and fresh.step_run_id != old.step_run_id
+        assert fresh.input_hash != old.input_hash
+        assert not tx.steps.get(old.step_run_id).active
+        rewinds = [event for event in tx.audit.list(run.run_id) if event.event_type == "resume_rewound"]
+        assert len(rewinds) == 1
+        assert rewinds[0].payload["to_step"] == StepName.CONNECTION_VALIDATION.value
+
+
+async def test_resume_keeps_completed_upstream_when_inputs_are_unchanged(service: OnboardingService) -> None:
+    run = await service.start_run(AGENT, "fixture:portco_a", stop_after=StepName.SCHEMA_PROFILING)
+    with service.store.tx() as tx:
+        old = tx.steps.active(run.run_id, StepName.SCHEMA_PROFILING.value)
+    await service.resume(AGENT, run.run_id, stop_after=StepName.ENTITY_INFERENCE)
+    with service.store.tx() as tx:
+        assert tx.steps.active(run.run_id, StepName.SCHEMA_PROFILING.value) == old
+        assert not any(event.event_type == "resume_rewound" for event in tx.audit.list(run.run_id))
+
+
+async def test_resume_rewind_invalidates_downstream_review_decisions(service: OnboardingService) -> None:
+    run = await service.start_run(AGENT, "fixture:portco_a")
+    assert run.gate == "mapping_review"
+    approval = service.submit_review(REVIEWER, run.run_id, decide_all(run.pending_items))
+    service.settings.fiscal_year_start_month = 3
+    resumed = await service.resume(AGENT, run.run_id, stop_after=StepName.SCHEMA_PROFILING)
+    assert resumed.status is S.PENDING and resumed.pending_items == [] and resumed.gate is None
+    with service.store.tx() as tx:
+        assert tx.approvals.get(approval.approval_id).revoked_at is not None
+        assert tx.steps.active(run.run_id, StepName.CANONICAL_MAPPING.value) is None
+        assert tx.steps.active(run.run_id, StepName.MAPPING_REVIEW.value) is None

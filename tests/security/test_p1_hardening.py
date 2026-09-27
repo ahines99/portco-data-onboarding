@@ -164,9 +164,12 @@ def test_person_like_columns_and_names_are_withheld(tmp_path: Path, fixtures_dir
     con.execute("ALTER TABLE crm.regions ADD COLUMN account_owner VARCHAR DEFAULT 'ops'")
     con.close()
     a = reg.open("fixture:portco_a")
+    a.spec.category_domains["crm.regions.region"] = ["apac", "emea"]
     try:
         assert a.low_cardinality_values("crm", "regions", "region", 12).values == ["apac", "emea"]
-        assert a.low_cardinality_values("crm", "regions", "champion", 12).withheld_reason == "person_name_suspected"
+        assert (
+            a.low_cardinality_values("crm", "regions", "champion", 12).withheld_reason == "unapproved_category_domain"
+        )
         assert a.low_cardinality_values("crm", "regions", "account_owner", 12).withheld_reason == "person_like_column"
     finally:
         a.close()

@@ -44,7 +44,9 @@ from src.domain.project_models import (
 from src.fsutil import remove_tree, write_bytes
 from src.observability import span
 from src.services.approvals import effective_decisions
+from src.services.semantic import execute_metrics
 from src.workflows.contracts import StepContext, StepResult, make_evidence
+from src.workflows.versioning import configuration_fingerprint, pipeline_version
 
 _GUARD = PiiGuard()
 DBT_ENV_ALLOWLIST = frozenset(
@@ -344,7 +346,7 @@ def reconcile(
                 "SELECT strftime(invoice_date, '%Y-%m') || '|' || currency, "
                 "cast(sum(total_amount) AS DECIMAL(18,2)) FROM fct_invoice GROUP BY 1",
             )
-            checks.append(_compare("metric:billings", exp, act, "billings by month and currency"))
+            checks.append(_compare("mart:billings", exp, act, "billings by month and currency"))
 
     if "fct_mrr_monthly" in models and "arr" in bundle.generated_metrics:
         recs = _records(src, r, "subscription", ["customer_id", "mrr", "currency", "start_date", "end_date"])
@@ -364,14 +366,14 @@ def reconcile(
                 "SELECT strftime(month_end, '%Y-%m') || '|' || currency, "
                 "cast(sum(mrr) * 12 AS DECIMAL(18,2)) FROM fct_mrr_monthly GROUP BY 1",
             )
-            checks.append(_compare("metric:arr", exp, act, "ARR by month and currency"))
+            checks.append(_compare("mart:arr", exp, act, "ARR by month and currency"))
             exp_ac = {m: v for m, v in ref.active_customers(subs, months).items() if v}
             act_ac = _mart_dict(
                 wh,
                 "SELECT strftime(month_end, '%Y-%m'), count(DISTINCT customer_id) "
                 "FILTER (WHERE mrr > 0) FROM fct_mrr_monthly GROUP BY 1",
             )
-            checks.append(_compare("metric:active_customers", exp_ac, act_ac, "active customers by month"))
+            checks.append(_compare("mart:active_customers", exp_ac, act_ac, "active customers by month"))
 
     if "fct_gl_entry" in models and "revenue_recognized" in bundle.generated_metrics:
         lines = _records(src, r, "gl_entry", ["account_code", "posting_date", "debit_amount", "credit_amount"])
@@ -397,7 +399,7 @@ def reconcile(
                 ).items()
                 if v
             }
-            checks.append(_compare("metric:revenue_recognized", exp, act, "recognized revenue by month"))
+            checks.append(_compare("mart:revenue_recognized", exp, act, "recognized revenue by month"))
 
     if {"fct_invoice", "fct_invoice_line"} <= models:
         cols = {c[0] for c in wh.execute("DESCRIBE fct_invoice_line").fetchall()}
@@ -439,6 +441,140 @@ def reconcile(
     return checks
 
 
+def reconcile_semantic(
+    ctx: StepContext,
+    src: SourceRows,
+    wh: duckdb.DuckDBPyConnection,
+    resolved: ResolvedMapping,
+    bundle: ArtifactBundle,
+    as_of: date | None,
+) -> list[ReconciliationCheck]:
+    """Every generated metric must execute and have an independent source reference."""
+    expected: dict[str, dict[str, Any]] = {}
+    invoices = _records(
+        src, resolved, "invoice", ["invoice_id", "customer_id", "invoice_date", "total_amount", "currency"]
+    )
+    if invoices is not None:
+        inv = [
+            ref.InvoiceRec(
+                str(x["invoice_id"]),
+                str(x["customer_id"]),
+                x["invoice_date"],
+                Decimal(x["total_amount"]),
+                str(x["currency"]),
+            )
+            for x in invoices
+        ]
+        expected["billings"] = {f"{m}|{c}": v for (m, c), v in ref.billings(inv).items()}
+    subscriptions = _records(
+        src, resolved, "subscription", ["customer_id", "mrr", "currency", "start_date", "end_date"]
+    )
+    if subscriptions is not None:
+        subs = [
+            ref.SubscriptionRec(
+                str(x["customer_id"]), Decimal(x["mrr"]), str(x["currency"]), x["start_date"], x["end_date"]
+            )
+            for x in subscriptions
+        ]
+        months = (
+            ref.month_range(ref.month_key(min(s.start_date for s in subs)), ref.month_key(as_of or date.today()))
+            if subs
+            else []
+        )
+        expected["mrr"] = {f"{m}|{c}": v for (m, c), v in ref.mrr(subs, months).items()}
+        expected["arr"] = {f"{m}|{c}": v for (m, c), v in ref.arr(subs, months).items()}
+        expected["active_customers"] = {m: n for m, n in ref.active_customers(subs, months).items() if n}
+    lines = _records(src, resolved, "gl_entry", ["account_code", "posting_date", "debit_amount", "credit_amount"])
+    accounts = _records(src, resolved, "gl_account", ["account_code", "account_type"])
+    if lines is not None and accounts is not None:
+        types = {str(a["account_code"]): str(a["account_type"]) for a in accounts}
+        gl = [
+            ref.GlLineRec(
+                x["posting_date"],
+                types.get(str(x["account_code"]), ""),
+                Decimal(x["debit_amount"] or 0),
+                Decimal(x["credit_amount"] or 0),
+            )
+            for x in lines
+        ]
+        periods = {ref.month_key(line.posting_date) for line in gl}
+        for name, calculator in (
+            ("revenue_recognized", ref.revenue_recognized),
+            ("cogs", ref.cogs),
+            ("opex", ref.opex),
+            ("ebitda", ref.ebitda),
+            ("gross_margin_pct", ref.gross_margin_pct),
+        ):
+            result = calculator(gl)
+            expected[name] = {m: result.get(m, None if name == "gross_margin_pct" else Decimal(0)) for m in periods}
+    files = {
+        f.path: ctx.blobs.get_bytes(f.sha256).decode("utf-8")
+        for f in bundle.files
+        if f.path.startswith("models/semantic/")
+    }
+    try:
+        actual = execute_metrics(wh, files, bundle.generated_metrics)
+    except (duckdb.Error, ValidationFailed, KeyError, TypeError, ValueError):
+        return [
+            ReconciliationCheck(
+                name=f"metric:{name}", passed=False, detail="generated semantic definitions could not execute"
+            )
+            for name in bundle.generated_metrics
+        ]
+    checks = []
+    for name in bundle.generated_metrics:
+        if name not in expected or name not in actual:
+            checks.append(
+                ReconciliationCheck(name=f"metric:{name}", passed=False, detail="missing independent metric coverage")
+            )
+            continue
+        exp, act = expected[name], actual[name]
+        # The monthly snapshot has no row during inactive periods; zero customers is equivalent.
+        if name == "active_customers":
+            act = {k: v for k, v in act.items() if v}
+        quantum = Decimal("0.0001") if name == "gross_margin_pct" else Decimal("0.01")
+
+        def normalize(value: Any, precision: Decimal = quantum) -> str | None:
+            if value is None:
+                return None
+            number = Decimal(str(value))
+            return str(number.quantize(precision)) if number.is_finite() else str(number)
+
+        left = {k: normalize(v) for k, v in exp.items()}
+        right = {k: normalize(v) for k, v in act.items()}
+        checks.append(
+            ReconciliationCheck(
+                name=f"metric:{name}",
+                passed=left == right,
+                detail=f"generated semantic expression: {len(left)} expected monthly groups, {len(right)} actual",
+                expected=left,
+                actual=right,
+            )
+        )
+    return checks
+
+
+def report_subject(report: TestReport) -> dict[str, Any]:
+    """Stable approval subject: all substantive outcomes, no execution noise or decisions."""
+    body = report.model_dump(mode="json", exclude={"cached", "duration_seconds", "waived_checks"})
+    body["dbt_results"] = sorted(body["dbt_results"], key=lambda r: r["unique_id"])
+    body["reconciliation"] = sorted(body["reconciliation"], key=lambda r: r["name"])
+    body["failing_checks"] = sorted(body["failing_checks"])
+    return body
+
+
+def sandbox_identity(
+    ctx: StepContext, bundle: ArtifactBundle, resolved: ResolvedMapping, fingerprint: str
+) -> dict[str, str]:
+    return {
+        "manifest": bundle.manifest_hash,
+        "source": fingerprint,
+        "mapping": resolved.content_hash(),
+        "pipeline": pipeline_version(),
+        "configuration": configuration_fingerprint(ctx.settings, ctx.services.get("judge")),
+    }
+
+
 # --------------------------------------------------------------------------- step
 
 
@@ -448,13 +584,18 @@ def sandbox_run_dir(sandbox_root: Path, run_id: UUID) -> Path:
 
 
 def build_and_test(ctx: StepContext, bundle: ArtifactBundle, resolved: ResolvedMapping, fingerprint: str) -> TestReport:
-    workdir = (
-        sandbox_run_dir(ctx.settings.sandbox_root, ctx.run.run_id) / f"{bundle.manifest_hash[:10]}-{fingerprint[:8]}"
-    ).resolve()
+    identity = sandbox_identity(ctx, bundle, resolved, fingerprint)
+    workdir = (sandbox_run_dir(ctx.settings.sandbox_root, ctx.run.run_id) / content_hash(identity)[:20]).resolve()
     report_path = workdir / "report.json"
-    if report_path.exists():
+    identity_path = workdir / "identity.json"
+    if (
+        report_path.exists()
+        and identity_path.exists()
+        and json.loads(identity_path.read_text(encoding="utf-8")) == identity
+    ):
         cached = TestReport.model_validate_json(report_path.read_text(encoding="utf-8"))
-        return cached.model_copy(update={"cached": True})
+        if cached.manifest_hash == bundle.manifest_hash and cached.source_fingerprint == fingerprint:
+            return cached.model_copy(update={"cached": True})
     started = time.monotonic()
     if workdir.exists():  # an earlier attempt died before writing its report
         remove_tree(workdir)
@@ -494,9 +635,15 @@ def build_and_test(ctx: StepContext, bundle: ArtifactBundle, resolved: ResolvedM
             checks = reconcile(
                 src, wh, resolved, usable, spec.as_of, {t: s for t, s in model_tables.items() if s in ok_models}
             )
+            checks += reconcile_semantic(ctx, src, wh, resolved, bundle, spec.as_of)
         finally:
             wh.close()
             src.close()
+    covered = {c.name.removeprefix("metric:") for c in checks if c.name.startswith("metric:")}
+    checks += [
+        ReconciliationCheck(name=f"metric:{name}", passed=False, detail="semantic execution did not run")
+        for name in sorted(set(bundle.generated_metrics) - covered)
+    ]
     failing = [r.unique_id for r in results if r.status in {"fail", "error"}]
     failing += [c.name for c in checks if not c.passed and c.blocking]
     report = TestReport(
@@ -510,6 +657,7 @@ def build_and_test(ctx: StepContext, bundle: ArtifactBundle, resolved: ResolvedM
         duration_seconds=round(time.monotonic() - started, 2),
     )
     (workdir / "report.json").write_text(report.model_dump_json(indent=1), encoding="utf-8", newline="\n")
+    (workdir / "identity.json").write_text(json.dumps(identity, sort_keys=True), encoding="utf-8")
     try:
         workdir.rename(final)
     except OSError:  # another attempt published the same key first; its report is equivalent
@@ -576,7 +724,7 @@ def run_automated_tests(ctx: StepContext) -> StepResult:
     failing = report.failing_checks or [f"dbt_exit_{report.dbt_exit_code}"]
     # The waiver is bound to the whole report, not only the failing names: a different result
     # set with the same names (other failure counts, other reconciliation outcomes) needs a new one.
-    subject = content_hash({**payload, "fingerprint": report.source_fingerprint, "failing": failing})
+    subject = content_hash({"report": report_subject(report), "failing": failing})
     decisions = effective_decisions(ctx.approvals, ReviewGate.TEST_FAILURES, subject)
     rejected = [k for k, d in decisions.items() if d.decision is ReviewDecision.REJECT]
     if rejected:

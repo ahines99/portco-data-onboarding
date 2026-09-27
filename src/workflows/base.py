@@ -20,6 +20,7 @@ from __future__ import annotations
 import random
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from time import monotonic
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -40,7 +41,7 @@ from src.observability import span
 from src.services import approvals as approval_service
 from src.settings import Settings
 from src.workflows.contracts import StepContext, StepResult
-from src.workflows.versioning import pipeline_version
+from src.workflows.versioning import configuration_fingerprint, pipeline_version
 
 log = structlog.get_logger(__name__)
 
@@ -111,8 +112,10 @@ class WorkflowEngine:
                 "step": spec.name.value,
                 "schema_version": SCHEMA_VERSION,
                 "pipeline_version": pipeline_version(),
+                "configuration": configuration_fingerprint(self.settings, self.services.get("judge")),
                 "upstream": upstream_hashes,
                 "connection": run.connection_id,
+                "connection_policy": self.connections.resolve(run.connection_id).model_dump(mode="json"),
             }
         )
 
@@ -133,6 +136,50 @@ class WorkflowEngine:
         with self.store.tx() as tx:
             return tx.runs.renew(run_id, owner, self.lease_seconds).status is RunStatus.RUNNING
 
+    def _resume_start(self, tx: Tx, run: RunRecord, start: int, actor: str) -> int:
+        """Validate skipped upstream outputs before trusting a persisted resume cursor."""
+        hashes: dict[str, str] = {}
+        for idx, spec in enumerate(self.steps[:start]):
+            rec = tx.steps.active(run.run_id, spec.name.value)
+            expected = self.input_hash(spec, hashes, run)
+            if rec is None or rec.status != "completed" or rec.input_hash != expected:
+                # The execution lease has already been claimed in this transaction.
+                # Preserve historical artifacts, but stop exposing stale active outputs
+                # or decisions to subsequent steps and require affected reviews again.
+                downstream = self.steps[idx:]
+                for following in downstream:
+                    tx.steps.deactivate(run.run_id, following.name.value)
+                gates = {following.gate for following in downstream if following.gate is not None}
+                for approval in tx.approvals.for_run(run.run_id):
+                    if approval.gate in gates and approval.revoked_at is None:
+                        tx.approvals.revoke(approval.approval_id, "upstream execution inputs changed")
+                        self._audit(
+                            tx,
+                            run.run_id,
+                            spec.name.value,
+                            "approval_invalidated",
+                            actor,
+                            approval_id=str(approval.approval_id),
+                            reason="upstream execution inputs changed",
+                        )
+                tx.runs.update(run.run_id, current_step=spec.name.value, gate=None, pending_items=[], error=None)
+                self._audit(
+                    tx,
+                    run.run_id,
+                    spec.name.value,
+                    "resume_rewound",
+                    actor,
+                    from_step=self.steps[start].name.value,
+                    to_step=spec.name.value,
+                    reason="upstream execution inputs changed",
+                    previous_input_hash=rec.input_hash if rec else None,
+                    current_input_hash=expected,
+                )
+                return idx
+            if rec.output_ref is not None and spec.output_type is not None:
+                hashes[spec.name.value] = rec.output_hash or ""
+        return start
+
     # ------------------------------------------------------------------ execution
 
     async def run(self, run_id: UUID, actor: str = "system", *, stop_after: str | None = None) -> RunRecord:
@@ -147,12 +194,17 @@ class WorkflowEngine:
                 tx.runs.update(run_id, stop_after=stop_after)
             names = [s.name.value for s in self.steps]
             start = names.index(run.current_step) if run.current_step in names else 0
+            start = self._resume_start(tx, run, start, actor)
             step0 = self.steps[start].name.value
             if before.status is RunStatus.RUNNING:  # the previous worker died holding an expired lease
                 self._audit(
                     tx, run_id, step0, "run_recovered", actor, from_step=step0, previous_owner=before.lease_owner
                 )
-            event = "run_resumed" if before.status is not RunStatus.PENDING or start else "run_started"
+            event = (
+                "run_resumed"
+                if before.status is not RunStatus.PENDING or before.current_step is not None
+                else "run_started"
+            )
             self._audit(tx, run_id, step0, event, actor, from_step=step0)
 
         with (
@@ -339,11 +391,16 @@ class WorkflowEngine:
 
     async def _execute(self, spec: StepSpec, ctx: StepContext) -> StepResult:
         timeout = spec.timeout_seconds or self.settings.step_timeout_seconds
+        ctx.execution_deadline = monotonic() + timeout
         try:
             with anyio.fail_after(timeout):
                 return await anyio.to_thread.run_sync(spec.fn, ctx, abandon_on_cancel=True)
         except TimeoutError as exc:
+            ctx.execution_cancelled.set()
             raise SourceTimeout(f"step {spec.name.value} exceeded {timeout:.0f}s") from exc
+        except BaseException:
+            ctx.execution_cancelled.set()
+            raise
 
     def _persist(
         self, run_id: UUID, spec: StepSpec, step_run_id: int, result: StepResult, actor: str, owner: str

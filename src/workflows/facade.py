@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
@@ -215,8 +216,18 @@ class OnboardingService:
         with self.store.tx() as tx:
             # A running run is cancelled too: its worker sees the status at the next step boundary,
             # discards any in-flight step result and releases the lease.
-            if not can_transition(tx.runs.get(run_id, lock=True).status, RunStatus.CANCELLED):
+            run = tx.runs.get(run_id, lock=True)
+            if not can_transition(run.status, RunStatus.CANCELLED):
                 raise Conflict(f"a {run.status.value} run cannot be cancelled")
+            # Publication linearizes when the final directory is materialized while
+            # holding this same run lock. Cancellation wins before that boundary;
+            # afterwards the worker/recovery must persist the successful result.
+            # Earlier steps of a later rerun may still be cancelled; historical
+            # publications remain published and cancellation never deletes them.
+            if run.current_step == StepName.PUBLISH.value and any(
+                p["state"] == "complete" or Path(p["receipt"]["path"]).exists() for p in tx.publications.for_run(run_id)
+            ):
+                raise Conflict("publication has finalized; the run can no longer be cancelled")
             tx.runs.update(run_id, status=RunStatus.CANCELLED, pending_items=[])
             tx.audit.append(
                 AuditEvent(

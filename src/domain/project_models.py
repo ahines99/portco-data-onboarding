@@ -1,8 +1,8 @@
 """Project-specific contracts (POD-102).
 
 Design rule: no contract carries raw row values. Profiles hold aggregates; the only value
-lists allowed are `category_values`, populated solely for low-cardinality columns that passed
-the PII guard (see `adapters.external.DuckDBAdapter.low_cardinality_values`).
+lists allowed are `category_values`, populated solely for operator-approved category domains
+that passed the PII guard (see `adapters.external.DuckDBAdapter.low_cardinality_values`).
 """
 
 from __future__ import annotations
@@ -62,6 +62,10 @@ class ConnectionSpec(Contract):
     kind: Literal["duckdb"] = "duckdb"
     path: str
     schemas: list[str] = Field(default_factory=list, description="Allowlisted schemas")
+    category_domains: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description="Operator-approved labels keyed by schema.table.column; unknown labels withheld",
+    )
     read_only: bool = True
     as_of: date | None = Field(default=None, description="Reference date for freshness checks")
     secret_ref: str | None = Field(default=None, description="Reference to a secret; never the secret")

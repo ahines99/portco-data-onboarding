@@ -49,19 +49,25 @@ PII_STRICTNESS = {"hash": 1, "exclude": 2}
 
 def _validate_override(item: ReviewItem, decision: ItemDecision) -> None:
     if decision.decision is not ReviewDecision.APPROVE_WITH_OVERRIDE:
+        if decision.override is not None:
+            raise ValidationFailed("override payload requires approve_with_override")
         return
     if item.kind != "mapping":
         raise ValidationFailed(f"overrides are only supported for mapping items ({item.item_key})")
     override = decision.override or {}
+    if not override:
+        raise ValidationFailed("approve_with_override requires a nonempty override")
     unknown = set(override) - {"canonical_field", "transform", "pii_handling"}
     if unknown:
         raise ValidationFailed(f"unsupported override keys: {sorted(unknown)}")
     allowed = set(item.options.get("allowed_fields", []))
-    if "canonical_field" in override and override["canonical_field"] not in allowed:
+    if "canonical_field" in override and (
+        not isinstance(override["canonical_field"], str) or override["canonical_field"] not in allowed
+    ):
         raise ValidationFailed(f"{override['canonical_field']!r} is not a field of this entity")
-    if override.get("transform") not in {None, "cents_to_major", "parse_mixed_date"}:
+    if override.get("transform") not in (None, "cents_to_major", "parse_mixed_date"):
         raise ValidationFailed("unsupported transform")
-    if override.get("pii_handling") not in {None, "hash", "exclude"}:
+    if override.get("pii_handling") not in (None, "hash", "exclude"):
         raise ValidationFailed("unsupported pii_handling")
     current = item.options.get("pii_handling")
     if current is not None and "pii_handling" in override:

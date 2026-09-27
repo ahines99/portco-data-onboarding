@@ -3,8 +3,8 @@
 `SourceAdapter` is the only way domain services touch source data, and it exposes
 aggregate reads only: counts, ratios, min/max of numeric and date columns, pattern-match
 counts, and containment statistics. There is no row-fetch method. The one narrow exception
-is `low_cardinality_values`, which returns category labels only after they pass the PII and
-prompt-injection guards (ADR-0003).
+is `low_cardinality_values`, which returns only operator-approved category labels that also
+pass the PII and prompt-injection guards (ADR-0003).
 """
 
 from __future__ import annotations
@@ -16,6 +16,7 @@ from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
 from typing import Any, Protocol
+from uuid import uuid4
 
 import duckdb
 from pydantic import BaseModel
@@ -67,9 +68,6 @@ SAFE_CATEGORY = re.compile(r"^[A-Za-z0-9 _&./()\-]{1,40}$")
 PERSON_COLUMN_TOKENS = frozenset(
     {"name", "owner", "rep", "manager", "user", "employee", "contact", "person", "assignee", "salesperson", "author"}
 )
-# "Jane Smith", "Mary-Ann O'Neil": two or more capitalised words, letters only. Some genuine labels
-# ("Deferred Revenue") match too; withholding those only costs an accepted_values test.
-TITLE_CASE_WORDS = re.compile(r"[A-Z][a-z'\-]+(?: [A-Z][a-z'\-]+)+")
 
 
 def _column_tokens(column: str) -> set[str]:
@@ -220,6 +218,8 @@ class DuckDBAdapter:
                 "SELECT DISTINCT schema_name FROM duckdb_tables() WHERE database_name = current_database()"
             )
             present = {r[0] for r in rows} - SYSTEM_SCHEMAS
+            if set(self.spec.schemas) - present:
+                raise NotFound("requested schema is not present in the source")
             self._allowed = {s for s in present if not self.spec.schemas or s in self.spec.schemas}
         return self._allowed
 
@@ -270,16 +270,25 @@ class DuckDBAdapter:
         return ConnectionProbe(reachable=True, engine_version=str(version), schemas=sorted(self.allowed_schemas()))
 
     def verify_read_only(self) -> bool:
-        """True when a write attempt fails. The probe runs in a transaction that is rolled back."""
+        """Require an explicit engine read-only denial, never infer it from an arbitrary error."""
         schema = sorted(self.allowed_schemas())[0] if self.allowed_schemas() else "main"
+        started = False
         try:
             self.con.execute("BEGIN")
-            self.con.execute(f"CREATE TABLE {_q(schema)}.__portco_write_probe (x INTEGER)")
+            started = True
+            self.con.execute(f"CREATE TABLE {_q(schema)}.{_q('__portco_write_probe_' + uuid4().hex)} (x INTEGER)")
+        except duckdb.InvalidInputException as exc:
+            return (
+                started
+                and 'cannot execute statement of type "create"' in str(exc).lower()
+                and "which is attached in read-only mode" in str(exc).lower()
+            )
         except duckdb.Error:
-            return True
+            return False
         finally:
-            with contextlib.suppress(duckdb.Error):
-                self.con.execute("ROLLBACK")
+            if started:
+                with contextlib.suppress(duckdb.Error):
+                    self.con.execute("ROLLBACK")
         return False
 
     def list_schemas(self) -> list[str]:
@@ -439,6 +448,9 @@ class DuckDBAdapter:
         qt, c = self._qt(schema, table), self._qc(schema, table, column)
         if _column_tokens(column) & PERSON_COLUMN_TOKENS:
             return CategoryValues(values=None, withheld_reason="person_like_column")
+        domain = self.spec.category_domains.get(f"{schema}.{table}.{column}")
+        if domain is None:
+            return CategoryValues(values=None, withheld_reason="unapproved_category_domain")
         rows = self._query(
             f"SELECT DISTINCT CAST({c} AS VARCHAR) AS v FROM {qt} WHERE {c} IS NOT NULL "
             f"ORDER BY v LIMIT {int(max_values) + 1}"
@@ -451,8 +463,8 @@ class DuckDBAdapter:
                 return CategoryValues(values=None, withheld_reason="injection_suspected")
             if value_is_pii(v) or not SAFE_CATEGORY.match(v):
                 return CategoryValues(values=None, withheld_reason="pii_or_unsafe_value")
-            if TITLE_CASE_WORDS.fullmatch(v):
-                return CategoryValues(values=None, withheld_reason="person_name_suspected")
+            if v not in domain:
+                return CategoryValues(values=None, withheld_reason="unapproved_category_value")
         return CategoryValues(values=values)
 
     def fingerprint(self) -> str:
@@ -497,7 +509,12 @@ class ConnectionRegistry:
             if not query.startswith("schemas="):
                 raise ValidationFailed("unsupported connection option")
             schemas = sorted(s for s in query.removeprefix("schemas=").split(",") if s)
-            return self.resolve(base).model_copy(update={"connection_id": connection_id, "schemas": schemas})
+            registered = self.resolve(base)
+            if not schemas:
+                return registered.model_copy(update={"connection_id": connection_id})
+            if registered.schemas and not set(schemas).issubset(registered.schemas):
+                raise PolicyViolation("requested schemas exceed the registered allowlist")
+            return registered.model_copy(update={"connection_id": connection_id, "schemas": schemas})
         if connection_id in self._extra:
             return self._extra[connection_id]
         if not connection_id.startswith("fixture:"):
@@ -509,7 +526,15 @@ class ConnectionRegistry:
             raise NotFound(f"unknown fixture connection {connection_id!r}")
         path = ensure_fixture(name, self.fixtures_dir)
         as_of = _fixture_as_of(name, build_fixture)
-        return ConnectionSpec(connection_id=connection_id, company_id=name, path=str(path), as_of=as_of)
+        from src.fixtures.category_domains import fixture_category_domains
+
+        return ConnectionSpec(
+            connection_id=connection_id,
+            company_id=name,
+            path=str(path),
+            as_of=as_of,
+            category_domains=fixture_category_domains(name),
+        )
 
     def open(self, connection_id: str) -> DuckDBAdapter:
         spec = self.resolve(connection_id)

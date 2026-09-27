@@ -1,8 +1,8 @@
 """The contract between the workflow engine and step services.
 
-Services are pure with respect to persistence: they receive a `StepContext` holding loaded
-upstream artifacts, and return a `StepResult`. The engine persists outputs, evidence,
-findings and audit events atomically (POD-401).
+Services receive a `StepContext` holding loaded upstream artifacts and return a `StepResult`.
+The engine persists outputs, evidence, findings and audit events atomically (POD-401).
+Publication additionally persists its recoverable side-effect lifecycle under execution fencing.
 """
 
 from __future__ import annotations
@@ -10,6 +10,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
+from threading import Event
+from time import monotonic
 from typing import Any, Literal, TypeVar
 from uuid import UUID, uuid5
 
@@ -17,10 +19,10 @@ from pydantic import BaseModel
 
 from src.adapters.artifact_store import ArtifactStore
 from src.adapters.external import SourceAdapter
-from src.adapters.repositories import RunRecord, Store
-from src.domain.errors import DomainError
+from src.adapters.repositories import RunRecord, Store, Tx
+from src.domain.errors import DomainError, LeaseLost
 from src.domain.hashing import content_hash
-from src.domain.models import Evidence, Finding, ReviewGate, StepName
+from src.domain.models import Evidence, Finding, ReviewGate, RunStatus, StepName
 from src.domain.ontology import Ontology
 from src.domain.project_models import Approval, ReviewItem
 from src.settings import Settings
@@ -40,6 +42,21 @@ class StepContext:
     approvals: list[Approval] = field(default_factory=list)
     services: dict[str, Any] = field(default_factory=dict)
     _adapter: SourceAdapter | None = None
+    execution_deadline: float | None = None
+    execution_cancelled: Event = field(default_factory=Event)
+
+    def check_publication_owner(self, tx: Tx) -> None:
+        """Called while holding the run lock at publication's commit boundary."""
+        run = tx.runs.get(self.run.run_id, lock=True)
+        if (
+            self.execution_cancelled.is_set()
+            or (self.execution_deadline is not None and monotonic() >= self.execution_deadline)
+            or run.status is not RunStatus.RUNNING
+            or self.run.lease_owner is None
+            or run.lease_owner != self.run.lease_owner
+            or not run.lease_live()
+        ):
+            raise LeaseLost("publication worker no longer owns a live execution attempt")
 
     def adapter(self) -> SourceAdapter:
         if self._adapter is None:

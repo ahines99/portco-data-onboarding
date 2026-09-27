@@ -11,6 +11,7 @@ import yaml
 from src.fixtures import portco_a, portco_b
 from src.fixtures.base import Fixture, content_digest, write_duckdb
 from src.fixtures.variants import VARIANTS, build_variant
+from src.paths import IN_CHECKOUT
 from src.settings import PROJECT_ROOT, get_settings
 
 GROUND_TRUTH_DIR = PROJECT_ROOT / "fixtures"
@@ -57,11 +58,11 @@ def _truth_document(fixture: Fixture) -> dict[str, Any]:
     return gt
 
 
-def generate(name: str, root: Path | None = None, *, write_truth: bool = True) -> Path:
+def generate(name: str, root: Path | None = None, *, write_truth: bool | None = None) -> Path:
     fixture = build_fixture(name)
     path = fixture_path(name, root)
     write_duckdb(fixture, path)
-    if write_truth:
+    if write_truth if write_truth is not None else IN_CHECKOUT:
         doc = _truth_document(fixture)
         target = ground_truth_path(name)
         target.parent.mkdir(parents=True, exist_ok=True)

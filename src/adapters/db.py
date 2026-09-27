@@ -178,6 +178,7 @@ publications = Table(
     Column("version", String(32), nullable=False),
     Column("run_id", Uuid, ForeignKey("workflow_runs.run_id"), nullable=False),
     Column("receipt", JsonType, nullable=False),
+    Column("state", String(16), nullable=False, server_default="complete"),
     Column("created_at", TS, nullable=False),
     UniqueConstraint("company_id", "publication_key", name="uq_publications_company_key"),
     UniqueConstraint("company_id", "version", name="uq_publications_company_version"),
@@ -186,7 +187,7 @@ publications = Table(
 
 def make_engine(url: str) -> Engine:
     if url.startswith("sqlite"):
-        engine = create_engine(url, connect_args={"check_same_thread": False})
+        engine = create_engine(url, connect_args={"check_same_thread": False, "timeout": 30})
 
         @event.listens_for(engine, "connect")
         def _fk_on(dbapi_conn, _record):  # type: ignore[no-untyped-def]

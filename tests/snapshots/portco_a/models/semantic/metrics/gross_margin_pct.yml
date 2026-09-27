@@ -4,7 +4,7 @@ metrics:
   description: '(revenue_recognized - cogs) / revenue_recognized. Pitfall: Undefined when revenue is zero.'
   type: derived
   type_params:
-    expr: (revenue_recognized - cogs) / revenue_recognized
+    expr: (revenue_recognized - cogs) / nullif(revenue_recognized, 0)
     metrics:
     - name: revenue_recognized
     - name: cogs

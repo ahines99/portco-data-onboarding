@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from pathlib import Path
 from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.domain.project_models import PiiClass
+from src.paths import RESOURCE_ROOT
 
-ONTOLOGY_DIR = Path(__file__).resolve().parents[2] / "ontology"
+ONTOLOGY_DIR = RESOURCE_ROOT / "ontology"
 
 FieldType = Literal["string", "integer", "decimal", "date", "timestamp", "boolean"]
 

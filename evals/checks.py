@@ -8,6 +8,7 @@ import json
 from collections import defaultdict
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -17,12 +18,14 @@ import duckdb
 from evals.drivers import ADMIN, AGENT, REVIEWER, CaseRun, decisions
 from src.adapters.external import ConnectionRegistry
 from src.domain.errors import DomainError, Forbidden, NotFound, PolicyViolation
+from src.domain.hashing import content_hash
 from src.domain.models import FindingStatus, Principal, ReviewGate, Role, RunStatus, StepName
 from src.domain.pii_guard import PiiGuard
 from src.fixtures.generate import load_ground_truth
 from src.reporting import render_run_report
 from src.run_metrics import compute_run_metrics
 from src.services.sandbox import sandbox_run_dir
+from src.services.semantic import execute_metrics
 from src.workflows.primary import PROJECT_STEPS
 
 CheckFn = Callable[[CaseRun, dict[str, Any]], Awaitable[tuple[bool, str]]]
@@ -91,18 +94,62 @@ async def findings_include(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
 async def evidence_fidelity(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
     findings = cr.service.findings(ADMIN, cr.run_id)
     bad = []
+    supported = 0
+    checked_claims = 0
     for f in findings:
         if f.status is FindingStatus.NEEDS_EVIDENCE:
             continue
+        supported += 1
         if not f.evidence:
             bad.append(f.code)
             continue
         for ref in f.evidence:
             try:
-                cr.service.evidence(ADMIN, UUID(ref.source_id))
-            except NotFound:
+                ev = cr.service.evidence(ADMIN, UUID(ref.source_id))
+                if content_hash(ev.payload) != ev.content_hash or (
+                    ref.excerpt_hash is not None and ref.excerpt_hash != ev.content_hash
+                ):
+                    bad.append(f.code)
+                if ev.source_type == "table_profile" and f.code in {
+                    "EMPTY_TABLE",
+                    "TEST_RECORDS",
+                    "SOFT_DELETE_FLAG",
+                    "MULTI_CURRENCY",
+                    "DUPLICATE_ENTITIES",
+                }:
+                    checked_claims += 1
+                    payload = ev.payload
+                    columns = {c["column"]: c for c in payload.get("columns", [])}
+                    column = columns.get(f.metadata.get("column"), {})
+                    patterns = column.get("pattern_counts", {})
+                    table = f"{payload.get('schema_name')}.{payload.get('table_name')}"
+                    support = table == f.metadata.get("table")
+                    if f.code == "EMPTY_TABLE":
+                        support &= payload.get("row_count") == 0
+                    elif f.code == "TEST_RECORDS":
+                        support &= bool(patterns.get("test_prefix")) and patterns.get("test_prefix") == f.metadata.get(
+                            "rows"
+                        )
+                    elif f.code == "SOFT_DELETE_FLAG":
+                        support &= bool(patterns.get("true_count")) and patterns.get("true_count") == f.metadata.get(
+                            "rows"
+                        )
+                    elif f.code == "MULTI_CURRENCY":
+                        support &= len(column.get("category_values", [])) > 1
+                    elif f.code == "DUPLICATE_ENTITIES":
+                        nn = column.get("non_null_count", 0)
+                        nd = patterns.get("normalized_distinct", nn)
+                        support &= bool(nn) and round((nn - nd) / nn, 4) == f.metadata.get("duplicate_ratio")
+                    if not support:
+                        bad.append(f.code)
+            except (NotFound, ValueError):
                 bad.append(f.code)
-    return not bad, f"{len(findings)} findings; unresolved: {sorted(set(bad))}"
+    enough = len(findings) >= a.get("min_findings", 1) and supported >= a.get("min_supported", 1)
+    enough &= checked_claims >= a.get("min_claim_assertions", 1)
+    return enough and not bad, (
+        f"{len(findings)} findings; {supported} supported; {checked_claims} profile claims checked; "
+        f"invalid evidence: {sorted(set(bad))}; minimum outputs met={enough}"
+    )
 
 
 # --------------------------------------------------------------------------- inference accuracy
@@ -132,8 +179,8 @@ async def join_accuracy(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
 
 
 def mapping_scores(cr: CaseRun) -> tuple[float, dict[str, list[bool]]]:
-    """Strict top-1 accuracy: a proposal for a column the ground truth leaves unmapped counts as wrong,
-    even when it was routed to review (reported separately as `flagged_extras`)."""
+    """Labeled-column top-1 accuracy, not whole-output precision. Explicit null labels count as wrong
+    when proposed; unlabeled proposals are reported separately by mapping_coverage."""
     truth = _truth(cr)
     ms = cr.service.artifact(ADMIN, cr.run_id, StepName.CANONICAL_MAPPING)
     got = {p.mapping_key: p for p in ms.proposals}
@@ -145,7 +192,19 @@ def mapping_scores(cr: CaseRun) -> tuple[float, dict[str, list[bool]]]:
         correct += ok
         if p is not None:
             buckets[p.confidence.value].append(f"{p.canonical_entity}.{p.canonical_field}" == exp)
-    return correct / len(truth["mappings"]), buckets
+    return correct / len(truth["mappings"]) if truth["mappings"] else 0.0, buckets
+
+
+def mapping_coverage(cr: CaseRun) -> dict[str, Any]:
+    truth = _truth(cr)["mappings"]
+    proposals = cr.service.artifact(ADMIN, cr.run_id, StepName.CANONICAL_MAPPING).proposals
+    unknown = sorted(p.mapping_key for p in proposals if p.mapping_key not in truth)
+    return {
+        "labeled_columns": len(truth),
+        "proposals": len(proposals),
+        "labeled_proposal_fraction": (len(proposals) - len(unknown)) / len(proposals) if proposals else 0.0,
+        "unlabeled_proposals": unknown,
+    }
 
 
 @check("mapping_accuracy", "uncertainty")
@@ -156,8 +215,8 @@ async def mapping_accuracy(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
     extras = [p.mapping_key for p in ms.proposals if truth["mappings"].get(p.mapping_key, "x") is None]
     flagged = all(p.requires_review for p in ms.proposals if p.mapping_key in extras)
     return acc >= a["min"] and flagged, (
-        f"strict top-1 accuracy {acc:.3f}; proposals for columns expected unmapped: {extras} "
-        f"(all routed to review: {flagged})"
+        f"labeled-column top-1 accuracy {acc:.3f}; proposals for columns expected unmapped: {extras} "
+        f"(all routed to review: {flagged}); truth coverage {mapping_coverage(cr)}"
     )
 
 
@@ -241,21 +300,22 @@ async def metrics_match_truth(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str
     con = duckdb.connect(str(wh), read_only=True)
     con.execute(f"ATTACH '{(wh.parent / 'source.duckdb').as_posix()}' AS src (READ_ONLY)")
     months = set(truth["months"])
-    queries = {
-        "billings": "SELECT strftime(invoice_date, '%Y-%m') || '|' || currency, cast(sum(total_amount) AS "
-        "DECIMAL(18,2)) FROM fct_invoice GROUP BY 1",
-        "arr": "SELECT strftime(month_end, '%Y-%m') || '|' || currency, cast(sum(mrr) * 12 AS DECIMAL(18,2)) "
-        "FROM fct_mrr_monthly GROUP BY 1",
-        "revenue_recognized": "SELECT strftime(posting_date, '%Y-%m'), cast(sum(credit_amount - debit_amount) AS "
-        "DECIMAL(18,2)) FROM fct_gl_entry WHERE account_type = 'revenue' GROUP BY 1",
-    }
+    bundle = cr.service.artifact(ADMIN, cr.run_id, StepName.ARTIFACT_GENERATION)
+    files = {f.path: cr.service.store.blobs.get_bytes(f.sha256).decode() for f in bundle.files}
+    try:
+        values = execute_metrics(con, files, bundle.generated_metrics)
+    finally:
+        con.close()
     diffs = {}
     for metric in a["metrics"]:
-        got = {k: str(v) for k, v in con.execute(queries[metric]).fetchall() if k.split("|")[0] in months}
+        got = {
+            k: str(Decimal(str(v)).quantize(Decimal("0.01")))
+            for k, v in values[metric].items()
+            if k.split("|")[0] in months
+        }
         exp = truth["expected_metrics"][metric]
         if got != exp:
             diffs[metric] = len(set(got.items()) ^ set(exp.items()))
-    con.close()
     return not diffs, f"differences: {diffs}" if diffs else f"{a['metrics']} match exactly"
 
 
@@ -562,8 +622,32 @@ async def tool_trace(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
 @check("published", "calculation")
 async def published(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
     receipt = cr.service.artifact(ADMIN, cr.run_id, StepName.PUBLISH)
+    bundle = cr.service.artifact(ADMIN, cr.run_id, StepName.ARTIFACT_GENERATION)
+    root = Path(receipt.path).resolve()
+    bad = []
+    expected = {"certification.json"}
+    for file in bundle.files:
+        if file.path.startswith("models/semantic/metrics/") and Path(file.path).stem in receipt.excluded_metrics:
+            continue
+        expected.add(file.path)
+        path = (root / file.path).resolve()
+        if (
+            not path.is_relative_to(root)
+            or not path.is_file()
+            or hashlib.sha256(path.read_bytes()).hexdigest() != file.sha256
+        ):
+            bad.append(file.path)
+    actual = {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()}
+    bad.extend(sorted(expected ^ actual))
+    try:
+        certificate = json.loads((root / "certification.json").read_text(encoding="utf-8"))
+        for name in ("version", "manifest_hash", "certification_id", "published_metrics", "excluded_metrics"):
+            if certificate["receipt"][name] != receipt.model_dump(mode="json")[name]:
+                bad.append(f"certification.json:{name}")
+    except (OSError, ValueError, KeyError):
+        bad.append("certification.json")
     ok = receipt.version == a.get("version", "v0001") and set(a.get("metrics", [])) <= set(receipt.published_metrics)
-    return ok, f"version {receipt.version}; metrics {receipt.published_metrics}"
+    return ok and not bad, f"version {receipt.version}; metrics {receipt.published_metrics}; invalid files={bad}"
 
 
 @check("latency_budget", "cost")

@@ -628,10 +628,12 @@ class ApprovalRepository:
             raise NotFound(f"approval {approval_id} not found")
         return self._to_model(row)
 
-    def for_run(self, run_id: UUID, gate: str | None = None) -> list[Approval]:
+    def for_run(self, run_id: UUID, gate: str | None = None, *, lock: bool = False) -> list[Approval]:
         q = select(db.approvals).where(db.approvals.c.run_id == run_id).order_by(db.approvals.c.created_at)
         if gate:
             q = q.where(db.approvals.c.gate == gate)
+        if lock:
+            q = q.with_for_update()
         return [self._to_model(r) for r in self.conn.execute(q).mappings()]
 
     def revoke(self, approval_id: UUID, reason: str) -> None:
@@ -649,13 +651,44 @@ class PublicationRepository:
     def __init__(self, conn: Connection) -> None:
         self.conn = conn
 
+    def for_run(self, run_id: UUID) -> list[dict[str, Any]]:
+        return [
+            dict(row)
+            for row in self.conn.execute(
+                select(db.publications).where(db.publications.c.run_id == run_id).with_for_update()
+            ).mappings()
+        ]
+
     def by_key(self, company_id: str, publication_key: str) -> dict[str, Any] | None:
         row = self.conn.execute(
             select(db.publications.c.receipt).where(
-                and_(db.publications.c.company_id == company_id, db.publications.c.publication_key == publication_key)
+                and_(
+                    db.publications.c.company_id == company_id,
+                    db.publications.c.publication_key == publication_key,
+                    db.publications.c.state == "complete",
+                )
             )
         ).first()
         return dict(row[0]) if row else None
+
+    def operation(self, company_id: str, key: str) -> dict[str, Any] | None:
+        row = (
+            self.conn.execute(
+                select(db.publications)
+                .where(db.publications.c.company_id == company_id, db.publications.c.publication_key == key)
+                .with_for_update()
+            )
+            .mappings()
+            .first()
+        )
+        return dict(row) if row else None
+
+    def complete(self, company_id: str, key: str) -> None:
+        self.conn.execute(
+            update(db.publications)
+            .where(db.publications.c.company_id == company_id, db.publications.c.publication_key == key)
+            .values(state="complete")
+        )
 
     def next_version(self, company_id: str) -> str:
         n = (
@@ -674,6 +707,8 @@ class PublicationRepository:
         version: str,
         run_id: UUID,
         receipt: dict[str, Any],
+        *,
+        state: str = "complete",
     ) -> None:
         """Unique on (company, key) and (company, version): a concurrent publisher gets IntegrityError."""
         self.conn.execute(
@@ -685,6 +720,7 @@ class PublicationRepository:
                 version=version,
                 run_id=run_id,
                 receipt=receipt,
+                state=state,
                 created_at=utcnow(),
             )
         )
@@ -715,6 +751,10 @@ class Store:
     @contextmanager
     def tx(self) -> Iterator[Tx]:
         with self.engine.begin() as conn:
+            # SQLite ignores FOR UPDATE. Reserve its write lock before *any* reads,
+            # preventing audit-head races and read-to-write snapshot upgrade failures.
+            if conn.dialect.name == "sqlite":
+                conn.exec_driver_sql("BEGIN IMMEDIATE")
             yield Tx(conn, self.blobs)
 
     def create_schema(self) -> None:

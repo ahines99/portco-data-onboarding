@@ -59,7 +59,7 @@ PROJECT_STEPS: list[StepSpec] = [
         gate=ReviewGate.CERTIFICATION,
         retryable=False,
     ),
-    StepSpec(StepName.PUBLISH, publish.publish_bundle, PublishReceipt, retryable=False),
+    StepSpec(StepName.PUBLISH, publish.publish_bundle, PublishReceipt, retryable=False, always_execute=True),
 ]
 
 OUTPUT_TYPES = {s.name: s.output_type for s in PROJECT_STEPS}

@@ -100,7 +100,8 @@ def test_judge_can_reorder_but_never_clears_review(tmp_path: Path) -> None:
     out = _apply_judge(judge, proposal, col, table, load_ontology())
     assert out.canonical_field == "customer_id" and out.requires_review
     assert out.confidence is Confidence.MEDIUM and "JUDGE_REORDERED" in out.reason_codes
-    assert out.judge and out.judge["usage"]["cost_usd"] > 0
+    assert out.judge and out.judge["usage"]["cost_usd"] is None
+    assert out.judge["usage"]["cost_status"] == "unknown_price"
 
 
 def test_invented_targets_and_uncited_answers_are_rejected(tmp_path: Path) -> None:
@@ -124,6 +125,14 @@ def test_pii_in_prompt_is_withheld(tmp_path: Path) -> None:
     judge, stub = _judge(tmp_path, {"choice": "customer_id", "rationale": "x", "cited_evidence_ids": []})
     assert judge.judge(proposal, col, table, load_ontology())["choice"] == "ABSTAIN"
     assert stub.requests == []
+
+
+def test_unknown_cost_is_preserved_in_comparison() -> None:
+    from evals.judge_eval import total_cost
+
+    assert total_cost([]) == 0
+    assert total_cost([{"usage": {"cost_usd": 0.01}}, {"usage": {"cost_usd": None}}]) is None
+    assert total_cost([{"usage": {"cost_usd": 0.01}}, {"usage": {"cost_usd": 0.02}}]) == 0.03
 
 
 def test_record_then_replay_without_network(tmp_path: Path) -> None:

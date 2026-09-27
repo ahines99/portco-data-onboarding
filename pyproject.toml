@@ -2,6 +2,9 @@
 name = "portco-data-onboarding"
 version = "0.1.0"
 description = "Governed agent for onboarding portfolio-company data into a canonical PE ontology."
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "Alex Hines"}]
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
@@ -20,9 +23,10 @@ dependencies = [
   "structlog>=24.4",
   "opentelemetry-api>=1.27",
   "opentelemetry-sdk>=1.27",
-  "dbt-core>=1.9,<1.11",
+  "dbt-core>=1.11.14,<1.12",
   "dbt-duckdb>=1.9,<1.11",
   "uvicorn>=0.30",
+  "sqlparse>=0.6.0,<0.7",
 ]
 
 [project.optional-dependencies]
@@ -37,10 +41,18 @@ dev = [
   "pre-commit>=3.8",
   "types-pyyaml",
 ]
+telemetry = [
+    "opentelemetry-exporter-otlp-proto-http>=1.44.0",
+]
 
 [project.scripts]
 portco = "src.cli:app"
 portco-mcp = "src.mcp_server:main"
+
+[project.urls]
+Repository = "https://github.com/ahines99/portco-data-onboarding"
+Documentation = "https://github.com/ahines99/portco-data-onboarding#readme"
+Issues = "https://github.com/ahines99/portco-data-onboarding/issues"
 
 [build-system]
 requires = ["hatchling"]
@@ -48,6 +60,15 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"ontology" = "src/_resources/ontology"
+"templates" = "src/_resources/templates"
+"migrations" = "src/_resources/migrations"
+"alembic.ini" = "src/_resources/alembic.ini"
+"fixtures" = "src/_resources/fixtures"
+"demo" = "src/_resources/demo"
+"uv.lock" = "src/_resources/uv.lock"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -107,4 +128,4 @@ demo = "python -m src.cli demo"
 schemas = "python scripts/export_schemas.py"
 docs = "python scripts/gen_data_contracts.py"
 cov-metrics = "pytest -q tests/test_metrics_reference.py --cov=src.domain.metrics_reference --cov-branch --cov-report=term-missing --cov-fail-under=100"
-
+smoke-wheel = "python scripts/smoke_wheel.py"

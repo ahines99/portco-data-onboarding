@@ -132,7 +132,14 @@ async def test_span_tree_for_a_run(tmp_path: Path, fixtures_dir: Path) -> None:
 @pytest.mark.slow
 def test_run_metrics(completed_a: CompletedRun) -> None:
     m = compute_run_metrics(completed_a.service, ADMIN, completed_a.run_id)
-    assert m["outcome"] == "complete" and m["overrides"] == 1 and m["human_changed_recommendation"] == 1
+    from src.domain.models import StepName
+
+    proposals = completed_a.service.artifact(ADMIN, completed_a.run_id, StepName.CANONICAL_MAPPING)
+    original = next(p for p in proposals.proposals if p.mapping_key == "crm.opportunities.rev")
+    # The demo review explicitly selects `amount`, which is already the proposal.
+    # Count actual changes, not an approve_with_override label on a no-op decision.
+    assert original.canonical_field == "amount"
+    assert m["outcome"] == "complete" and m["overrides"] == 0 and m["human_changed_recommendation"] == 0
     assert m["steps"]["automated_tests"]["attempts"] >= 1 and m["evidence_cited"] > 10
     assert m["llm"]["calls"] == 0  # deterministic path
     json.dumps(m)

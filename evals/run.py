@@ -33,8 +33,15 @@ DIMENSIONS = ["tool_correctness", "evidence", "calculation", "permission", "unce
 
 async def evaluate(case_ids: list[str] | None, workdir: Path) -> dict[str, Any]:
     cases = yaml.safe_load((HERE / "cases.yaml").read_text(encoding="utf-8"))
-    if case_ids:
+    if case_ids is not None:
+        unknown = set(case_ids) - {c["id"] for c in cases}
+        if unknown:
+            raise ValueError(f"unknown eval case ids: {', '.join(sorted(unknown))}")
         cases = [c for c in cases if c["id"] in case_ids]
+    if not cases:
+        raise ValueError("eval case selection must not be empty")
+    if any(not c.get("checks") for c in cases):
+        raise ValueError("every eval case must contain at least one check")
     fixtures_dir = get_settings().fixtures_dir
     for name in sorted({c["fixture"] for c in cases}):
         ensure_fixture(name, fixtures_dir)
@@ -89,6 +96,10 @@ async def evaluate(case_ids: list[str] | None, workdir: Path) -> dict[str, Any]:
 
 def gate(report: dict[str, Any], thresholds: dict[str, Any], full_run: bool) -> list[str]:
     failures = []
+    if not report["cases_total"] or not any(d["total"] for d in report["dimensions"].values()):
+        failures.append("no cases or checks were evaluated")
+    if report["cases_passed"] != report["cases_total"]:
+        failures.append("one or more cases failed")
     if full_run and report["cases_passed"] < thresholds["min_cases_passing"]:
         failures.append(f"only {report['cases_passed']} cases passed (< {thresholds['min_cases_passing']})")
     for dim, minimum in thresholds["dimensions"].items():
@@ -141,7 +152,11 @@ def main(argv: list[str] | None = None) -> int:
     # Short segments: each case's dbt sandbox nests deeply, and Windows paths stop at 260 characters.
     workdir = get_settings().var_root / "ev" / datetime.now(UTC).strftime("%m%d%H%M%S")
     workdir.mkdir(parents=True, exist_ok=True)
-    report = anyio.run(evaluate, args.case, workdir)
+    try:
+        report = anyio.run(evaluate, args.case, workdir)
+    except ValueError as exc:
+        shutil.rmtree(workdir, ignore_errors=True)
+        parser.error(str(exc))
     thresholds = yaml.safe_load((HERE / "thresholds.yaml").read_text(encoding="utf-8"))
     failures = gate(report, thresholds, full_run=not args.case)
     report["gate"] = {"passed": not failures, "failures": failures}

@@ -35,7 +35,8 @@ def render() -> str:
         "Generated from the Pydantic models by `scripts/gen_data_contracts.py`; do not edit by hand.",
         "JSON Schemas live in `contracts/` and a test fails if they drift from the models.",
         "",
-        "Every persisted contract carries `schema_version`. No contract has a field that can carry row values.",
+        "Every persisted contract carries `schema_version`. Model-facing profiles contain aggregates "
+        "and explicitly approved category labels, not source rows.",
         "",
     ]
     for name, model in MODELS.items():

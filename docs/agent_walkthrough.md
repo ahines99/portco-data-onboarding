@@ -28,7 +28,7 @@ mkdir -p .claude/skills && cp -r skills/* .claude/skills/        # or symlink on
 | 1 | Agent | Prompt `onboarding_kickoff` with `fixture:portco_a`. The agent calls `start_onboarding_run` and reads `run://{run_id}/profile` and `run://{run_id}/findings` (schema-profiling Skill). |
 | 2 | Agent | Explains the 22 pending items using the canonical-pe-ontology Skill: `UNIT_MISMATCH` on invoice lines, `SEMANTIC_TRAP` on `rev`, the orphaned CRM join, and the PII handling. |
 | 3 | Agent | Tries `submit_mapping_review` and gets `FORBIDDEN`. It tells the human what to decide instead. |
-| 4 | Human | `uv run portco review <run_id> --export review.yaml`, edits the decisions (override `rev` to `amount`), then `uv run portco review <run_id> --import review.yaml --reviewer alice`. The command prints the approval id. |
+| 4 | Human | `uv run portco review <run_id> --export review.yaml`, inspects every item and fills its decision, then `uv run portco review <run_id> --import review.yaml --reviewer alex`. `rev` is already proposed as `amount`: approving it is not an override. The command prints the approval id. |
 | 5 | Agent | `generate_dbt_artifacts(run_id, approval_id)`, then `run_sandbox_tests`. It reports reconciliation results with the dbt-modeling and data-quality Skills. |
 | 6 | Human | Certifies: `portco review <run_id> --export cert.yaml`, sets decisions, and imports the file. Or a reviewer-scoped MCP client calls `certify_run`. |
 | 7 | Agent | `publish_run(run_id, certification_id)`, then reads `run://{run_id}/summary`. |
@@ -59,4 +59,7 @@ needs a live model session and **has not been run** in this build environment. T
 verified statically: `tests/test_skills.py` checks that every tool, resource and prompt they reference
 exists on the live server. To run the comparison, repeat step 1 in two Claude Code sessions, one with
 `.claude/skills` present and one without, and score the transcripts against
-`skills/schema-profiling/SKILL.md` § Never.
+`skills/schema-profiling/SKILL.md` § Never. The repeatable three-prompt protocol, transcript
+manifest and human-annotation scorer are documented in [skill_comparison.md](skill_comparison.md).
+`scripts/compare_skills.py prepare` creates the six-session manifest; `score` refuses incomplete
+or mismatched pairs. No live result is claimed until actual transcripts are collected and reviewed.

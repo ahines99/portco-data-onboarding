@@ -57,10 +57,10 @@ sequenceDiagram
   Engine-->>MCP: NEEDS_REVIEW at mapping_review (22 items)
   Agent->>MCP: submit_mapping_review (agent)
   MCP-->>Agent: FORBIDDEN (separation of duties)
-  Reviewer->>MCP: submit_mapping_review (approve, 1 override)
+  Reviewer->>MCP: submit_mapping_review (explicit item decisions)
   MCP-->>Reviewer: approval_id (bound to mapping hash)
   Agent->>MCP: generate_dbt_artifacts(approval_id)
-  MCP->>Engine: verify approval, then resume (steps 1-5 reused)
+  MCP->>Engine: verify approval and input hashes, then resume or rewind stale steps
   Agent->>MCP: run_sandbox_tests
   Engine->>Sandbox: copy source, dbt build (subprocess), reconcile vs reference
   Engine-->>MCP: NEEDS_REVIEW at certification
@@ -90,7 +90,7 @@ stateDiagram-v2
 | Property | Mechanism | Code |
 |---|---|---|
 | State outside the conversation | Every step persists output (content-addressed), evidence, findings and audit in one transaction | `src/workflows/base.py`, `src/adapters/repositories.py` |
-| Idempotent reruns | Step input hash = upstream output hashes; an identical input reuses the completed step | `WorkflowEngine._run_step` |
+| Idempotent reruns | Hashes bind upstream output, implementation, configuration and source policy; publish always verifies files | `WorkflowEngine._run_step`, ADR-0012 |
 | Deterministic evidence ids | uuid5(run, source URI, content hash) | `src/workflows/contracts.py::make_evidence` |
 | No raw PII in context | Aggregate-only adapter, PII guard middleware on every MCP response, hashed or excluded PII in staging | ADR-0003, `src/capabilities/guard.py` |
 | Approvals cannot be faked or go stale | Server-side lookup, bound to the subject content hash, revoked on change | ADR-0004, `src/services/approvals.py` |
@@ -100,4 +100,9 @@ stateDiagram-v2
 | Recovery | Error taxonomy, retries with backoff, per-step timeouts, fault injection | `src/domain/errors.py`, `src/adapters/faults.py` |
 
 ## Decisions
-See `docs/adr/` (ADR-0001 to ADR-0010).
+See `docs/adr/` (ADR-0001 to ADR-0012). [ADR-0012](adr/0012-recoverable-publication.md)
+describes publication recovery and the point after which cancellation is too late.
+
+Local reviewer identities rely on a trusted OS operator. Anyone who controls the local process,
+configuration or state database is outside the agent-role boundary. The scripted demo uses synthetic
+reviewer decisions; only a separately recorded human session establishes independent human review.

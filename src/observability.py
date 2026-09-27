@@ -105,8 +105,8 @@ def configure_tracing(exporter: SpanExporter | None = None) -> TracerProvider:
                 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 
                 provider.add_span_processor(SimpleSpanProcessor(OTLPSpanExporter()))
-            except ImportError:  # optional dependency
-                pass
+            except ImportError as exc:
+                raise RuntimeError("OTLP export is configured; install the telemetry extra to enable it") from exc
     _provider = provider
     return provider
 

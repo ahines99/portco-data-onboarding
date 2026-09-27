@@ -4,7 +4,7 @@ FROM python:3.12-slim AS build
 COPY --from=ghcr.io/astral-sh/uv:0.12.18 /uv /usr/local/bin/uv
 WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
-COPY pyproject.toml uv.lock README.md ./
+COPY pyproject.toml uv.lock README.md LICENSE ./
 RUN uv sync --frozen --no-dev --extra postgres --no-install-project
 COPY src ./src
 COPY ontology ./ontology
@@ -12,6 +12,7 @@ COPY templates ./templates
 COPY migrations ./migrations
 COPY alembic.ini ./
 COPY fixtures ./fixtures
+COPY demo ./demo
 RUN uv sync --frozen --no-dev --extra postgres
 
 FROM python:3.12-slim

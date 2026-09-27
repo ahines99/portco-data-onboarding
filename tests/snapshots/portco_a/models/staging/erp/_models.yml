@@ -7,21 +7,6 @@ models:
     data_tests:
     - unique
     - not_null
-    - accepted_values:
-        arguments:
-          values:
-          - '1000'
-          - '1100'
-          - '1500'
-          - '2000'
-          - '4000'
-          - '4100'
-          - '5000'
-          - '5100'
-          - '6000'
-          - '6100'
-          - '6200'
-          - '6900'
   - name: account_name
   - name: account_type
     data_tests:
@@ -47,20 +32,6 @@ models:
   - name: account_code
     data_tests:
     - not_null
-    - accepted_values:
-        arguments:
-          values:
-          - '1000'
-          - '1100'
-          - '1500'
-          - '4000'
-          - '4100'
-          - '5000'
-          - '5100'
-          - '6000'
-          - '6100'
-          - '6200'
-          - '6900'
     - relationships:
         arguments:
           to: ref('stg_erp__gl_accounts')

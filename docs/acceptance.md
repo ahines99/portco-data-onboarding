@@ -1,6 +1,6 @@
 # Acceptance audit (POD-907)
 
-Audit of the handoff's acceptance checklist against the implementation, as of 2026-09-23. "Proven by"
+Audit of the handoff's acceptance checklist against the implementation, updated 2026-09-27. "Proven by"
 lists the tests (`tests/…`) and golden eval cases (`G..`, `evals/cases.yaml`) that fail if the
 property breaks.
 
@@ -39,11 +39,11 @@ property breaks.
 | Requirement | Status |
 |---|---|
 | Typed MCP capabilities | ✅ 12 tools, 17 resources and resource templates (2 + 15), 3 prompts |
-| Persisted workflow state | ✅ SQLAlchemy + Alembic; SQLite locally, Postgres in CI |
+| Persisted workflow state | ✅ SQLAlchemy + Alembic; SQLite and PostgreSQL 14.24 locally tested; PostgreSQL 16 configured in CI |
 | Evidence and provenance preserved | ✅ Deterministic evidence ids, lineage resource, hash-chained audit |
 | Stops at approval boundaries | ✅ Three gates, hash-bound approvals, separation of duties |
 | At least one Agent Skill | ✅ Five, linted against the live server |
-| Integration tests | ✅ 366 tests (plus 3 CI-only Postgres tests) and 37 gating eval cases |
+| Integration tests | ✅ 451 non-Postgres tests, four PostgreSQL 14.24 tests, and 37 gating eval cases passed locally |
 | End-to-end demo with success and controlled failure paths | ✅ `poe demo` |
 
 ## Hardening after the independent audit
@@ -57,14 +57,25 @@ property breaks.
 | Fail-open auth, gates and overrides | Tokens need explicit tenants; the test gate fails closed; PII handling can only tighten | `tests/security/test_p1_hardening.py` |
 | Audit tampering and truncation | Canonical payload check, chain head and count on the run | `test_audit_chain_detects_tampering`, `test_audit_chain_detects_deleted_tail` |
 
-## Known gaps (tracked for v0.2)
+The [September remediation record](REMEDIATION-2026-09-27.md) tracks all 19 findings from the
+five-agent audit, their fixes, and final verification. Publication recovery and cancellation
+semantics are documented in [ADR-0012](adr/0012-recoverable-publication.md).
 
-- Live with-vs-without-Skill and LLM-judge comparisons need model credentials; the tooling is in place
-  (`evals/judge_eval.py --mode record`).
-- The Postgres suite (`tests/test_postgres.py`) runs in the CI service container; it was not run in the
-  local build environment, which has no Docker. CI itself has not yet run on a hosted runner.
+## Remaining verification and v0.2 limits
+
+- Live with-vs-without-Skill and LLM-judge comparisons need model sessions/credentials. They have
+  separate harnesses: `scripts/compare_skills.py` ([protocol](skill_comparison.md)) and
+  `evals/judge_eval.py --mode record`. Neither harness alone proves a live comparison occurred.
+- The four Postgres tests passed against isolated PostgreSQL 14.24 on 2026-09-27, including full
+  certified publication, concurrent audit/publication and crash recovery. CI targets PostgreSQL 16;
+  CI itself has not yet run on a hosted runner.
+- `scripts/smoke_container.py` and the container CI job cover the real Compose migration revision,
+  HTTP bearer auth/refusal and state surviving an MCP container restart. Docker is unavailable
+  locally, so the container smoke remains unexecuted here. The wheel smoke runs separately.
 - POD-609's live parts (a recorded Claude Code session and the with-vs-without-Skill comparison) are
   still open; they need a model session.
-- The `mf validate-configs` MetricFlow CLI check is not installed; semantic manifests are validated by
-  `dbt parse`/`build` instead.
-- The OpenTelemetry OTLP exporter is optional; spans are verified with the in-memory exporter.
+- The `mf validate-configs` MetricFlow CLI check is not installed. dbt parse/build and the local
+  semantic executor validate and execute all nine generated metrics at the supported monthly grain,
+  including zero-denominator behavior. This is not a run of the MetricFlow CLI/runtime.
+- The optional `telemetry` extra installs the HTTP OTLP exporter. Local HTTP collector export is
+  covered by `tests/test_otlp_export.py`; deployment to an external collector remains environment-specific.

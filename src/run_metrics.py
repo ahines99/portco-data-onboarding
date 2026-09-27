@@ -31,6 +31,7 @@ def compute_run_metrics(svc: Any, principal: Principal, run_id: UUID) -> dict[st
 
     calls = input_tokens = output_tokens = 0
     cost_usd = 0.0
+    cost_known = True
     model: str | None = None
     overrides = rejections = 0
     try:
@@ -42,7 +43,10 @@ def compute_run_metrics(svc: Any, principal: Principal, run_id: UUID) -> dict[st
                 calls += 1
                 input_tokens += int(u.get("input_tokens", 0))
                 output_tokens += int(u.get("output_tokens", 0))
-                cost_usd = round(cost_usd + float(u.get("cost_usd", 0.0)), 6)
+                if u.get("cost_usd") is None:
+                    cost_known = False
+                else:
+                    cost_usd = round(cost_usd + float(u["cost_usd"]), 6)
                 model = p.judge.get("model")
     except NotFound:
         pass
@@ -76,7 +80,8 @@ def compute_run_metrics(svc: Any, principal: Principal, run_id: UUID) -> dict[st
             "calls": calls,
             "input_tokens": input_tokens,
             "output_tokens": output_tokens,
-            "cost_usd": cost_usd,
+            "cost_usd": cost_usd if cost_known else None,
+            "cost_status": "known" if cost_known else "unknown_price",
             "model": model,
         },
         "outcome": run.status.value,

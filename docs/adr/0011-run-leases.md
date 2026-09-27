@@ -21,8 +21,9 @@ example, a cancelled run could be made RUNNING again.
 - Any unexpected engine exception fails the run as INTERNAL, and the lease is released in `finally`.
 - Every status change goes through `src/domain/run_states.py`. CANCELLED is terminal, and a
   completed run can only be reopened by `rerun_from`.
-- Step input hashes include a pipeline version: a digest of the ontology, the dbt templates and the
-  step code. A code change therefore invalidates reuse instead of serving stale outputs.
+- Step input hashes include all source implementation, ontology, dbt templates, the dependency
+  lockfile, semantic configuration, judge identity and connection policy. Resume also rechecks
+  skipped upstream steps, rewinds at the first mismatch and revokes affected approvals.
 
 ## Alternatives considered
 - `SELECT ... FOR UPDATE` held for the whole run: rejected. It would hold a transaction open for
@@ -34,8 +35,9 @@ example, a cancelled run could be made RUNNING again.
 
 ## Consequences
 A run stuck behind a crashed worker waits at most one lease period before it can be resumed.
-Threads abandoned on timeout keep running until they finish, but they write only into their own
-sandbox directory, and their results are discarded because the lease has moved on.
+Threads abandoned on timeout can keep running until they finish; their step results are discarded
+once ownership is lost. Publication requires additional checks around its filesystem side effects,
+described in [ADR-0012](0012-recoverable-publication.md).
 
 ## Evaluation
 `tests/test_engine_leases.py`: the table-driven transition tests, exclusive claims, recovery of an

@@ -1,7 +1,7 @@
 """One-command demo (POD-901): `uv run poe demo` / `portco demo`.
 
-1. Success path: fixture A is onboarded; a scripted human reviewer decides the mapping gate
-   (including one override); the sandbox build reconciles exactly; the reviewer certifies; the
+1. Success path: fixture A is onboarded; a synthetic reviewer script decides the mapping gate;
+   the sandbox build reconciles exactly; the scripted reviewer certifies; the
    bundle is published.
 2. Controlled failure path: fixture A with malformed invoice lines, plus an injected source timeout.
    The timeout is retried, the malformed rows fail sandbox tests, and the run stops for review
@@ -79,7 +79,7 @@ async def _success(root: Path, script: dict[str, Any]) -> tuple[bool, str]:
     approval = svc.submit_review(reviewer, run.run_id, _reviewer_decisions(run.pending_items, script))
     _say(
         f"   reviewer '{reviewer.principal_id}' recorded approval {str(approval.approval_id)[:8]} "
-        f"({len(approval.decisions)} decisions, 1 override)"
+        f"({len(approval.decisions)} decisions)"
     )
     run = await svc.resume(AGENT, run.run_id)
     report = svc.artifact(AGENT, run.run_id, StepName.AUTOMATED_TESTS)
@@ -87,7 +87,7 @@ async def _success(root: Path, script: dict[str, Any]) -> tuple[bool, str]:
     _say(
         f"   generated dbt + semantic layer; sandbox build exit {report.dbt_exit_code}; "
         f"{sum(c.passed for c in report.reconciliation)}/{len(report.reconciliation)} reconciliation checks "
-        "exact to the cent"
+        "passed (money exact to the cent)"
     )
     _say(f"   paused at '{run.gate}' for human certification")
     manifest = run.pending_items[0].subject_hash

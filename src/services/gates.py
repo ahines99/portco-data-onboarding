@@ -6,6 +6,7 @@ from collections import Counter
 from typing import Any
 
 from src.domain.models import Confidence, Finding, FindingType, ReviewDecision, ReviewGate, StepName
+from src.domain.ontology import Ontology, load_ontology
 from src.domain.project_models import (
     AcceptedMapping,
     ItemDecision,
@@ -13,7 +14,7 @@ from src.domain.project_models import (
     ResolvedMapping,
     ReviewItem,
 )
-from src.services.approvals import effective_decisions
+from src.services.approvals import _validate_override, effective_decisions
 from src.workflows.contracts import StepContext, StepResult, make_evidence
 
 
@@ -77,7 +78,11 @@ def review_items(ms: MappingSet, ctx: StepContext) -> list[ReviewItem]:
     return items
 
 
-def resolve(ms: MappingSet, decisions: dict[str, ItemDecision]) -> tuple[ResolvedMapping, list[str]]:
+def resolve(
+    ms: MappingSet, decisions: dict[str, ItemDecision], ontology: Ontology | None = None
+) -> tuple[ResolvedMapping, list[str]]:
+    ontology = ontology or load_ontology()
+    subject_hash = ms.content_hash()
     accepted: list[AcceptedMapping] = []
     rejected: list[str] = []
     for p in ms.proposals:
@@ -96,6 +101,20 @@ def resolve(ms: MappingSet, decisions: dict[str, ItemDecision]) -> tuple[Resolve
             )
             continue
         d = decisions[key]
+        _validate_override(
+            ReviewItem(
+                item_key=key,
+                gate=ReviewGate.MAPPING_REVIEW,
+                kind="mapping",
+                summary="Mapping resolution",
+                subject_hash=subject_hash,
+                options={
+                    "allowed_fields": list(ontology.entities[p.canonical_entity].fields),
+                    "pii_handling": p.pii_handling,
+                },
+            ),
+            d,
+        )
         if d.decision is ReviewDecision.REJECT:
             rejected.append(key)
             continue
@@ -109,7 +128,15 @@ def resolve(ms: MappingSet, decisions: dict[str, ItemDecision]) -> tuple[Resolve
                 transform=override.get("transform", p.suggested_transform),
                 pii_handling=override.get("pii_handling") or p.pii_handling,  # never relaxed to None
                 decided_by="reviewer",
-                overridden=d.decision is ReviewDecision.APPROVE_WITH_OVERRIDE,
+                overridden=any(
+                    override[field] != original
+                    for field, original in {
+                        "canonical_field": p.canonical_field,
+                        "transform": p.suggested_transform,
+                        "pii_handling": p.pii_handling,
+                    }.items()
+                    if field in override
+                ),
             )
         )
     counts = Counter((a.source_table, a.canonical_field) for a in accepted)
@@ -118,6 +145,20 @@ def resolve(ms: MappingSet, decisions: dict[str, ItemDecision]) -> tuple[Resolve
         for a in accepted
         if counts[(a.source_table, a.canonical_field)] > 1
     ]
+    for key, kind in [
+        *[(f"filter:{f.filter_key}", "row_filter") for f in ms.row_filters if f.requires_review],
+        *[(f"join:{j.join_id}", "join") for j in ms.joins if j.requires_review],
+    ]:
+        _validate_override(
+            ReviewItem(
+                item_key=key,
+                gate=ReviewGate.MAPPING_REVIEW,
+                kind=kind,
+                summary="Review resolution",
+                subject_hash=subject_hash,
+            ),
+            decisions[key],
+        )
     filters = [
         f
         for f in ms.row_filters
@@ -157,7 +198,7 @@ def mapping_review(ctx: StepContext) -> StepResult:
             subject_hash=h,
             audit=[("review_requested", {"gate": "mapping_review", "items": len(pending), "subject_hash": h})],
         )
-    resolved, duplicated = resolve(ms, decisions)
+    resolved, duplicated = resolve(ms, decisions, ctx.ontology)
     if duplicated:
         again = [
             i.model_copy(update={"reason_codes": [*i.reason_codes, "DUPLICATE_TARGET_AFTER_REVIEW"]})

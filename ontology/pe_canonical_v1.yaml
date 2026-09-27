@@ -393,7 +393,7 @@ metrics:
     grain: month
     formula: (revenue_recognized - cogs) / revenue_recognized
     requires: [gl_entry.debit_amount, gl_entry.credit_amount, gl_entry.account_code, gl_entry.posting_date, gl_account.account_type]
-    semantic: {kind: derived, expr: "(revenue_recognized - cogs) / revenue_recognized", depends_on: [revenue_recognized, cogs]}
+    semantic: {kind: derived, expr: "(revenue_recognized - cogs) / nullif(revenue_recognized, 0)", depends_on: [revenue_recognized, cogs]}
     pitfall: Undefined when revenue is zero.
 
   ebitda:

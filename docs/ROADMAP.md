@@ -1,11 +1,17 @@
 # Roadmap: Portco Data Onboarding Agent v0.1
 
-> **Implementation status (2026-09-23): all 74 tickets implemented, then hardened after an independent
-> audit (P0-P2 findings fixed; see ADR-0011 and the commit history).** 366 tests pass locally (the 3
-> Postgres tests are CI-only), 37/37 golden eval cases pass, the metric reference calculators have 100%
-> branch coverage, and ruff and mypy are clean. CI is configured but has not yet run on a hosted runner.
-> POD-609 is implemented except its live parts (a recorded Claude Code session and the
-> with-vs-without-Skill comparison), which need model credentials. See [acceptance.md](acceptance.md).
+> **Current remaining-work plan:** [Portfolio finalization roadmap](PORTFOLIO-ROADMAP.md), including
+> Codex/Alex ownership, release gaps, dependencies and acceptance criteria. This document remains
+> the historical implementation plan.
+
+> **Status update (2026-09-27): implementation and acceptance evidence are tracked separately.**
+> The earlier claim that all 74 tickets were complete overstated deployment and live-model proof.
+> Four PostgreSQL tests now pass locally against an isolated PostgreSQL 14.24 instance, covering
+> schema parity, append-only audit, full certified publication and concurrent crash recovery.
+> CI uses PostgreSQL 16 and includes wheel and Compose smoke jobs; hosted CI and the actual Docker
+> run remain unverified here. POD-609's live recording and paired Skill comparison remain open.
+> The three-prompt transcript/scoring harness is implemented ([protocol](skill_comparison.md));
+> no live improvement is claimed. See [acceptance.md](acceptance.md) for evidence and limitations.
 > Deviations from this plan, each recorded where noted:
 > - The MCP capability package is `src/capabilities/`, not `src/mcp/`, so it cannot shadow the `mcp` SDK import.
 > - dbt runs as a subprocess, not in-process `dbtRunner`: stdout would corrupt the stdio transport, and a
@@ -24,9 +30,9 @@
 > - Runs execute under a lease with a status transition table (ADR-0011), which the plan did not
 >   specify.
 > - The mapping-review gate is a workflow step, and there is also a test-failure waiver gate (ADR-0005).
-> - Not executed in the build environment: the Postgres suite (runs in CI; no local Docker), the live
->   LLM-judge comparison and the with-vs-without-Skill comparison (no model credentials). The tooling for
->   all three is in place.
+> - Not executed in this environment: the Docker smoke, hosted CI, live LLM-judge comparison and
+>   with-vs-without-Skill comparison. Their tooling exists; the four backend-specific PostgreSQL tests
+>   were executed locally against PostgreSQL 14.24 without Docker.
 
 This document breaks [IMPLEMENTATION_HANDOFF.md](../IMPLEMENTATION_HANDOFF.md) into tickets that can each be built, reviewed, and closed on their own. The handoff doc defines **what** the system is and **why**. This roadmap defines **the order to build it in** and **when each piece counts as done**.
 
@@ -1482,7 +1488,7 @@ Handoff *"Add tests for"* list → tickets: each MCP tool (POD-502–506), autho
 | The heuristic mapper overfits fixture A | Portfolio claims look fragile | Fixture B (POD-105) with alien naming; G06 threshold; weights in config, not code |
 | dbt and MetricFlow version drift on Python 3.12/Windows | Sandbox step breaks | Pin in `uv.lock`; `mf validate-configs` optional; CI on Linux plus a local Windows smoke test |
 | Scope creep into multiple MCP servers or live sources | MVP never lands | ADR-0006; v0.2 backlog; handoff rule "do not broaden scope until the first vertical slice is demonstrably correct" |
-| SQLite/Postgres behavior differences | Bugs appear only in one store | Portable types; the Postgres CI job (POD-205) runs the full suite |
+| SQLite/Postgres behavior differences | Bugs appear only in one store | Portable types; four PostgreSQL-specific tests cover migration parity, append-only audit, certified publication, concurrency and crash recovery. The broader default suite uses SQLite. |
 | LLM judge adds nondeterminism to CI | Flaky builds | Cassettes; judge off by default; gated by POD-608 |
 | Estimates are optimistic (about 100 dev-days) | Timeline slip | The P0-only path is about 80 days; P1 epics (6xx judge, 804/805, 902/904–906) can be cut without breaking the Definition of done |
 

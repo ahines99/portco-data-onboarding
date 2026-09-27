@@ -10,7 +10,7 @@ from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
-from src.domain.errors import NotFound
+from src.domain.errors import DataContractError, NotFound
 from src.domain.hashing import canonical_json, sha256_bytes
 
 M = TypeVar("M", bound=BaseModel)
@@ -41,7 +41,10 @@ class ArtifactStore:
         path = self._path(ref)
         if not path.exists():
             raise NotFound(f"artifact {ref[:12]} not found")
-        return path.read_bytes()
+        data = path.read_bytes()
+        if sha256_bytes(data) != ref:
+            raise DataContractError(f"artifact {ref[:12]} failed integrity verification")
+        return data
 
     def put_json(self, value: Any) -> str:
         return self.put_bytes(canonical_json(value).encode("utf-8"))
