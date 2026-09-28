@@ -272,6 +272,13 @@ async def test_real_http_jwt_auth_tenant_and_role_enforcement(
         evidence = await probe(settings.http_base_url, access_token(signing_key))
         assert evidence["gate"] == "mapping_review" and evidence["review_method"] == "none"
         assert evidence["anonymous_and_invalid_tokens_denied"]
+        completed = await probe(
+            settings.http_base_url,
+            access_token(signing_key),
+            access_token(signing_key, {"sub": "human:reviewer", "portco_role": "reviewer"}),
+        )
+        assert completed["gate"] == "complete" and len(completed["published_metrics"]) == 9
+        assert completed["review_method"].startswith("automated synthetic")
 
 
 async def test_capacity_rejects_parallel_work_and_releases_after_failure():

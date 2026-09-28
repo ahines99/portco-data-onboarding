@@ -2,8 +2,8 @@
 
 Dev tokens come from `PORTCO_HTTP_TOKENS`: `token=principal:role:company1|company2;...`.
 Each token becomes an AccessToken whose scopes encode the role and tenant scope; the
-server resolves a `Principal` from it on every call. Production would swap this verifier for
-an OAuth/JWT verifier without touching any tool.
+server resolves a `Principal` from it on every call. Production uses `jwt_auth.JwtTokenVerifier`
+instead; settings reject static tokens in production.
 
 Fail closed: a token without a company list is scoped to no tenant (grant all with `*`
 explicitly), and a malformed entry is dropped with a warning, never defaulted to a role.
