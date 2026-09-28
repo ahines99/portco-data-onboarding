@@ -13,13 +13,16 @@ measured analyst-time savings or investment-performance claim. The implementatio
 with substantial AI assistance. Alex approved the personal statement and delegated final acceptance;
 [the record](FINAL-ACCEPTANCE.md) distinguishes owner approval from automated execution.
 
-## Current automated qualification candidate
+## Current automated qualification release
 
 The owner selected fully agentic or automated execution and free-only operation. The
 [automated qualification plan](AUTOMATED-QUALIFICATION.md) adds a separately authored six-case
 corpus, a read-only PostgreSQL source connector, and recorded separate operator/reviewer agent
-work. The integrated candidate and actual PostgreSQL acceptance are pending hosted verification;
-these additions do not establish a production deployment or independent human validation.
+work. Actual PostgreSQL acceptance passed on `25c6937` in
+[hosted CI](https://github.com/ahines99/portco-data-onboarding/actions/runs/36443092813).
+The [v0.2.0-rc.3 release record](https://github.com/ahines99/portco-data-onboarding/releases/tag/v0.2.0-rc.3)
+and [release status](RELEASE-STATUS.md) identify integrated verification and exact release provenance.
+These additions do not establish a production deployment or independent human validation.
 
 ## The problem made concrete
 
@@ -65,7 +68,7 @@ and changed files. This is a useful interview example of correctness across two 
 - [Release evidence and accepted scope](RELEASE-STATUS.md).
 - [Separate-agent operator attempt](evidence/agent-operator-qualification/README.md) and
   [reviewer completion](evidence/agent-reviewer-qualification/README.md) on baseline `03c4fb3`.
-- [Automated candidate qualification](AUTOMATED-QUALIFICATION.md),
+- [Automated release qualification](AUTOMATED-QUALIFICATION.md),
   [PostgreSQL contract](POSTGRES-SOURCE.md) and [v2 corpus](../evals/agent_qualification_v2/README.md).
 
 The [release status](RELEASE-STATUS.md) and exact tagged CI/verification assets contain dated test
@@ -87,8 +90,8 @@ safety gate for an unreviewed competing monetary interpretation. Later fixes/rer
 post-benchmark remediation, not held-out proof of improvement. The [remediation rerun](evidence/unfamiliar-benchmark.json)
 passes safety with 32/33 correct proposals, 32/32 positive targets covered and 6/6 unit outcomes.
 Review burden increases to 7/33; one incorrect reviewed proposal and eight unresolved opaque
-fields remain. Those counts describe the preserved historical remediation. The current v1
-regression after the later entity-uncertainty repair retains safety, 32/33 correctness and 32/32
+fields remain. Those counts describe the preserved historical remediation. The [current v1
+regression](evidence/unfamiliar-benchmark-rc3.json) after the later entity-uncertainty repair retains safety, 32/33 correctness and 32/32
 target coverage, with 17/33 proposals requiring review and eight unresolved fields.
 Those limits matter as much as the passing safety gate.
 
@@ -118,11 +121,15 @@ not human active time, independent usability measurements or business savings.
 ## Boundaries and next steps
 
 Accepted source evidence includes DuckDB fixtures and [operator-imported typed CSV snapshots](CSV-SOURCE.md).
-The new [PostgreSQL source connector](POSTGRES-SOURCE.md) is implemented in the candidate: it checks
+The [PostgreSQL source connector](POSTGRES-SOURCE.md) checks
 SELECT-only authority and schema contracts, extracts a bounded read-only repeatable-read snapshot,
-and registers it atomically through the CSV/DuckDB contract. Its actual PostgreSQL/full-workflow
-acceptance still awaits hosted verification. It is operator-triggered extraction, not continuous
-synchronization or a claim of access to a customer's system. Publication remains a versioned local directory. A 10,000-row public retail extract passed six ingestion/profile
+and registers it atomically through the CSV/DuckDB contract. Actual PostgreSQL acceptance extracted
+11 synthetic tables / 14,639 rows, then removed the source database before onboarding. The snapshot
+completed nine-metric reconciliation and publication with 58 generated-file hashes checked,
+59 published files, 45 verified audit events and zero waived checks. The separate reviewer identity
+in this smoke is scripted automation, distinct from the source-informed SAP-style agent review above.
+It is operator-triggered extraction, not continuous synchronization or customer-system access.
+Publication remains a versioned local directory. A 10,000-row public retail extract passed six ingestion/profile
 controls, retaining missing identifiers, cancellations and negative quantities; no mapping was
 approved or certified. Static HTTP tokens and trusted local reviewer identities are development
 controls. A [production JWT candidate](LIVE-DEPLOYMENT.md) is implemented, but there is no accepted

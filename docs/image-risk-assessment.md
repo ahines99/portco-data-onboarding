@@ -27,6 +27,9 @@ release scan above and must be proved by the new image's CI evidence before rely
 For the audit-response candidate, use the exact `v0.2.0-rc.2` release's `container-audit.json`,
 `runtime-evidence.json` and `verification.json` together. The earlier image ID and scan counts
 above remain historical; a rebuilt image needs its own evidence even when the counts match.
+The subsequent [automated qualification release](https://github.com/ahines99/portco-data-onboarding/releases/tag/v0.2.0-rc.3)
+likewise carries a fresh full scan, runtime report and verification summary for its exact commit.
+Its free local/CI scope does not authorize or establish live production exposure.
 The local Compose service additionally
 drops all capabilities, sets `no-new-privileges`, and binds the host port to loopback. **Those
 Compose settings are not declared by the Render Blueprint and must not be attributed to Render.**

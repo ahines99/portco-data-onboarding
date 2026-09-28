@@ -208,6 +208,8 @@ def import_postgres(manifest_path: Path, sources_root: Path) -> dict[str, Any]:
                 ):
                     conn.execute(sql.SQL("SET LOCAL {} = {}").format(sql.Identifier(setting), sql.Literal(value)))
                 for table in sorted(manifest.tables, key=lambda t: (t.schema_name, t.table_name)):
+                    if time.monotonic() > deadline:
+                        raise ValidationFailed("PostgreSQL extraction exceeded its total time limit")
                     conn.execute(
                         sql.SQL("LOCK TABLE ONLY {} IN ACCESS SHARE MODE").format(
                             sql.Identifier(table.schema_name, table.table_name)

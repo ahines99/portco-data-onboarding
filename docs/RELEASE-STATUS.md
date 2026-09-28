@@ -15,10 +15,13 @@ record for the exact shipped code, rather than treating an earlier test count as
 
 ## Current development and deployment boundary
 
-The `v0.2.0-rc.3` automated qualification candidate implements the owner's instruction that
+The [v0.2.0-rc.3 automated qualification candidate](https://github.com/ahines99/portco-data-onboarding/releases/tag/v0.2.0-rc.3) implements the owner's instruction that
 execution be fully agentic or automated. Its [gate ledger](AUTOMATED-QUALIFICATION.md) separates
-the pinned operator/reviewer exercise from current-source integration verification. Hosted
-acceptance and release publication are pending until the exact release record confirms them.
+the pinned operator/reviewer exercise from current-source integration verification. The linked
+release's `verification.json`, exact CI link and `SHA256SUMS.txt` identify the shipped code and evidence.
+Implementation [CI 36443092813](https://github.com/ahines99/portco-data-onboarding/actions/runs/36443092813)
+verified actual PostgreSQL publication and both frozen benchmark safety gates; final release evidence
+includes a fresh full CI run for the final source.
 
 - Separate delegated agents operated and reviewed the SAP-style workflow: six supported metrics,
   38 verified publication files, 46 intact audit events and one rejected unsupported mapping.
@@ -32,6 +35,8 @@ acceptance and release publication are pending until the exact release record co
 - The [PostgreSQL source connector](POSTGRES-SOURCE.md) implements bounded, read-only snapshots
   with explicit types/keys, verified remote transport requirements and atomic registration.
   Its actual PostgreSQL acceptance covers synthetic extraction through nine-metric publication.
+  The [retained hosted report](evidence/postgres-source-acceptance.json) records 11 tables / 14,639 rows,
+  59 publication files, 45 intact audit events and no waived checks.
 - Agent observations led to review-packet evidence pointers, stage-appropriate context links
   and neutral reviewer wording. A separate follow-up verified links and retained authority checks.
 - A prepared optional human-pilot kit and timing utility do not fabricate participation, consent,

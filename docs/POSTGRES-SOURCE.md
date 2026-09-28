@@ -157,6 +157,15 @@ Local registration is trusted operator-owned metadata, not a remote attestation.
 
 ## Verification
 
+The first hosted acceptance on commit `25c6937ca75aeda58108e1258c441b7e0d9eea60`
+passed in [CI 36443092813](https://github.com/ahines99/portco-data-onboarding/actions/runs/36443092813).
+The [retained report](evidence/postgres-source-acceptance.json) records 11 tables / 14,639 rows,
+nine published metrics, 58 generated file hashes checked, 59 publication files, 45 intact audit
+events and zero waivers. The live synthetic source was removed before onboarding. The release
+record carries a fresh exact-release-commit report; this earlier report keeps its original provenance.
+PostgreSQL CI uses plaintext loopback transport. Remote `verify-full` configuration is enforced
+and unit-tested; these checks do not establish a real remote provider's TLS integration.
+
 ```powershell
 python -m pytest -q tests/test_postgres_source.py
 ```

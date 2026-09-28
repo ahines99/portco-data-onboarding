@@ -6,10 +6,12 @@ separate reviewer authority and recovery across database/filesystem failures. Co
 workflows, a bounded real-data ingestion exercise and a deployment candidate have different scopes.
 See [current release status](RELEASE-STATUS.md) before quoting version-specific test counts.
 
-The current [automated qualification candidate](AUTOMATED-QUALIFICATION.md) follows the owner's
+The current [automated qualification release](AUTOMATED-QUALIFICATION.md) follows the owner's
 instruction to make execution agentic or automated. Separate operator/reviewer agents completed a
-synthetic workflow on pinned baseline `03c4fb3`; the new connector and integrated candidate still
-await hosted acceptance. The project remains free-only: static portfolio and local execution,
+synthetic workflow on pinned baseline `03c4fb3`; actual PostgreSQL acceptance subsequently passed
+on `25c6937` in [hosted CI](https://github.com/ahines99/portco-data-onboarding/actions/runs/36443092813).
+Use the [v0.2.0-rc.3 record](https://github.com/ahines99/portco-data-onboarding/releases/tag/v0.2.0-rc.3)
+and [release status](RELEASE-STATUS.md) for integrated verification and exact release provenance. The project remains free-only: static portfolio and local execution,
 with no deployed production backend. Automated qualification does not become a human pilot.
 
 ## Recommended resume entry
@@ -25,11 +27,13 @@ Python, SQL, dbt, DuckDB, PostgreSQL, MCP, Docker, GitHub Actions
 - Extended ingestion to typed CSV snapshots and validated ingestion/profiling on 10,000 public
   historical retail rows; maintained reproducible evaluation, packaging and security checks.
 
-Optional candidate-stage connector bullet, when relevant to the role:
+Optional connector bullet, when relevant to the role:
 
-- Added a bounded read-only PostgreSQL snapshot connector with explicit read-only transactions,
-  schema/privilege checks and atomic registration; real PostgreSQL end-to-end acceptance is pending
-  in the current candidate. Do not shorten this to a verified production integration yet.
+- Added a bounded read-only PostgreSQL snapshot connector and verified extraction of 11 synthetic
+  tables / 14,639 rows through nine-metric reconciliation and certified publication in actual
+  PostgreSQL CI, with schema/privilege checks and atomic registration.
+
+This is verified synthetic integration, not a production deployment or customer-source claim.
 
 "Directed" matches the recorded project role. Use "personally implemented" for a component only if
 that is accurate and you can explain your contribution. Owner approval of a result does not mean the
@@ -48,7 +52,7 @@ honest evaluation. Do not add all technologies and counts to every bullet.
 | Governed end-to-end onboarding | [Accepted synthetic run](evidence/owner-acceptance/acceptance.json), [case study](portfolio_case_study.md) | Supported synthetic workflow through separate reviewer certification; recorded reviewers include automated/delegated identities |
 | Nine reconciled financial metrics | [Reconciliation](evidence/reconciliation.json) | Generated supported-fixture metrics, not nine audited customer KPIs |
 | Typed external extract ingestion | [CSV source contract](CSV-SOURCE.md), [synthetic full-workflow smoke](evidence/csv-source-smoke.json) | Operator-imported files, immutable registered snapshots; not direct Salesforce/SAP/Snowflake credentials or a live sync |
-| PostgreSQL source connector candidate | [Connector contract](POSTGRES-SOURCE.md), integration/acceptance harness | Implemented SELECT-only snapshots into immutable DuckDB sources; actual hosted PostgreSQL acceptance pending, no customer credentials or continuous synchronization |
+| PostgreSQL source connector | [Connector contract](POSTGRES-SOURCE.md), [actual PostgreSQL CI](https://github.com/ahines99/portco-data-onboarding/actions/runs/36443092813) | 11 synthetic tables / 14,639 rows through nine-metric publication; 58 generated-file hashes, 59 published files, 45 audit events, zero waivers; no customer credentials or continuous synchronization |
 | Separate-agent operated/reviewed workflow | [Operator record](evidence/agent-operator-qualification/README.md), [reviewer verification](evidence/agent-reviewer-qualification/README.md) | Pinned baseline `03c4fb3`: six supported metrics, 38 verified publication files, 46 audit events; source-informed automated review, not human or blinded validation |
 | Real historical operating data | [Public retail exercise](PUBLIC-OPERATING-DATA.md), [aggregate evidence](evidence/public-retail-profile.json) | 10,000 source-order rows imported/profiled; six extract/profile controls, no approved mapping, certified metrics or customer participation |
 | Unfamiliar-schema evaluation | [Frozen benchmark](../evals/unfamiliar/README.md) and its immutable reports | Cases authored by a separate agent before mapper changes; not external human validation or fully blinded research |
@@ -68,7 +72,7 @@ proposals and 32/32 targets covered, after feedback from the first run. Do not c
 validated accuracy improvement. Review rises to 7/33; one wrong reviewed proposal and eight opaque
 fields remain unresolved. This is post-benchmark remediation, not a new held-out study.
 Those 7/33 review counts belong to the preserved historical report. With the later entity-uncertainty
-repair, the current v1 regression still passes safety at 32/33 correct proposals and 32/32 targets,
+repair, the [current v1 regression](evidence/unfamiliar-benchmark-rc3.json) still passes safety at 32/33 correct proposals and 32/32 targets,
 but requires review for 17/33 proposals; eight fields remain unresolved.
 
 The new six-case [v2 corpus](../evals/agent_qualification_v2/README.md) is a separate experiment.
@@ -89,8 +93,8 @@ mappings, generates dbt models and reconciles financial metrics, with separate r
 I extended the boundary to typed CSV extracts and exercised ingestion on public historical retail
 data. The strongest engineering work is keeping calculations, permissions and recovery explicit.
 Separate automated operator and reviewer agents completed a supported baseline workflow.
-The current PostgreSQL connector candidate awaits hosted acceptance; human impact and live production
-operations remain unverified."
+The PostgreSQL connector passed actual database-to-publication acceptance using synthetic data.
+Human impact and live production operations remain unverified."
 
 Be ready to explain a cents-to-dollars transformation, a retained customer with no CRM match, the
 stale-approval check, and a crash between publication rename and database commit. Explain why a
