@@ -10,14 +10,18 @@ still required; local tests or a successful container build do not establish liv
 Use [render.yaml](../render.yaml): one 1 CPU / 2 GB application instance, PostgreSQL 16 on the
 0.5 CPU / 1 GB plan with 5 GB database storage, and a 10 GB `/data` disk, all in Virginia.
 Use the assigned `onrender.com` hostname initially. Keep the public portfolio on GitHub Pages.
-Auth0's free tier is sufficient for a small, access-controlled demonstration, subject to its limits.
+Use Auth0 Essentials for reviewer MFA; its current B2C pricing lists $35/month and Pro MFA.
+The free tier does not satisfy this guide's reviewer MFA requirement. Confirm the selected
+tenant's MFA and machine-to-machine entitlements before purchasing; do not rely on trial features.
 The first service contains only generated synthetic data; no source connector for customer data
 is enabled by this deployment recipe. Machine clients are agents; human accounts hold reviewer access.
 
 The app was listed at $25/month when checked on 2026-09-27; database, storage and possible usage
-charges are additional. Budget approximately $50–60/month and review the actual provider quote
+charges are additional. Allow approximately $50–60/month for Render plus $35/month for Auth0;
+use a provisional total budget of $100/month before tax and review the actual provider quote
 before provisioning. This estimate is not authorization to spend. Avoid paid workspace upgrades,
-custom-domain purchases and automatic storage scaling for the initial service.
+custom-domain purchases and automatic storage scaling for the initial service. This is an estimate,
+not a provider-enforced spending cap; monitor usage charges and configure available billing alerts.
 [Current pricing](https://render.com/pricing), [Auth0 plans](https://auth0.com/pricing).
 
 The persistent disk limits this design to one instance and causes brief deployment downtime.
