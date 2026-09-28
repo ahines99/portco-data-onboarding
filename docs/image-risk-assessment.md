@@ -24,6 +24,9 @@ ownership of `/app` and strip SUID/SGID bits from regular files in the final ima
 This reduces application code mutation and privilege-helper exposure; it does **not** patch the
 flagged packages or remove the requirement for a fresh unfiltered scan. Those changes postdate the
 release scan above and must be proved by the new image's CI evidence before relying on them.
+For the audit-response candidate, use the exact `v0.2.0-rc.2` release's `container-audit.json`,
+`runtime-evidence.json` and `verification.json` together. The earlier image ID and scan counts
+above remain historical; a rebuilt image needs its own evidence even when the counts match.
 The local Compose service additionally
 drops all capabilities, sets `no-new-privileges`, and binds the host port to loopback. **Those
 Compose settings are not declared by the Render Blueprint and must not be attributed to Render.**

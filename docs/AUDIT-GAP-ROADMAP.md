@@ -115,8 +115,13 @@ See the [three-stage benchmark record](../evals/unfamiliar/README.md).
 The integrated first implementation passed 606 local non-PostgreSQL tests (one Windows symlink
 permission skip; five PostgreSQL tests deselected), all 37 golden evaluation cases, six Auth0 Action
 tests, Ruff and mypy. The monetary repair additionally passed 23 structural/golden and 58 workflow,
-generation, review-binding and invoice regressions (one existing skip). These populations overlap;
-do not sum them. Final post-remediation suite, actual container/PostgreSQL results and distribution
+generation, review-binding and invoice regressions (one existing skip). The full post-remediation
+Windows suite passed 608 tests, with one symlink-permission skip and five PostgreSQL tests deselected.
+Hosted testing then exposed fixture generation rewriting bundled reference answers under the newly
+root-owned application directory. Runtime fixture generation was separated from explicit development
+reference regeneration, retaining the read-only application boundary. The release verification record
+distinguishes the Windows run before that final CLI repair from the subsequent targeted and hosted checks.
+These populations overlap; do not sum them. Final container/PostgreSQL results and distribution
 hashes are recorded in the `v0.2.0-rc.2` release verification assets. Local evidence records worktree
 status and implementation hashes because measurements preceded the integration commit.
 

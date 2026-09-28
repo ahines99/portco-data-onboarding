@@ -18,6 +18,9 @@ uv run poe demo
 decisions. For real independent review, use the [agent walkthrough](agent_walkthrough.md).
 The installed wheel requires no development extras for fixture generation, demo or stdio MCP.
 The `postgres`, `llm`, and `telemetry` extras supply optional capabilities.
+Fixture generation writes runtime databases without changing bundled reference answers. To deliberately
+regenerate those answers in a writable development checkout, use
+`uv run portco fixtures generate --refresh-ground-truth` and review the resulting source diff.
 
 ## Human review
 

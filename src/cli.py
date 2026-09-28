@@ -77,13 +77,18 @@ def _print_run(run: Any) -> None:
 
 
 @fixtures_app.command("generate")
-def fixtures_generate(fixture: Annotated[str, typer.Option(help="a, b, all, or a fixture name")] = "all") -> None:
-    """Generate fixture databases (and refresh committed ground truth)."""
+def fixtures_generate(
+    fixture: Annotated[str, typer.Option(help="a, b, all, or a fixture name")] = "all",
+    refresh_ground_truth: Annotated[
+        bool, typer.Option(help="Explicitly refresh ground-truth resources in a writable development checkout")
+    ] = False,
+) -> None:
+    """Generate runtime fixture databases; ground-truth resources are unchanged by default."""
     from src.fixtures.generate import fixture_names, generate
 
     names = {"a": ["portco_a"], "b": ["portco_b"], "all": fixture_names()}.get(fixture, [fixture])
     for name in names:
-        path = generate(name, get_settings().fixtures_dir)
+        path = generate(name, get_settings().fixtures_dir, write_truth=refresh_ground_truth)
         typer.echo(f"generated {name} -> {path}")
 
 
