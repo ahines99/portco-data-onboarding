@@ -22,6 +22,7 @@ RUN python -m pip uninstall -y pip
 RUN useradd --create-home --uid 10001 portco
 WORKDIR /app
 COPY --from=build /app /app
+RUN chmod -R go-w /app
 # Application code and its environment stay root-owned. Runtime writes belong in /data
 # or temporary directories; remove inherited privilege-bearing file permissions.
 RUN find / -xdev -type f -perm /6000 -exec chmod a-s {} +

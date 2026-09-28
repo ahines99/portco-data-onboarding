@@ -120,6 +120,8 @@ Windows suite passed 608 tests, with one symlink-permission skip and five Postgr
 Hosted testing then exposed fixture generation rewriting bundled reference answers under the newly
 root-owned application directory. Runtime fixture generation was separated from explicit development
 reference regeneration, retaining the read-only application boundary. The release verification record
+also retains the subsequent runtime assertion failure for a build-created writable virtual-environment
+lock file; application-tree modes were tightened without exempting the file from the gate. The record
 distinguishes the Windows run before that final CLI repair from the subsequent targeted and hosted checks.
 These populations overlap; do not sum them. Final container/PostgreSQL results and distribution
 hashes are recorded in the `v0.2.0-rc.2` release verification assets. Local evidence records worktree
