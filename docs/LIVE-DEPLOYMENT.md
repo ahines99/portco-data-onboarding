@@ -132,7 +132,9 @@ not restart services or prove backup recovery; those separate checks remain belo
   consistent application recovery point. Record achieved recovery time and data-loss window.
 - Inspect the fresh image scan and decide on every residual HIGH/CRITICAL vulnerability before
   exposure. The image gate rejects fixable HIGH/CRITICAL findings; it does not certify unfixed ones
-  harmless. Monitor resource use on the selected plan during the full synthetic run.
+  harmless. Use the [per-CVE assessment](image-risk-assessment.md) to record actual runtime evidence;
+  Compose privilege restrictions do not automatically apply to Render. Monitor resource use on
+  the selected plan during the full synthetic run.
 - Record service URL, deployed source SHA, CI run, image scan, test timestamp and rollback/restore
   evidence. Only then change this document's status to deployed. Never call a configuration file a
   successful deployment.

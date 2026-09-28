@@ -16,8 +16,9 @@
   package version for these entries. Counts include the same advisory on multiple binary packages.
   These are retained as residual risk, not suppressed or described as a clean image.
 
-The container runs as a non-root user, drops all Linux capabilities, forbids privilege escalation
-and binds its HTTP port to loopback. No systemd daemon or privileged mount helper is part of the
+The local Compose service runs as a non-root user, drops all Linux capabilities, forbids privilege escalation
+and binds its host HTTP port to loopback. These Compose settings do not establish Render runtime
+restrictions. No systemd daemon or privileged mount helper is part of the
 application workflow. These constraints reduce some exposure; they do not establish that every
 reported issue is unreachable. The image is a local synthetic demo artifact and is not approved
 for production or untrusted public traffic. A static GitHub Pages site serves only public evidence.
@@ -32,3 +33,6 @@ Before production use: replace development tokens with verified identity, review
 boundaries, update/rebuild the base image, remediate or independently assess remaining OS findings,
 and rerun container scans and functional tests. These are explicit production prerequisites, not
 claims made by this portfolio release.
+
+The [deployment candidate assessment](image-risk-assessment.md) records all eight residual CVEs,
+their exploit prerequisites, source-review evidence and the runtime checks still required.
