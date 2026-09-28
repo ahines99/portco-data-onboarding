@@ -3,7 +3,9 @@
 This is a synthetic-data portfolio demonstration, not a production financial reporting service.
 Supported release scope is Python 3.12, local SQLite/PostgreSQL state, DuckDB fixture sources and
 versioned local publication. Static bearer tokens and trusted local reviewer identities are for
-development. Do not expose the MCP server to the public internet or use real personal/company data.
+development and must never be exposed publicly. The new deployment candidate adds strict JWT
+authentication for an access-controlled synthetic live service; see [live acceptance prerequisites](docs/LIVE-DEPLOYMENT.md).
+It has not yet been validated against a real hosting/identity account. Do not use real personal/company data.
 
 For a sensitive vulnerability, use GitHub's private vulnerability reporting on the repository's
 Security tab. Do not open a public issue containing credentials, source records or exploit data.

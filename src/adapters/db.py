@@ -197,4 +197,4 @@ def make_engine(url: str) -> Engine:
             cur.close()
 
         return engine
-    return create_engine(url, pool_pre_ping=True)
+    return create_engine(url, pool_pre_ping=True, pool_timeout=5, connect_args={"connect_timeout": 5})

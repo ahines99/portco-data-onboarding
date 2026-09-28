@@ -1,6 +1,6 @@
 [project]
 name = "portco-data-onboarding"
-version = "0.1.1"
+version = "0.2.0rc1"
 description = "Governed agent for onboarding portfolio-company data into a canonical PE ontology."
 license = "MIT"
 license-files = ["LICENSE"]
@@ -26,6 +26,7 @@ dependencies = [
   "dbt-core>=1.11.14,<1.12",
   "dbt-duckdb>=1.9,<1.11",
   "uvicorn>=0.30",
+  "pyjwt[crypto]>=2.15,<3",
   "sqlparse>=0.6.0,<0.7",
 ]
 

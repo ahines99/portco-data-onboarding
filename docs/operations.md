@@ -113,3 +113,9 @@ Review dependencies monthly or before sharing a new release; rerun CI, eval, min
 checks after updates. Keep judge API calls off unless an explicit experiment and spending limit exist.
 Track external model/runtime support separately; avoid silently upgrading optional tooling into the
 working application environment.
+
+## Live-service candidate
+
+The original Compose path above remains a local development demonstration. For the separate
+JWT-authenticated deployment profile, follow [Render + Auth0 setup and live acceptance](LIVE-DEPLOYMENT.md).
+A green local/hosted test suite does not substitute for those live deployment and recovery checks.

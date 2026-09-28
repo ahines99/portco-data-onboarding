@@ -1,5 +1,8 @@
 # Portfolio Company Data Onboarding Agent
 
+Live-service preparation: [Render + Auth0 deployment candidate](docs/LIVE-DEPLOYMENT.md).
+The live backend has not been provisioned or accepted; the finalized v0.1.1 portfolio release is separate.
+
 [![CI](https://github.com/ahines99/portco-data-onboarding/actions/workflows/ci.yml/badge.svg)](https://github.com/ahines99/portco-data-onboarding/actions/workflows/ci.yml)
 
 **[Project page and recorded scripted replay](https://ahines99.github.io/portco-data-onboarding/)** ·

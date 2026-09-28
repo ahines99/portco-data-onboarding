@@ -29,6 +29,9 @@ services:
   mcp:
     profiles: [full]
     build: .
+    mem_limit: 2g
+    cpus: 1.0
+    pids_limit: 256
     cap_drop: ["ALL"]
     security_opt: ["no-new-privileges:true"]
     environment: *env

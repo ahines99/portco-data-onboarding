@@ -38,6 +38,7 @@ from src.domain.project_models import (
     SchemaProfile,
     TestReport,
 )
+from src.version import VERSION
 
 READ = ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False)
 WRITE_STATE = ToolAnnotations(
@@ -89,7 +90,7 @@ def register(mcp: MCPServer, state: ServerState) -> None:
         except Exception:
             db = "unavailable"
         return Health(
-            status="ok" if db == "ok" else "degraded", version="0.1.0", database=db, schema_version=SCHEMA_VERSION
+            status="ok" if db == "ok" else "degraded", version=VERSION, database=db, schema_version=SCHEMA_VERSION
         )
 
     # ------------------------------------------------------------------ runs (orchestration)

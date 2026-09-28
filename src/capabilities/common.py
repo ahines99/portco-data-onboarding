@@ -11,7 +11,7 @@ import structlog
 from mcp.server.auth.middleware.auth_context import get_access_token
 from mcp.types import CallToolResult, TextContent
 
-from src.domain.errors import DomainError, ErrorCode, ValidationFailed
+from src.domain.errors import DomainError, ErrorCode, Forbidden, ValidationFailed
 from src.domain.models import Principal, Role
 from src.settings import Settings, get_settings
 
@@ -41,6 +41,8 @@ class ServerState:
         token = get_access_token()
         if token is not None:
             return principal_from_token(token.client_id, token.scopes)
+        if self.settings.env == "production":
+            raise Forbidden("an authenticated identity is required")
         return Principal(principal_id=self.settings.local_principal_id, role=Role(self.settings.local_principal_role))
 
 

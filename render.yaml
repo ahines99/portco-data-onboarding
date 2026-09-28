@@ -1,0 +1,50 @@
+# Review costs before applying. First deployment is a restricted synthetic-data service.
+services:
+  - type: web
+    name: portco-data-onboarding
+    runtime: docker
+    region: virginia
+    plan: 1c-2g
+    numInstances: 1
+    autoDeployTrigger: "off"
+    dockerCommand: python -m src.serve
+    healthCheckPath: /readyz
+    maxShutdownDelaySeconds: 45
+    disk:
+      name: portco-data
+      mountPath: /data
+      sizeGB: 10
+    envVars:
+      - key: PORTCO_ENV
+        value: production
+      - key: PORTCO_AUTH_MODE
+        value: jwt
+      - key: PORTCO_VAR_ROOT
+        value: /data
+      - key: PORTCO_SEED_SYNTHETIC
+        value: "true"
+      - key: PORTCO_REQUIRE_DISTINCT_REVIEWER
+        value: "true"
+      - key: PORTCO_LLM_ENABLED
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: portco-state
+          property: connectionString
+      - key: PORTCO_HTTP_BASE_URL
+        sync: false
+      - key: PORTCO_JWT_ISSUER_URL
+        sync: false
+      - key: PORTCO_JWT_JWKS_URL
+        sync: false
+      - key: PORTCO_JWT_AUDIENCE
+        value: https://portco-data-onboarding-api
+databases:
+  - name: portco-state
+    region: virginia
+    plan: 0.5c-1g
+    postgresMajorVersion: "16"
+    databaseName: portco
+    user: portco
+    diskSizeGB: 5
+    ipAllowList: []

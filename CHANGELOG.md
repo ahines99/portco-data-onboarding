@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0rc1 ? live-service deployment candidate
+
+- Add strict RS256 JWT verification with issuer/audience/tenant enforcement and rotation-aware JWKS caching.
+- Reject unsafe production configuration, local identity fallback and unauthenticated transport.
+- Add schema/storage readiness, bounded HTTP sessions/workload, and a managed PostgreSQL cloud entry point.
+- Prepare Render infrastructure and tested Auth0 login/machine entitlement actions.
+- Keep live deployment and recovery acceptance explicitly pending; no live readiness claim.
+
+
 ## 0.1.1 ? final audit hardening
 
 - Bind CLI and MCP review decisions to the caller-reviewed run, gate and content hash; validate against locked current state. Certification requires its dedicated route.

@@ -28,6 +28,9 @@ jobs:
       - run: uv run poe lint
       - run: uv run ruff format --check src tests evals scripts
       - run: uv run poe typecheck
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node --test deploy/auth0/actions.test.js
 
   test:
     runs-on: ubuntu-latest

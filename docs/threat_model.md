@@ -40,8 +40,10 @@ DuckDB source adapter, the dbt sandbox and the local publish target.
 | **Elevation of privilege**: unknown or new action | B2 | Policy registry is an allowlist; unknown actions are denied | `test_unknown_action_is_denied` |
 
 ## Residual risks and v0.2 work
-- **Static dev tokens.** HTTP auth uses static bearer tokens; production needs an OAuth/JWT
-  verifier with audience validation (`validate_token_resource=True`).
+- **Identity operations.** Development uses static tokens. Production mode now requires signed JWTs,
+  issuer/audience validation, explicit tenants and SDK resource validation. Real issuer configuration,
+  MFA, client registration, token revocation operations and live acceptance remain deployment duties;
+  see [deployment candidate](LIVE-DEPLOYMENT.md).
 - **PII heuristics.** Classification is pattern- and name-based. Unusual encodings (for example
   national ids without separators) can be missed; the PII guard is a second line, not a proof.
 - **Hashing brute force.** Hashed low-entropy PII (phone numbers) can be brute-forced. Salt per
