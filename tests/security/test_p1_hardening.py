@@ -237,7 +237,13 @@ async def test_test_gate_fails_closed_without_named_failures(
     monkeypatch.setattr(sandbox, "build_and_test", broken_build)
     svc = make_service(tmp_path)
     run = await svc.start_run(AGENT, "fixture:portco_a")
-    svc.submit_review(REVIEWER, run.run_id, decide_all(run.pending_items))
+    svc.submit_review(
+        REVIEWER,
+        run.run_id,
+        decide_all(run.pending_items),
+        subject_hash=run.pending_items[0].subject_hash,
+        gate=ReviewGate(run.gate),
+    )
     run = await svc.resume(AGENT, run.run_id)
     assert run.status is RunStatus.NEEDS_REVIEW and run.gate == "test_failures"
     assert [i.item_key for i in run.pending_items] == ["test:dbt_exit_2"]

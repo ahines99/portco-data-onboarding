@@ -9,7 +9,7 @@ import pytest
 
 from src.adapters.faults import FaultInjector
 from src.domain.errors import Conflict, Forbidden, ValidationFailed
-from src.domain.models import Principal, ReviewDecision, Role, RunStatus, StepName
+from src.domain.models import Principal, ReviewDecision, ReviewGate, Role, RunStatus, StepName
 from src.domain.project_models import ConnectionSpec, ItemDecision, MappingSet
 from src.workflows.facade import OnboardingService
 from tests.conftest import AGENT, REVIEWER, STANDARD_OVERRIDES, decide_all, make_service
@@ -47,28 +47,50 @@ async def test_resume_without_approvals_stays_paused_and_does_not_recompute(serv
 async def test_agent_cannot_approve_and_denial_is_audited(service: OnboardingService) -> None:
     run = await service.start_run(AGENT, "fixture:portco_a")
     with pytest.raises(Forbidden):
-        service.submit_review(AGENT, run.run_id, decide_all(run.pending_items))
+        service.submit_review(
+            AGENT,
+            run.run_id,
+            decide_all(run.pending_items),
+            subject_hash=run.pending_items[0].subject_hash,
+            gate=ReviewGate(run.gate),
+        )
     assert "policy_denied" in _events(service, run.run_id)
 
 
 async def test_reviewer_who_started_the_run_cannot_approve_it(service: OnboardingService) -> None:
     run = await service.start_run(REVIEWER, "fixture:portco_a")
     with pytest.raises(Forbidden, match="separation of duties"):
-        service.submit_review(REVIEWER, run.run_id, decide_all(run.pending_items))
+        service.submit_review(
+            REVIEWER,
+            run.run_id,
+            decide_all(run.pending_items),
+            subject_hash=run.pending_items[0].subject_hash,
+            gate=ReviewGate(run.gate),
+        )
 
 
 async def test_out_of_scope_reviewer_is_forbidden(service: OnboardingService) -> None:
     run = await service.start_run(AGENT, "fixture:portco_a")
     other = Principal(principal_id="bob", role=Role.REVIEWER, company_ids=("portco_b",))
     with pytest.raises(Exception, match="not found"):
-        service.submit_review(other, run.run_id, decide_all(run.pending_items))
+        service.submit_review(
+            other,
+            run.run_id,
+            decide_all(run.pending_items),
+            subject_hash=run.pending_items[0].subject_hash,
+            gate=ReviewGate(run.gate),
+        )
 
 
 async def test_unknown_items_and_bad_overrides_are_rejected(service: OnboardingService) -> None:
     run = await service.start_run(AGENT, "fixture:portco_a")
     with pytest.raises(ValidationFailed, match="unknown review item"):
         service.submit_review(
-            REVIEWER, run.run_id, [ItemDecision(item_key="mapping:x.y.z", decision=ReviewDecision.APPROVE)]
+            REVIEWER,
+            run.run_id,
+            [ItemDecision(item_key="mapping:x.y.z", decision=ReviewDecision.APPROVE)],
+            subject_hash=run.pending_items[0].subject_hash,
+            gate=ReviewGate(run.gate),
         )
     with pytest.raises(ValidationFailed, match="not a field"):
         service.submit_review(
@@ -81,13 +103,21 @@ async def test_unknown_items_and_bad_overrides_are_rejected(service: OnboardingS
                     override={"canonical_field": "revenue_recognized"},
                 )
             ],
+            subject_hash=run.pending_items[0].subject_hash,
+            gate=ReviewGate(run.gate),
         )
 
 
 async def test_partial_review_keeps_remaining_items_pending(service: OnboardingService) -> None:
     run = await service.start_run(AGENT, "fixture:portco_a")
     first = run.pending_items[:3]
-    service.submit_review(REVIEWER, run.run_id, decide_all(first))
+    service.submit_review(
+        REVIEWER,
+        run.run_id,
+        decide_all(first),
+        subject_hash=run.pending_items[0].subject_hash,
+        gate=ReviewGate(run.gate),
+    )
     run = await service.resume(AGENT, run.run_id)
     assert run.status is RunStatus.NEEDS_REVIEW
     assert {i.item_key for i in run.pending_items}.isdisjoint({i.item_key for i in first})
@@ -95,7 +125,13 @@ async def test_partial_review_keeps_remaining_items_pending(service: OnboardingS
 
 async def test_resume_after_gate_a_continues_at_generation_without_rerunning_steps(service: OnboardingService) -> None:
     run = await service.start_run(AGENT, "fixture:portco_a")
-    service.submit_review(REVIEWER, run.run_id, decide_all(run.pending_items, STANDARD_OVERRIDES))
+    service.submit_review(
+        REVIEWER,
+        run.run_id,
+        decide_all(run.pending_items, STANDARD_OVERRIDES),
+        subject_hash=run.pending_items[0].subject_hash,
+        gate=ReviewGate(run.gate),
+    )
     run = await service.resume(AGENT, run.run_id, stop_after=StepName.ARTIFACT_GENERATION)
     assert run.status is RunStatus.PENDING and run.current_step == StepName.AUTOMATED_TESTS.value
     attempts = _attempts(service, run.run_id)
@@ -105,7 +141,13 @@ async def test_resume_after_gate_a_continues_at_generation_without_rerunning_ste
 
 async def test_idempotent_rerun_reuses_steps_and_produces_identical_hashes(service: OnboardingService) -> None:
     run = await service.start_run(AGENT, "fixture:portco_a")
-    service.submit_review(REVIEWER, run.run_id, decide_all(run.pending_items, STANDARD_OVERRIDES))
+    service.submit_review(
+        REVIEWER,
+        run.run_id,
+        decide_all(run.pending_items, STANDARD_OVERRIDES),
+        subject_hash=run.pending_items[0].subject_hash,
+        gate=ReviewGate(run.gate),
+    )
     run = await service.resume(AGENT, run.run_id, stop_after=StepName.ARTIFACT_GENERATION)
     before_bundle = service.artifact(AGENT, run.run_id, StepName.ARTIFACT_GENERATION)
     before_findings = sorted((f.code, f.statement) for f in service.findings(AGENT, run.run_id))
@@ -191,13 +233,25 @@ async def test_cancel_and_resume_of_cancelled_run(service: OnboardingService) ->
 async def test_review_on_run_not_waiting_is_conflict(service: OnboardingService) -> None:
     run = await service.start_run(AGENT, "fixture:portco_a", stop_after=StepName.SCHEMA_PROFILING)
     with pytest.raises(Conflict):
-        service.submit_review(REVIEWER, run.run_id, [ItemDecision(item_key="x", decision=ReviewDecision.APPROVE)])
+        service.submit_review(
+            REVIEWER,
+            run.run_id,
+            [ItemDecision(item_key="x", decision=ReviewDecision.APPROVE)],
+            subject_hash="not-waiting",
+            gate=ReviewGate.MAPPING_REVIEW,
+        )
 
 
 async def test_reject_mapping_item_removes_it(service: OnboardingService) -> None:
     run = await service.start_run(AGENT, "fixture:portco_a")
     key = "mapping:crm.opportunities.rev"
-    service.submit_review(REVIEWER, run.run_id, decide_all(run.pending_items, reject={key}))
+    service.submit_review(
+        REVIEWER,
+        run.run_id,
+        decide_all(run.pending_items, reject={key}),
+        subject_hash=run.pending_items[0].subject_hash,
+        gate=ReviewGate(run.gate),
+    )
     run = await service.resume(AGENT, run.run_id, stop_after=StepName.MAPPING_REVIEW)
     resolved = service.artifact(AGENT, run.run_id, StepName.MAPPING_REVIEW)
     assert key in resolved.rejected_keys

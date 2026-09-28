@@ -6,6 +6,8 @@ Approvals are never accepted as caller-supplied booleans: `generate_dbt_artifact
 (ADR-0004), and only reviewer principals can create approvals (ADR-0009).
 """
 
+from typing import Literal
+
 from mcp.server import MCPServer
 from mcp.types import ToolAnnotations
 
@@ -129,16 +131,28 @@ def register(mcp: MCPServer, state: ServerState) -> None:
     @mcp.tool(annotations=TOOL_ANNOTATIONS["submit_mapping_review"])
     @tool_errors
     async def submit_mapping_review(
-        run_id: str, decisions: list[DecisionIn], comment: str | None = None
+        run_id: str,
+        subject_hash: str,
+        gate: Literal["mapping_review", "test_failures"],
+        decisions: list[DecisionIn],
+        comment: str | None = None,
     ) -> ApprovalResult:
-        """Record a human reviewer's decisions for the run's current gate. Reviewer principals only.
+        """Record a reviewer's decisions for an observed mapping or test-failure packet.
 
         Decisions: approve | reject | approve_with_override (override keys: canonical_field, transform,
-        pii_handling). The approval is bound to the content hash of the items under review.
+        pii_handling). Supply the exact subject_hash and gate returned by list_pending_reviews.
+        Stale packets are rejected. Certification must use certify_run. Reviewer principals only.
         """
         svc, principal = state.svc(), state.principal()
         rid = parse_uuid(run_id, "run_id")
-        approval = svc.submit_review(principal, rid, [ItemDecision(**d.model_dump()) for d in decisions], comment)
+        approval = svc.submit_review(
+            principal,
+            rid,
+            [ItemDecision(**d.model_dump()) for d in decisions],
+            comment,
+            subject_hash=subject_hash,
+            gate=ReviewGate(gate),
+        )
         return ApprovalResult(
             approval_id=str(approval.approval_id),
             run_id=run_id,

@@ -12,11 +12,12 @@ and a [captioned synthetic-voice tour](https://github.com/ahines99/portco-data-o
 are available. Alex approved finalization; [final acceptance](docs/FINAL-ACCEPTANCE.md) records delegated
 workflow completion, accepted annotations and known scope limits. No required owner actions remain.
 
-Onboards an unfamiliar portfolio company's data into a canonical private-equity data model:
+Demonstrates governed onboarding of supported synthetic SaaS and SAP-style sources into a canonical
+private-equity data model:
 
 1. Profiles the source through aggregates and explicitly approved category domains.
 2. Infers entities, keys and joins, and maps columns to the ontology.
-3. Routes anything uncertain to a human.
+3. Routes uncertain mapping proposals to a reviewer.
 4. Generates a tested dbt project and semantic layer.
 5. Executes every generated metric in a disposable sandbox and reconciles monetary amounts to the cent.
 6. Publishes only what a human reviewer certified.
@@ -24,6 +25,10 @@ Onboards an unfamiliar portfolio company's data into a canonical private-equity 
 It is exposed to agents (for example Claude Code) through a typed MCP server and a set of Agent
 Skills. The agent does the discovery; deterministic code does every calculation; humans hold every
 approval.
+
+The mapper depends on recognized schema vocabulary. An additional unfamiliar-schema probe produced
+**zero proposals and 0/10 target matches**; it was never approved or published. This is a tested
+workflow prototype, with [generalization limits reported alongside fixture results](docs/evidence/heldout-probe.json).
 
 ```text
 uv sync --all-extras && uv run poe demo
@@ -159,14 +164,16 @@ Setup, tokens, upgrades and recovery: [operations](docs/operations.md).
 - Hosted CI passed minimal wheel/sdist checks on Linux and Windows, and actual Docker tests for
   migrations, auth, certified publication, file hashes, audit integrity, MCP restart and full stack
   recreation with both named volumes preserved. Local Docker is unavailable; the CI run is the proof.
-- An additional unfamiliar-schema probe is reported in full, including missed predictions, in
-  [heldout-probe.json](docs/evidence/heldout-probe.json). Fixture accuracy is not real-world accuracy.
+- The unfamiliar-schema probe produced zero proposals and matched 0/10 labeled targets; its
+  [full report](docs/evidence/heldout-probe.json) preserves every missed prediction. Fixture accuracy
+  is not real-world accuracy.
 - MetricFlow 0.15.0 configuration validation failed in the isolated compatibility experiment;
   the supported local semantic executor is not a claim of full MetricFlow runtime compatibility.
-- A recorded Claude Code session and the live with-vs-without-Skill comparison are still to do
-  (they need a model session); the static Skill checks run in the test suite. The
-  [three-prompt comparison harness](docs/skill_comparison.md) records and scores real transcripts
-  once collected; it does not substitute synthetic results for live evidence.
+- [Six real Claude Code sessions](docs/evidence/live-study/README.md) completed the three-prompt
+  comparison. Owner-approved assistant annotations count three findings in each condition; only
+  one session invoked a Skill body. The review is non-exhaustive and not independent blinded coding,
+  and no general Skill improvement is established. The [scorer](docs/skill_comparison.md) preserves
+  those provenance qualifications when regenerating the report.
 
 ## Project layout
 

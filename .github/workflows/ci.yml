@@ -135,7 +135,13 @@ jobs:
       - name: Scan actual application image
         run: |
           image=$(docker compose --profile full images -q mcp)
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/scan" aquasec/trivy:0.74.0 image --scanners vuln --format json --output /scan/container-audit.json "$image"
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/scan" aquasec/trivy:0.74.0 --cache-dir /scan/var/trivy-cache image --scanners vuln --format json --output /scan/container-audit.json "$image"
+      - name: Reject fixable HIGH and CRITICAL image vulnerabilities
+        run: |
+          image=$(docker compose --profile full images -q mcp)
+          # Keep the complete report above, including accepted unfixed OS findings.
+          # Reuse the same vulnerability database for the narrower failing gate.
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/scan" aquasec/trivy:0.74.0 --cache-dir /scan/var/trivy-cache image --scanners vuln --skip-db-update --ignore-unfixed --severity HIGH,CRITICAL --exit-code 1 "$image"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

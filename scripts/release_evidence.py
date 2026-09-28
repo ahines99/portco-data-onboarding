@@ -23,7 +23,7 @@ import anyio
 from alembic import command
 from alembic.config import Config
 
-from src.domain.models import Principal, ReviewDecision, Role, RunStatus, StepName
+from src.domain.models import Principal, ReviewDecision, ReviewGate, Role, RunStatus, StepName
 from src.domain.project_models import ItemDecision
 from src.fixtures.generate import ensure_fixture
 from src.reporting import render_run_report
@@ -44,7 +44,13 @@ async def drive(svc: OnboardingService, fixture: str):
         if run.gate == "certification":
             svc.certify(REVIEWER, run.run_id, run.pending_items[0].subject_hash, decisions)
         else:
-            svc.submit_review(REVIEWER, run.run_id, decisions)
+            svc.submit_review(
+                REVIEWER,
+                run.run_id,
+                decisions,
+                subject_hash=run.pending_items[0].subject_hash,
+                gate=ReviewGate(run.gate),
+            )
         run = await svc.resume(AGENT, run.run_id)
     return run
 

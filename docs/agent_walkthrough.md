@@ -53,13 +53,18 @@ publish_run               agent     ok
 
 ## 4. With-Skill vs without-Skill comparison
 
-The roadmap asks for a small live comparison (three prompts, counting protocol violations such as
-requesting raw values, skipping review items or making claims without evidence ids). That comparison
-needs a live model session and **has not been run** in this build environment. The Skills are instead
-verified statically: `tests/test_skills.py` checks that every tool, resource and prompt they reference
-exists on the live server. To run the comparison, repeat step 1 in two Claude Code sessions, one with
-`.claude/skills` present and one without, and score the transcripts against
-`skills/schema-profiling/SKILL.md` § Never. The repeatable three-prompt protocol, transcript
-manifest and human-annotation scorer are documented in [skill_comparison.md](skill_comparison.md).
-`scripts/compare_skills.py prepare` creates the six-session manifest; `score` refuses incomplete
-or mismatched pairs. No live result is claimed until actual transcripts are collected and reviewed.
+[Six real Claude Code sessions](evidence/live-study/README.md) completed the three-prompt comparison
+on 2026-09-27. All six stopped for mapping review during collection. One run was subsequently
+certified and published under [explicit owner delegation](FINAL-ACCEPTANCE.md); that continuation is
+separate from the experiment and does not rewrite its transcripts.
+
+The owner-approved assistant annotations count three findings without Skills and three with Skills.
+Only one session invoked a Skill body. This is a non-exhaustive review, not independent blinded
+annotation or evidence of general improvement. The malformed-fixture sessions stopped before sandbox
+execution and therefore do not demonstrate model discovery of the injected test failures.
+
+To repeat the study, follow [the six-session protocol](skill_comparison.md). Each pair uses fresh
+state and identical prompts, model settings and MCP permissions, with project Skills available only
+in the `with` condition. `scripts/compare_skills.py prepare` creates the manifest; `score` validates
+paired settings, line-anchored findings and declared annotation provenance. Static checks in
+`tests/test_skills.py` separately verify tool, resource and prompt references against the live server.

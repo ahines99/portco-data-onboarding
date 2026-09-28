@@ -148,7 +148,7 @@ RUN_TOOLS: list[tuple[str, dict[str, Any], Any]] = [
     ("run_sandbox_tests", {}, AGENT),
     ("generate_dbt_artifacts", {"approval_id": ZERO}, AGENT),
     ("publish_run", {"certification_id": ZERO}, AGENT),
-    ("submit_mapping_review", {"decisions": []}, REVIEWER),
+    ("submit_mapping_review", {"decisions": [], "subject_hash": "x", "gate": "mapping_review"}, REVIEWER),
     ("certify_run", {"subject_hash": "x"}, REVIEWER),
 ]
 

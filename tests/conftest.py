@@ -16,7 +16,7 @@ os.environ.setdefault("PORTCO_ENV", "test")
 
 from src.adapters.faults import FaultInjector
 from src.adapters.repositories import RunRecord
-from src.domain.models import Principal, ReviewDecision, Role, RunStatus
+from src.domain.models import Principal, ReviewDecision, ReviewGate, Role, RunStatus
 from src.domain.project_models import ItemDecision, ReviewItem
 from src.fixtures.generate import ensure_fixture, load_ground_truth
 from src.settings import PROJECT_ROOT, Settings
@@ -114,6 +114,8 @@ async def drive(
                 REVIEWER,
                 run.run_id,
                 decide_all(run.pending_items, overrides if overrides is not None else STANDARD_OVERRIDES),
+                subject_hash=run.pending_items[0].subject_hash,
+                gate=ReviewGate(run.gate),
             )
         run = await svc.resume(AGENT, run.run_id)
     return run

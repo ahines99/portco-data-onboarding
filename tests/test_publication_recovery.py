@@ -2,7 +2,7 @@
 
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from threading import Barrier
 from time import monotonic
 from uuid import uuid4
@@ -21,7 +21,7 @@ from src.domain.project_models import (
     ItemDecision,
     MetricCertification,
 )
-from src.services.publish import publish_bundle
+from src.services.publish import _contained, publish_bundle
 from src.workflows.contracts import StepContext
 from tests.conftest import REVIEWER
 
@@ -284,6 +284,47 @@ def test_publication_contains_bundle_paths(service, path):
     with pytest.raises(PolicyViolation):
         publish_bundle(ctx)
     assert not list(ctx.settings.published_root.rglob("*.sql"))
+
+
+@pytest.mark.parametrize(
+    ("resolved_root", "resolved_target"),
+    [
+        (r"C:\published\company", r"\\?\C:\published\company\v0001"),
+        (r"\\?\C:\published\company", r"C:\published\company\v0001"),
+        (r"\\server\share\company", r"\\?\UNC\server\share\company\v0001"),
+        (r"\\?\UNC\server\share\company", r"\\server\share\company\v0001"),
+    ],
+)
+def test_windows_extended_resolution_spelling_preserves_containment(
+    tmp_path, monkeypatch, resolved_root, resolved_target
+):
+    # Simulate realpath's two spellings without depending on a rare directory-creation race.
+    root = tmp_path / "company"
+    target = root / "v0001"
+    monkeypatch.setattr(
+        Path,
+        "resolve",
+        lambda path: PureWindowsPath(resolved_root if path == root else resolved_target),
+    )
+    assert _contained(root, "v0001") == target
+
+
+@pytest.mark.parametrize("symlink", [False, True])
+def test_windows_extended_resolution_does_not_allow_escape_or_symlink(tmp_path, monkeypatch, symlink):
+    root = tmp_path / "company"
+    target = root / "v0001"
+    monkeypatch.setattr(
+        Path,
+        "resolve",
+        lambda path: PureWindowsPath(
+            r"C:\published\company"
+            if path == root
+            else (r"\\?\C:\published\company\v0001" if symlink else r"\\?\C:\outside\v0001")
+        ),
+    )
+    monkeypatch.setattr(Path, "is_symlink", lambda path: path == target and symlink)
+    with pytest.raises(PolicyViolation, match="escapes"):
+        _contained(root, "v0001")
 
 
 def test_concurrent_publication_finalizers_share_one_verified_receipt(service):

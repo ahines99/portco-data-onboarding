@@ -197,6 +197,8 @@ async def test_service_rejects_ordinary_approval_override(tmp_path: Path, fixtur
             REVIEWER,
             run.run_id,
             [ItemDecision(item_key=item.item_key, decision=ReviewDecision.APPROVE, override={"pii_handling": "hash"})],
+            subject_hash=run.pending_items[0].subject_hash,
+            gate=ReviewGate(run.gate),
         )
 
 

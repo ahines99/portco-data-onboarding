@@ -5,13 +5,22 @@ Updated 2026-09-27. The owner approved the hiring-focused, MIT-licensed public r
 The [public project page](https://ahines99.github.io/portco-data-onboarding/) is a static presentation
 and actual scripted-output replay; it has no live backend or model API calls. Supplemental evidence
 now includes [six actual model sessions](evidence/live-study/README.md), a synthetic-voice video and
-an [owner-approved acceptance packet](ASSISTED-ACCEPTANCE.md). These do not alter the v0.1.0 source tag.
+an [owner-approved acceptance packet](ASSISTED-ACCEPTANCE.md). The v0.1.0 source tag remains immutable; v0.1.1 addresses the subsequent final-audit findings.
 
 Engineering delivery is a **finalized portfolio release**, explicitly approved by Alex.
 The delegated workflow and approved annotation report are complete. See [final acceptance](FINAL-ACCEPTANCE.md).
 Independent usability and general Skill efficacy remain unclaimed optional validation, not release blockers.
 The tagged GitHub release links its source commit, final CI run and distribution checksums; use that
 record for the exact shipped code, rather than treating an earlier test count as a permanent guarantee.
+
+## Final audit patch
+
+The final three-agent review identified and reproduced review-packet binding, invoice consistency,
+and annotation-provenance defects plus contradictory scope wording. Version 0.1.1 fixes these
+with regression tests and adds an enforced fixable HIGH/CRITICAL image vulnerability gate.
+See [audit closeout](FINAL-AUDIT-CLOSEOUT.md) and the exact tagged CI run linked from the
+[release](https://github.com/ahines99/portco-data-onboarding/releases/tag/v0.1.1).
+The verification below is historical v0.1.0 evidence; it is not a fresh v0.1.1 measurement.
 
 ## Completed verification
 

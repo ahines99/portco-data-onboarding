@@ -88,7 +88,12 @@ async def call(base: str, token: str, name: str, arguments: dict[str, Any], *, d
 async def complete(base: str, token: str, reviewer: str, before: dict[str, Any]) -> dict[str, Any]:
     rid = before["run_id"]
     decisions = [{"item_key": i["item_key"], "decision": "approve"} for i in before["pending_items"]]
-    args = {"run_id": rid, "decisions": decisions}
+    args = {
+        "run_id": rid,
+        "decisions": decisions,
+        "subject_hash": before["pending_items"][0]["subject_hash"],
+        "gate": before["gate"],
+    }
     await call(base, token, "submit_mapping_review", args, denied=True)
     approval = await call(base, reviewer, "submit_mapping_review", args)
     await call(base, token, "generate_dbt_artifacts", {"run_id": rid, "approval_id": approval["approval_id"]})

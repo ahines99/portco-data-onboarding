@@ -210,5 +210,10 @@
     }
   ],
   "approval_basis": "Looks good to me. FINALIZE THIS. I APPROVE ALL",
-  "scoring_scope": "Counts of owner-approved assistant annotation candidates; non-exhaustive. An empty list means no approved candidate, not proof of no errors."
+  "scoring_scope": "Counts of owner-approved assistant annotation candidates; non-exhaustive. An empty list means no approved candidate, not proof of no errors.",
+  "annotation_provenance": {
+    "method": "owner_approved_assistant",
+    "exhaustive": false,
+    "blinded_independent": false
+  }
 }

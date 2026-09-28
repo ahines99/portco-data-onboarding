@@ -22,7 +22,7 @@ import anyio
 import yaml
 
 from src.adapters.faults import FaultInjector
-from src.domain.models import Principal, ReviewDecision, Role, RunStatus, StepName
+from src.domain.models import Principal, ReviewDecision, ReviewGate, Role, RunStatus, StepName
 from src.domain.project_models import ItemDecision, PublishReceipt, TestReport
 from src.fixtures.generate import ensure_fixture
 from src.fsutil import remove_tree
@@ -73,10 +73,22 @@ async def _success(root: Path, script: dict[str, Any]) -> tuple[bool, str]:
     for t in traps:
         _say(f"   trap caught -> {t.summary} [{', '.join(t.reason_codes)}]")
     try:
-        svc.submit_review(AGENT, run.run_id, _reviewer_decisions(run.pending_items, script))
+        svc.submit_review(
+            AGENT,
+            run.run_id,
+            _reviewer_decisions(run.pending_items, script),
+            subject_hash=run.pending_items[0].subject_hash,
+            gate=ReviewGate.MAPPING_REVIEW,
+        )
     except Exception as exc:  # the point: the agent cannot approve its own proposals
         _say(f"   agent tried to approve its own proposals -> {type(exc).__name__}")
-    approval = svc.submit_review(reviewer, run.run_id, _reviewer_decisions(run.pending_items, script))
+    approval = svc.submit_review(
+        reviewer,
+        run.run_id,
+        _reviewer_decisions(run.pending_items, script),
+        subject_hash=run.pending_items[0].subject_hash,
+        gate=ReviewGate.MAPPING_REVIEW,
+    )
     _say(
         f"   reviewer '{reviewer.principal_id}' recorded approval {str(approval.approval_id)[:8]} "
         f"({len(approval.decisions)} decisions)"
@@ -131,7 +143,13 @@ async def _failure(root: Path, script: dict[str, Any]) -> tuple[bool, str]:
     )
     mixed = [f for f in svc.findings(AGENT, run.run_id) if f.code == "MIXED_TYPES"]
     _say(f"   profiling flagged {len(mixed)} mixed-type column(s)")
-    svc.submit_review(reviewer, run.run_id, _reviewer_decisions(run.pending_items, script))
+    svc.submit_review(
+        reviewer,
+        run.run_id,
+        _reviewer_decisions(run.pending_items, script),
+        subject_hash=run.pending_items[0].subject_hash,
+        gate=ReviewGate.MAPPING_REVIEW,
+    )
     run = await svc.resume(AGENT, run.run_id)
     report = svc.artifact(AGENT, run.run_id, StepName.AUTOMATED_TESTS)
     assert isinstance(report, TestReport)

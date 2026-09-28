@@ -16,8 +16,8 @@ import anyio
 import typer
 import yaml
 
-from src.domain.errors import DomainError
-from src.domain.models import Principal, ReviewDecision, Role, StepName
+from src.domain.errors import Conflict, DomainError, ValidationFailed
+from src.domain.models import Principal, ReviewDecision, ReviewGate, Role, StepName
 from src.domain.project_models import ItemDecision
 from src.settings import get_settings
 
@@ -144,6 +144,20 @@ def review(
             typer.echo("use --export or --import")
             raise typer.Exit(1)
         doc = yaml.safe_load(import_.read_text(encoding="utf-8"))
+        if not isinstance(doc, dict) or not isinstance(doc.get("items"), list):
+            raise ValidationFailed("review file must contain packet metadata and an items list")
+        try:
+            packet_run = UUID(str(doc["run_id"]))
+            packet_gate = ReviewGate(doc["gate"])
+            subject_hash = doc["subject_hash"]
+        except (KeyError, ValueError, TypeError) as exc:
+            raise ValidationFailed(
+                "review file requires a valid run_id, gate and subject_hash; export it again"
+            ) from exc
+        if not isinstance(subject_hash, str) or not subject_hash:
+            raise ValidationFailed("review file requires a nonempty subject_hash")
+        if packet_run != run_id or packet_gate.value != r.gate:
+            raise Conflict("review file is for a different run or gate; export the current packet")
         decisions = []
         for item in doc.get("items", []):
             decision = item.get("decision") or default
@@ -158,7 +172,12 @@ def review(
                 )
             )
         principal = _principal(reviewer, Role.REVIEWER)
-        approval = svc.submit_review(principal, run_id, decisions, comment)
+        if packet_gate is ReviewGate.CERTIFICATION:
+            approval = svc.certify(principal, run_id, subject_hash, decisions, comment)
+        else:
+            approval = svc.submit_review(
+                principal, run_id, decisions, comment, subject_hash=subject_hash, gate=packet_gate
+            )
         typer.secho(
             f"recorded approval {approval.approval_id} ({len(decisions)} decisions) for gate {approval.gate.value}",
             fg=typer.colors.GREEN,

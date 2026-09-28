@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from hashlib import sha256
-from pathlib import Path, PurePosixPath, PureWindowsPath
+from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from uuid import uuid4
 
 from sqlalchemy.exc import IntegrityError
@@ -136,13 +136,27 @@ def _certifications(
     return certs, certification, excluded, published
 
 
+def _resolved_identity(path: Path) -> PurePath:
+    resolved = path.resolve()
+    # Windows realpath can retain its extended prefix if a parent is created between
+    # its filesystem probes. Normalize that spelling only after resolving links;
+    # otherwise concurrent publishers can compare \\?\C:\... against C:\....
+    if isinstance(resolved, PureWindowsPath):
+        text = str(resolved)
+        if resolved.drive.startswith("\\\\?\\UNC\\"):
+            return PureWindowsPath("\\\\" + text[8:])
+        if len(resolved.drive) == 6 and resolved.drive.startswith("\\\\?\\") and resolved.drive[-1] == ":":
+            return PureWindowsPath(text[4:])
+    return resolved
+
+
 def _contained(root: Path, relative: str) -> Path:
     # Reject both POSIX and Windows path escapes regardless of the host platform.
     p, w = PurePosixPath(relative), PureWindowsPath(relative)
     if not relative or p.is_absolute() or w.drive or w.root or ".." in p.parts or ".." in w.parts:
         raise PolicyViolation("publication path escapes its root")
     target = root / relative
-    if not target.resolve().is_relative_to(root.resolve()) or target.is_symlink():
+    if not _resolved_identity(target).is_relative_to(_resolved_identity(root)) or target.is_symlink():
         raise PolicyViolation("publication path escapes its root")
     return target
 

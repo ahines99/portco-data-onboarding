@@ -57,7 +57,7 @@ sequenceDiagram
   Engine-->>MCP: NEEDS_REVIEW at mapping_review (22 items)
   Agent->>MCP: submit_mapping_review (agent)
   MCP-->>Agent: FORBIDDEN (separation of duties)
-  Reviewer->>MCP: submit_mapping_review (explicit item decisions)
+  Reviewer->>MCP: submit_mapping_review (gate, subject_hash, item decisions)
   MCP-->>Reviewer: approval_id (bound to mapping hash)
   Agent->>MCP: generate_dbt_artifacts(approval_id)
   MCP->>Engine: verify approval and input hashes, then resume or rewind stale steps
@@ -106,3 +106,11 @@ describes publication recovery and the point after which cancellation is too lat
 Local reviewer identities rely on a trusted OS operator. Anyone who controls the local process,
 configuration or state database is outside the agent-role boundary. The scripted demo uses synthetic
 reviewer decisions; only a separately recorded human session establishes independent human review.
+
+## Review packet binding
+
+Review clients retain `run_id`, `gate` and `subject_hash` from the packet they actually reviewed.
+`submit_mapping_review` accepts only `mapping_review` or `test_failures`; certification uses
+`certify_run` with the reviewed manifest hash. The facade loads and locks current run state in
+the approval write transaction before comparing the packet and recording decisions. CLI imports
+also validate the exported run and gate. Stale packets must be re-exported and reviewed again.

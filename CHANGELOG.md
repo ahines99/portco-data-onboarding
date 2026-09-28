@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.1 ? final audit hardening
+
+- Bind CLI and MCP review decisions to the caller-reviewed run, gate and content hash; validate against locked current state. Certification requires its dedicated route.
+- Block invoice reconciliation on any header/line discrepancy, including a single cent in large invoice populations.
+- Handle equivalent Windows extended-path spellings during concurrent publication without relaxing containment checks.
+- Preserve owner-approved assistant annotation provenance when reproducing live-study scores.
+- Align public scope and acceptance claims with the supported synthetic fixtures and recorded evidence.
+- Fail CI on fixable high/critical image vulnerabilities while retaining the complete scan report.
+
+Review clients must now supply `subject_hash` and `gate` to `submit_mapping_review`; stale review files must be re-exported.
+
 ## 0.1.0 — final portfolio release
 
 - Persistent nine-step onboarding with three human review boundaries and typed MCP/CLI interfaces.

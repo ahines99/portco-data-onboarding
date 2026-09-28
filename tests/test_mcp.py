@@ -51,6 +51,9 @@ async def test_tools_have_schemas_and_consistent_annotations(h: Harness) -> None
     async with Client(h.server) as c:
         tools = {t.name: t for t in (await c.list_tools()).tools}
     assert set(tools) == set(TOOL_ANNOTATIONS)
+    review_schema = tools["submit_mapping_review"].input_schema
+    assert {"subject_hash", "gate"} <= set(review_schema["required"])
+    assert set(review_schema["properties"]["gate"]["enum"]) == {"mapping_review", "test_failures"}
     for name, tool in tools.items():
         assert tool.input_schema and tool.output_schema, name
         ann = tool.annotations
@@ -101,10 +104,37 @@ async def test_review_flow_guards(h: Harness) -> None:
         assert not err and run["status"] == "needs_review" and run["gate"] == "mapping_review"
         rid = run["run_id"]
         decisions = [{"item_key": i["item_key"], "decision": "approve"} for i in run["pending_items"]]
-        err, body = await call(c, "submit_mapping_review", run_id=rid, decisions=decisions)
+        err, body = await call(
+            c,
+            "submit_mapping_review",
+            run_id=rid,
+            decisions=decisions,
+            subject_hash=run["pending_items"][0]["subject_hash"],
+            gate=run["gate"],
+        )
         assert err and body["code"] == "FORBIDDEN"  # G23: the agent cannot approve its own proposals
         h.as_(REVIEWER)
-        err, body = await call(c, "submit_mapping_review", run_id=rid, decisions=decisions)
+        for subject, gate in (
+            ("stale-packet", run["gate"]),
+            (run["pending_items"][0]["subject_hash"], "test_failures"),
+        ):
+            err, body = await call(
+                c,
+                "submit_mapping_review",
+                run_id=rid,
+                decisions=decisions,
+                subject_hash=subject,
+                gate=gate,
+            )
+            assert err and body["code"] == "CONFLICT"
+        err, body = await call(
+            c,
+            "submit_mapping_review",
+            run_id=rid,
+            decisions=decisions,
+            subject_hash=run["pending_items"][0]["subject_hash"],
+            gate=run["gate"],
+        )
         assert not err
         approval = body["approval_id"]
         h.as_(AGENT)
@@ -201,7 +231,14 @@ async def test_full_flow_to_publish_through_mcp(h: Harness) -> None:
             for d in decisions
         ]
         h.as_(REVIEWER)
-        _, appr = await call(c, "submit_mapping_review", run_id=rid, decisions=decisions)
+        _, appr = await call(
+            c,
+            "submit_mapping_review",
+            run_id=rid,
+            decisions=decisions,
+            subject_hash=run["pending_items"][0]["subject_hash"],
+            gate=run["gate"],
+        )
         h.as_(AGENT)
         err, _ = await call(c, "generate_dbt_artifacts", run_id=rid, approval_id=appr["approval_id"])
         assert not err

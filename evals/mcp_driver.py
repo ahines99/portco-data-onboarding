@@ -42,12 +42,22 @@ async def drive_mcp(svc: OnboardingService, fixture: str) -> CaseRun:
             AGENT,
             run_id=rid,
             decisions=[{"item_key": i["item_key"], "decision": "approve"} for i in run["pending_items"]],
+            subject_hash=run["pending_items"][0]["subject_hash"],
+            gate=run["gate"],
         )
         decisions = [{"item_key": i["item_key"], "decision": "approve"} for i in run["pending_items"]]
         for d in decisions:
             if d["item_key"] == "mapping:crm.opportunities.rev":
                 d.update({"decision": "approve_with_override", "override": {"canonical_field": "amount"}})
-        approval = await call(c, "submit_mapping_review", REVIEWER, run_id=rid, decisions=decisions)
+        approval = await call(
+            c,
+            "submit_mapping_review",
+            REVIEWER,
+            run_id=rid,
+            decisions=decisions,
+            subject_hash=run["pending_items"][0]["subject_hash"],
+            gate=run["gate"],
+        )
         await call(c, "generate_dbt_artifacts", AGENT, run_id=rid, approval_id=approval["approval_id"])
         await call(c, "run_sandbox_tests", AGENT, run_id=rid)
         status = await call(c, "get_run_status", AGENT, run_id=rid)

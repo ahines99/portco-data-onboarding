@@ -10,7 +10,7 @@ import pytest
 from pydantic import ValidationError
 
 from src.domain.errors import Conflict
-from src.domain.models import Confidence, EvidenceRef, Finding, RunStatus, StepName, utcnow
+from src.domain.models import Confidence, EvidenceRef, Finding, ReviewGate, RunStatus, StepName, utcnow
 from src.domain.run_states import CLAIMABLE, TRANSITIONS, can_transition
 from src.workflows.base import StepSpec, WorkflowEngine
 from src.workflows.contracts import StepContext, StepResult
@@ -200,7 +200,13 @@ async def test_resume_keeps_completed_upstream_when_inputs_are_unchanged(service
 async def test_resume_rewind_invalidates_downstream_review_decisions(service: OnboardingService) -> None:
     run = await service.start_run(AGENT, "fixture:portco_a")
     assert run.gate == "mapping_review"
-    approval = service.submit_review(REVIEWER, run.run_id, decide_all(run.pending_items))
+    approval = service.submit_review(
+        REVIEWER,
+        run.run_id,
+        decide_all(run.pending_items),
+        subject_hash=run.pending_items[0].subject_hash,
+        gate=ReviewGate(run.gate),
+    )
     service.settings.fiscal_year_start_month = 3
     resumed = await service.resume(AGENT, run.run_id, stop_after=StepName.SCHEMA_PROFILING)
     assert resumed.status is S.PENDING and resumed.pending_items == [] and resumed.gate is None

@@ -5,7 +5,7 @@ verification and remaining human handoffs. The observations below describe the p
 Owner names: **Codex** means implementation, investigation, testing and preparation I can perform;
 **Alex** means your decisions, account access, independent human reviews and publication choices.
 
-This is the current remaining-work plan. [ROADMAP.md](ROADMAP.md) remains the historical build plan;
+This is the historical planning baseline; current completion and accepted scope are recorded in release status. [ROADMAP.md](ROADMAP.md) remains the historical build plan;
 its unchecked acceptance bullets are not a reliable list of missing implementation.
 
 ## 1. Target and finish line

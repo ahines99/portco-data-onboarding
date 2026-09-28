@@ -23,8 +23,10 @@ reported issue is unreachable. The image is a local synthetic demo artifact and 
 for production or untrusted public traffic. A static GitHub Pages site serves only public evidence.
 
 The full machine-readable scan is retained in the CI `container-audit` artifact. The release status
-links the verified run and records final counts after rebuilding. The scan job deliberately retains
-unfixed OS findings for review; application dependency scanning is a failing gate on vulnerabilities.
+links the verified run and records final counts after rebuilding. The scan job retains a complete,
+unfiltered report, including unfixed OS findings. A separate gate reuses the same vulnerability
+database and fails on fixable HIGH or CRITICAL image vulnerabilities; the full report is uploaded
+even if that gate fails. Application dependency scanning also remains a failing gate on vulnerabilities.
 
 Before production use: replace development tokens with verified identity, review actual data/egress
 boundaries, update/rebuild the base image, remediate or independently assess remaining OS findings,

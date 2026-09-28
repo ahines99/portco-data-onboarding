@@ -329,7 +329,13 @@ async def agent_cannot_approve(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, st
         return body.get("code") == "FORBIDDEN", f"MCP self-approval -> {body.get('code')}"
     run = cr.refresh()
     try:
-        cr.service.submit_review(AGENT, run.run_id, decisions(run.pending_items, {}, set()))
+        cr.service.submit_review(
+            AGENT,
+            run.run_id,
+            decisions(run.pending_items, {}, set()),
+            subject_hash=run.pending_items[0].subject_hash,
+            gate=ReviewGate(run.gate),
+        )
     except Forbidden:
         return True, "FORBIDDEN"
     return False, "agent approval was accepted"
@@ -526,6 +532,8 @@ async def approval_invalidated(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, st
             },
             set(),
         ),
+        subject_hash=run.pending_items[0].subject_hash,
+        gate=ReviewGate(run.gate),
     )
     run = await svc.resume(AGENT, run.run_id)
     err, body = await _mcp(cr, AGENT, "publish_run", run_id=str(run.run_id), certification_id=str(old.approval_id))

@@ -12,7 +12,7 @@ from uuid import UUID
 from src.adapters.faults import FaultInjector
 from src.adapters.repositories import RunRecord
 from src.domain.hashing import content_hash
-from src.domain.models import Principal, ReviewDecision, Role, RunStatus
+from src.domain.models import Principal, ReviewDecision, ReviewGate, Role, RunStatus
 from src.domain.project_models import ItemDecision, ReviewItem
 from src.settings import Settings, get_settings
 from src.workflows.facade import OnboardingService
@@ -94,9 +94,21 @@ async def drive(
         elif run.gate == "test_failures":
             if not waive:
                 return run
-            svc.submit_review(REVIEWER, run.run_id, decisions(run.pending_items, {}, set()))
+            svc.submit_review(
+                REVIEWER,
+                run.run_id,
+                decisions(run.pending_items, {}, set()),
+                subject_hash=run.pending_items[0].subject_hash,
+                gate=ReviewGate(run.gate),
+            )
         else:
-            svc.submit_review(REVIEWER, run.run_id, decisions(run.pending_items, overrides, reject))
+            svc.submit_review(
+                REVIEWER,
+                run.run_id,
+                decisions(run.pending_items, overrides, reject),
+                subject_hash=run.pending_items[0].subject_hash,
+                gate=ReviewGate(run.gate),
+            )
         run = await svc.resume(AGENT, run.run_id)
     return run
 

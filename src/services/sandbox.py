@@ -405,19 +405,31 @@ def reconcile(
         cols = {c[0] for c in wh.execute("DESCRIBE fct_invoice_line").fetchall()}
         icols = {c[0] for c in wh.execute("DESCRIBE fct_invoice").fetchall()}
         if {"amount", "invoice_id"} <= cols and {"total_amount", "invoice_id"} <= icols:
-            total, ok = wh.execute(
-                "SELECT count(*), count(*) FILTER (WHERE abs(coalesce(l.s, 0) - i.total_amount) < 0.005) "
+            total, ok, max_difference, unknown = wh.execute(
+                "SELECT count(*), count(*) FILTER (WHERE difference = 0), "
+                "coalesce(max(abs(difference)), 0), count(*) FILTER (WHERE difference IS NULL) "
+                "FROM (SELECT coalesce(l.s, 0) - i.total_amount AS difference "
                 "FROM fct_invoice i LEFT JOIN (SELECT invoice_id, sum(amount) AS s FROM fct_invoice_line "
-                "GROUP BY 1) l USING (invoice_id)"
+                "GROUP BY 1) l USING (invoice_id))"
             ).fetchone()  # type: ignore[misc]
-            ratio = ok / total if total else 1.0
+            mismatches = total - ok
             checks.append(
                 ReconciliationCheck(
                     name="consistency:invoice_lines_sum_to_header",
-                    passed=ratio >= 0.999,
-                    detail=f"{ok} of {total} invoices have line amounts summing to the header total ({ratio:.1%})",
-                    expected={"match_ratio": ">= 0.999"},
-                    actual={"match_ratio": round(ratio, 4)},
+                    passed=mismatches == 0,
+                    detail=(
+                        f"{ok} of {total} invoices have line amounts summing exactly to the header total; "
+                        f"{mismatches} mismatches, maximum absolute difference {max_difference} "
+                        f"in invoice currency units, {unknown} unknown differences"
+                    ),
+                    expected={"mismatched_invoices": 0},
+                    actual={
+                        "invoices": total,
+                        "matched_invoices": ok,
+                        "mismatched_invoices": mismatches,
+                        "maximum_absolute_difference": str(max_difference),
+                        "unknown_differences": unknown,
+                    },
                 )
             )
 

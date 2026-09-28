@@ -231,6 +231,12 @@
     }
   ],
   "limitation": "Three paired prompts are descriptive evidence, not a statistical efficacy claim.",
-  "review_method": "Counts of owner-approved assistant annotation candidates; non-exhaustive. An empty list means no approved candidate, not proof of no errors. Not a blinded independent study.",
+  "annotation_provenance": {
+    "method": "owner_approved_assistant",
+    "exhaustive": false,
+    "blinded_independent": false
+  },
+  "scoring_scope": "Counts of owner-approved assistant annotation candidates; non-exhaustive. An empty list means no approved candidate, not proof of no errors.",
+  "review_method": "Owner-approved assistant annotations. Non-exhaustive; zero annotated findings do not establish zero actual errors. Not a blinded independent study.",
   "approval_basis": "Looks good to me. FINALIZE THIS. I APPROVE ALL"
 }

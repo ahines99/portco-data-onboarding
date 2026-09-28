@@ -1,4 +1,4 @@
-# From unfamiliar source schemas to certified metrics
+# From synthetic source schemas to certified metrics
 
 **Portfolio Company Data Onboarding Agent** · Alex Hines · Python / dbt / DuckDB / PostgreSQL / MCP
 
@@ -52,7 +52,7 @@ and changed files. This is a useful interview example of correctness across two 
 - [Upgrade/restore rehearsal](evidence/recovery.json): populated local state survives migration and restoration.
 - [Timing sample](evidence/benchmark.json): three cold/reused fixture runs, excluding human waiting.
 - [Scripted demo transcript](evidence/demo-transcript.txt) and [read-only replay](index.html).
-- [Release evidence and remaining handoffs](RELEASE-STATUS.md).
+- [Release evidence and accepted scope](RELEASE-STATUS.md).
 
 The earlier audit baseline passed 451 non-Postgres tests and four PostgreSQL tests. The release
 adds packaging and test-isolation coverage; the release status and linked CI run contain the final
@@ -77,8 +77,8 @@ Six real model sessions and a captioned synthetic-voice tour have now been colle
 [owner-approved acceptance packet](ASSISTED-ACCEPTANCE.md) and [final acceptance](FINAL-ACCEPTANCE.md)
 record completed delegated mapping/certification and accepted annotation/personal wording. Independent
 first-use feedback is optional future validation.
-Adding another integration before that evidence would broaden the product without closing these
-acceptance gaps.
+Broader schema coverage, independent usability feedback and stronger controlled model studies are
+possible next steps. They would extend the evidence beyond the accepted synthetic portfolio scope.
 
 ## Interview prompts
 
@@ -88,5 +88,6 @@ recovery after a crash between rename and commit; explain what a perfect fixture
 
 Suggested portfolio description: “A governed data-onboarding prototype that profiles synthetic
 portfolio-company sources, proposes evidence-linked mappings, generates dbt models, reconciles
-financial metrics and publishes only after separate reviewer certification.” Personal first-person
-and resume claims should be edited by Alex to match his actual contribution.
+financial metrics and publishes only after separate reviewer certification.” The
+[owner-approved personal statement](ASSISTED-ACCEPTANCE.md) describes Alex's role and substantial
+AI assistance without claiming production outcomes or sole implementation authorship.

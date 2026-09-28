@@ -57,7 +57,7 @@ def build_server(
     server = MCPServer(
         "portco-data-onboarding",
         title="Portfolio Company Data Onboarding",
-        version="0.1.0",
+        version="0.1.1",
         instructions=INSTRUCTIONS,
         middleware=[guard],
         **auth_kwargs,

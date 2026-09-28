@@ -48,3 +48,10 @@ commit, linked from the published release, which is promoted from prerelease to 
 Known limits remain visible: the unfamiliar-schema probe matched 0/10 targets, full MetricFlow
 runtime support is deferred, the optional paid judge remains off, and the demo container retains
 unfixed Debian findings. These are accepted scope limits, not unfinished release tasks.
+
+## Subsequent audit hardening
+
+The recorded acceptance above describes v0.1.0 and its original evidence. The later three-agent
+audit found defects despite that acceptance; v0.1.1 closes them with automated regressions.
+See [audit closeout](FINAL-AUDIT-CLOSEOUT.md). This patch does not rewrite the original model
+transcripts or claim a new personal review by Alex.

@@ -146,7 +146,13 @@ async def test_sandbox_failure_blocks_publish_and_source_is_untouched(tmp_path: 
     # dbt build skips everything downstream of a failing test, so the bad lines never reach the marts.
     assert any(r.status == "skipped" and "fct_invoice_line" in r.unique_id for r in report.dbt_results)
     assert not list(Path(svc.settings.published_root).rglob("*"))
-    svc.submit_review(REVIEWER, run.run_id, decide_all(run.pending_items, reject={run.pending_items[0].item_key}))
+    svc.submit_review(
+        REVIEWER,
+        run.run_id,
+        decide_all(run.pending_items, reject={run.pending_items[0].item_key}),
+        subject_hash=run.pending_items[0].subject_hash,
+        gate=ReviewGate(run.gate),
+    )
     run = await svc.resume(AGENT, run.run_id)
     assert run.status is RunStatus.FAILED and run.error and run.error["code"] == "VALIDATION"
     assert hashlib.sha256(source.read_bytes()).hexdigest() == before
@@ -172,6 +178,8 @@ async def test_changing_a_mapping_after_certification_revokes_it(tmp_path: Path,
                 "mapping:billing.invoice_lines.amount": {"transform": None},  # reviewer declines the cents transform
             },
         ),
+        subject_hash=run.pending_items[0].subject_hash,
+        gate=ReviewGate(run.gate),
     )
     run = await svc.resume(AGENT, run.run_id)
     assert run.gate in {"certification", "test_failures"}

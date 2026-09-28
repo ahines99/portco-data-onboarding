@@ -255,14 +255,20 @@ class OnboardingService:
         run_id: UUID,
         decisions: list[ItemDecision],
         comment: str | None = None,
-        gate: ReviewGate | None = None,
+        *,
+        subject_hash: str,
+        gate: ReviewGate,
     ) -> Approval:
-        run = self.get_run(principal, run_id)
-        gate = gate or (ReviewGate(run.gate) if run.gate else None)
-        if gate is None:
-            raise Conflict("run is not waiting for review")
-        subject = run.pending_items[0].subject_hash if run.pending_items else ""
-        return self._record(principal, run, gate, subject, decisions, comment)
+        """Approve only the mapping/test packet the caller actually reviewed.
+
+        Certification uses its dedicated entry point; no route infers a caller's expected hash
+        or gate from whatever happens to be current when the request arrives.
+        """
+        if gate not in (ReviewGate.MAPPING_REVIEW, ReviewGate.TEST_FAILURES):
+            raise ValidationFailed(
+                "submit_review supports mapping_review or test_failures; use certify for certification"
+            )
+        return self._record(principal, run_id, gate, subject_hash, decisions, comment)
 
     def certify(
         self,
@@ -272,13 +278,12 @@ class OnboardingService:
         decisions: list[ItemDecision],
         comment: str | None = None,
     ) -> Approval:
-        run = self.get_run(principal, run_id)
-        return self._record(principal, run, ReviewGate.CERTIFICATION, manifest_hash, decisions, comment)
+        return self._record(principal, run_id, ReviewGate.CERTIFICATION, manifest_hash, decisions, comment)
 
     def _record(
         self,
         principal: Principal,
-        run: RunRecord,
+        run_id: UUID,
         gate: ReviewGate,
         subject: str,
         decisions: list[ItemDecision],
@@ -286,6 +291,11 @@ class OnboardingService:
     ) -> Approval:
         try:
             with self.store.tx() as tx:
+                # The lock and comparison share the write transaction. SQLite's transaction
+                # starts with BEGIN IMMEDIATE; PostgreSQL locks this row until commit.
+                run = tx.runs.get(run_id, lock=True)
+                if not principal.can_access(run.company_id):
+                    raise NotFound("run not found")
                 return approval_service.record(tx, self.settings, principal, run, gate, subject, decisions, comment)
         except Forbidden as exc:
             # The failed transaction rolled back; record the denial in its own committed transaction.
