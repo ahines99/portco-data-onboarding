@@ -48,7 +48,7 @@ def render_run_report(svc: Any, principal: Principal, run_id: UUID) -> str:
         f"- Connection: `{run.connection_id}`",
         f"- Status: **{run.status.value}**" + (f" (gate: {run.gate})" if run.gate else ""),
         f"- Audit chain: {'intact' if chain_ok else 'BROKEN'} ({len(events)} events)",
-        f"- Human changes to recommendations: {metrics['human_changed_recommendation']}",
+        f"- Reviewer changes to recommendations: {metrics['human_changed_recommendation']}",
         "",
     ]
 

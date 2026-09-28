@@ -50,6 +50,25 @@ automated reviewer. A bounded public-data exercise imported
 and profiled [10,000 real historical retail rows](docs/PUBLIC-OPERATING-DATA.md), with six passing
 aggregate controls. This proves ingestion/profiling, not financial certification or customer impact.
 See the [operator pilot protocol](docs/OPERATOR-PILOT.md) and [resume/claims guide](docs/RESUME-AND-CLAIMS.md).
+The [next-phase roadmap](docs/EXTERNAL-VALIDATION-ROADMAP.md) now follows the owner's
+[fully automated qualification instruction](docs/AUTOMATED-QUALIFICATION.md): separate agent
+operation/review, new frozen cases, a read-only connector and observed review improvements,
+while keeping hosting free. Agent qualification does not establish human usability or savings.
+
+The automated qualification candidate adds a [read-only PostgreSQL snapshot connector](docs/POSTGRES-SOURCE.md),
+with explicit schema/primary-key contracts, verified transport, bounded extraction and immutable provenance.
+A separate agent operator and delegated reviewer [published six supported SAP-style metrics](docs/evidence/agent-reviewer-qualification/README.md),
+verified all 38 publication files and the 46-event audit chain, and rejected an unsupported mapping.
+[Observed review improvements](docs/evidence/agent-operator-qualification/FOLLOWUP.md) add resolvable evidence
+links and use neutral reviewer wording. This exercise was automated and source-informed.
+
+A second, separately authored [six-case frozen corpus](evals/agent_qualification_v2/README.md)
+exposed another safety failure: an exact field-name match bypassed uncertainty about its table's entity.
+The generic repair routes such proposals to review. Correct proposals remain **42/52**, covering **42/43**
+positive targets; review rises from **22/52 to 48/52**, with ten unresolved fields. The remediation passes
+safety but leaves ten incorrect proposals and substantial review effort. The first failed result is retained.
+On the original v1 corpus, the same repair retains 32/33 correct proposals but raises required review
+from the historical 7/33 to [17/33](docs/evidence/unfamiliar-benchmark-rc3.json). Safety still passes.
 
 ```text
 uv sync --all-extras && uv run poe demo

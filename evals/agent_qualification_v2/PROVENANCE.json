@@ -1,0 +1,65 @@
+{
+  "authorship": "Independent delegated agent in the same model/tool session; synthetic author-defined truth. Not human, customer, external organization, or statistically representative validation.",
+  "independence_scope": "Authored before evaluation and before seeing any predictions for these cases. No mapper, entity or join implementation, scoring.yaml, prior case labels, or prior benchmark results inspected. Public ontology and contracts are known to the author, so this is not ontology-blind validation.",
+  "consulted_files": [
+    "ontology/pe_canonical_v1.yaml",
+    "src/domain/ontology.py",
+    "src/domain/models.py",
+    "src/domain/project_models.py",
+    "evals/unfamiliar/manifest.json",
+    "evals/unfamiliar_benchmark.py"
+  ],
+  "consulted_scope": {
+    "evals/unfamiliar_benchmark.py": "first 200 lines, including evaluator label contract",
+    "src/domain/project_models.py": "entity, join, mapping and transform contract excerpts"
+  },
+  "other_reads": "Repository HEAD and path listings to locate public contract files, AGENTS.md, and Python executable. No AGENTS.md was found at repository root or evals root.",
+  "execution": "Each authored SQL case executed in an in-memory DuckDB solely to check DDL/data validity and complete source-field label coverage. Canonical targets checked against public YAML. No onboarding service, mapper, or inference invoked.",
+  "limitations": [
+    "Small synthetic examples and author-defined semantics do not establish production readiness.",
+    "SQL comments capture source-owner semantics but profiling may not surface those comments to inference; missed novel-name positives expose the metadata gap, not necessarily an unsafe decision.",
+    "Deliberately misleading names and coincidental containment can be indistinguishable without richer source documentation; abstention and review are desired safety behavior.",
+    "No actual customer data, human signoff, authorization drill, or operator-time observations are included.",
+    "Labels are public after freeze; subsequent tuning on them converts this corpus to a regression set."
+  ],
+  "label_contract": {
+    "entities": "Fully qualified table -> canonical entity or null for unsupported entity",
+    "mappings": "Every input column -> canonical entity.field or null for deliberate abstention",
+    "joins": "Exhaustive list of justified unordered endpoint pairs; all other joins lack semantic support",
+    "units": "Expected suggested_transform, including null when no conversion is needed",
+    "must_review": "Fields that require review if proposed; null mappings still require abstention for correctness",
+    "notes": "Author explanations; not supplied to inference"
+  },
+  "syntax_validation": {
+    "folio_billing": {
+      "tables": 2,
+      "columns": 11,
+      "rows": 6
+    },
+    "retainer_cadence": {
+      "tables": 1,
+      "columns": 10,
+      "rows": 3
+    },
+    "receipt_collision": {
+      "tables": 3,
+      "columns": 14,
+      "rows": 9
+    },
+    "ledger_net_ambiguity": {
+      "tables": 2,
+      "columns": 10,
+      "rows": 7
+    },
+    "roster_pay_basis": {
+      "tables": 1,
+      "columns": 8,
+      "rows": 3
+    },
+    "operational_abstention": {
+      "tables": 2,
+      "columns": 9,
+      "rows": 6
+    }
+  }
+}

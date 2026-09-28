@@ -1,0 +1,31 @@
+{
+  "version": 2,
+  "corpus_id": "agent_qualification_v2",
+  "authorship": "Independent delegated agent in the same model/tool session; synthetic author-defined truth. Not human, customer, external organization, or statistically representative validation.",
+  "baseline_commit": "03c4fb38b51364caf42cde2580a3e9bb933a505c",
+  "frozen_at_utc": "2026-09-28T15:07:52.730399+00:00",
+  "cases": [
+    "folio_billing",
+    "retainer_cadence",
+    "receipt_collision",
+    "ledger_net_ambiguity",
+    "roster_pay_basis",
+    "operational_abstention"
+  ],
+  "files": {
+    "inputs/folio_billing.sql": "ba19fc8f3998e20234936ba0190776816c7f2508fc2adcac0507519b7a0f81ce",
+    "inputs/ledger_net_ambiguity.sql": "884c4ee279db033b0fa442f71b905a944f7e141f18f266f2a48992dca693eff7",
+    "inputs/operational_abstention.sql": "7ba051d15460d638c43498ab14e7414f86e2523742ea9c3588bb2e5a668330f9",
+    "inputs/receipt_collision.sql": "e3a737773b18c2ddca823c7105bb82fc479e5f91bc5f5e02049b182627ad0e08",
+    "inputs/retainer_cadence.sql": "6f00f4f41b1a0f4bded890632d84d7b163756f275d43d9fab8962336c8469f53",
+    "inputs/roster_pay_basis.sql": "d9d0d9d7e356af7e31e475d26c000f78321f9eb6a3640afc7e55f906f0ae48ac",
+    "labels/folio_billing.json": "c3e3475f48e3edba592467e96f582001940da0d06d8af80fed521eac7207b33e",
+    "labels/ledger_net_ambiguity.json": "ed05cf2a60ac38e0fcea3f1c587a2668da4fdcd2a379770c09afd9de06db46bd",
+    "labels/operational_abstention.json": "d192603ad15dba8b28187ae527836ed2929f9048482b788c01bbdd76f57bc958",
+    "labels/receipt_collision.json": "aa2619b031a713f085f90284eaae42ba6b641a60f245b063eac061364f98e399",
+    "labels/retainer_cadence.json": "5e10366c34b66a0178b9bba890ba0a1fc72e37ea9ddfdc681b7616d227e02061",
+    "labels/roster_pay_basis.json": "495585d67916dec523384679e0ac4576adc5279f793ec0df65c7aeefc3105811",
+    "PROVENANCE.json": "cb6442def5f04be3ae5fccb24b29e72f9d5b0efdc6eaba6af6260952ee225486"
+  },
+  "policy": "Frozen before evaluation. Do not edit cases or labels after observing predictions; create a new corpus version."
+}

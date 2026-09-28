@@ -1,0 +1,28 @@
+{
+  "entities": {
+    "raw.retainer_roll": "subscription"
+  },
+  "mappings": {
+    "raw.retainer_roll.subscription_id": "subscription.subscription_id",
+    "raw.retainer_roll.customer_id": "subscription.customer_id",
+    "raw.retainer_roll.plan_code": "subscription.plan_code",
+    "raw.retainer_roll.monthly_amount_cents": "subscription.mrr",
+    "raw.retainer_roll.currency": "subscription.currency",
+    "raw.retainer_roll.start_date": "subscription.start_date",
+    "raw.retainer_roll.end_date": "subscription.end_date",
+    "raw.retainer_roll.status": "subscription.status",
+    "raw.retainer_roll.annual_quote": null,
+    "raw.retainer_roll.rate_unit": null
+  },
+  "joins": [],
+  "units": {
+    "raw.retainer_roll.monthly_amount_cents": "cents_to_major"
+  },
+  "must_review": [
+    "raw.retainer_roll.monthly_amount_cents",
+    "raw.retainer_roll.annual_quote"
+  ],
+  "notes": [
+    "No annual-to-monthly transform is assumed. The available contract only supports cents_to_major and parse_mixed_date."
+  ]
+}

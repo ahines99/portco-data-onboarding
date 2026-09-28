@@ -1,0 +1,48 @@
+{
+  "run_id": "ebdbc80e-859c-4b3e-836b-afc3b3b4159e",
+  "automated": true,
+  "mapping_subject_hash": "0fab9f6df411995005b17e82e645ddb2d8c3175aae9f01526b503c0a664371d6",
+  "decisions": {
+    "mapping:sap.BSEG.DMBTR_S": [
+      "approve",
+      "Profile DECIMAL(14,2), nonnegative/no nulls; fixture generator posts invoice total and cost on debit side, while ontology debit_amount requires major-currency amount. Preserve value, no cents conversion."
+    ],
+    "mapping:sap.BSEG.DMBTR_H": [
+      "approve",
+      "Profile DECIMAL(14,2), nonnegative/no nulls; source generator places revenue/offset values on credit side. Ontology credit_amount major units agrees; no transform."
+    ],
+    "mapping:sap.PA0001.ENAME": [
+      "approve",
+      "Profile classifies person_name; ontology employee.full_name is PII. Retain proposed hash handling; no raw employee values were examined."
+    ],
+    "mapping:sap.PA0001.GBDAT": [
+      "approve",
+      "Profile DATE classified dob and ontology date_of_birth PII agree. Preserve proposed exclude handling; exact birthdates unnecessary."
+    ],
+    "mapping:sap.VBRK.KUNAG": [
+      "approve",
+      "Profile 255 invoice rows, nonnull customer reference; validated N:1 join to unique KNA1.KUNNR with containment 1 and orphan rate 0. Source generator references same customer IDs."
+    ],
+    "mapping:sap.VBRK.NETWR": [
+      "approve",
+      "Source generator sums line price-times-quantity Decimal major-unit amounts into header NETWR and specifies EUR; DECIMAL(14,2) profile agrees. Map total_amount unchanged; require exact downstream reconciliation."
+    ],
+    "mapping:sap.VBRK.FKART": [
+      "reject",
+      "Only approved source category F2; SAP billing-document-type documentation identifies F2 as invoice type, not paid/open lifecycle status. No supported status mapping; omit rather than invent."
+    ],
+    "mapping:sap.VBRP.NETWR": [
+      "approve",
+      "Source generator writes price*quantity quantized to 0.01 into NETWR; DECIMAL(14,2) is line extended amount, not unit price or cents. Map amount with no transform, subject to exact header-line checks."
+    ],
+    "filter:sap.KNA1.LOEVM:exclude_true": [
+      "approve",
+      "Boolean soft-delete semantic from ontology; profile/proposal identifies 2 of 80 customer rows. For this synthetic qualification apply explicit active-customer exclusion consistently; require downstream scope and money reconciliation, not silently dropping unmatched customers."
+    ],
+    "join:sap.VBRK.KUNAG->sap.KNA1.KUNNR": [
+      "approve",
+      "Reviewed aggregate evidence: KNA1 key unique 80/80; invoice KUNAG nonnull, N:1 containment 100%, zero orphans; synthetic source generation links these identifiers. Accept relation with reviewed soft-delete scope."
+    ]
+  },
+  "sap_reference": "https://help.sap.com/docs/SAP_S4HANA_CLOUD/a376cd9ea00d476b96f18dea1247e6a5/d96fb6535fe6b74ce10000000a174cb4.html"
+}

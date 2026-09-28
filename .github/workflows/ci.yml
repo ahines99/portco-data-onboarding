@@ -70,6 +70,7 @@ jobs:
     env:
       PORTCO_TEST_POSTGRES_URL: postgresql+psycopg://portco:portco@localhost:5432/portco
       PORTCO_TEST_POSTGRES_ALLOW_CREATE: '1'
+      PORTCO_POSTGRES_SOURCE_SUMMARY: var/postgres-source-summary.json
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -77,6 +78,11 @@ jobs:
       - run: uv sync --all-extras --frozen
       - run: uv run poe fixtures
       - run: uv run pytest -q -m postgres
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: postgres-source-acceptance
+          path: var/postgres-source-summary.json
 
   eval:
     runs-on: ubuntu-latest
@@ -91,6 +97,13 @@ jobs:
         run: uv run poe eval
       - name: Frozen unfamiliar-schema integrity and review safety
         run: uv run python -m evals.unfamiliar_benchmark --output var/unfamiliar-benchmark.json --enforce-safety
+      - name: Agent-authored v2 corpus integrity and review safety
+        run: uv run python -m evals.unfamiliar_benchmark --corpus evals/agent_qualification_v2 --manifest-sha256 e21b4cf4a8b2ad802c9cdbfb884c94ab1e42c92a1753b67275d2fd8eac078647 --output var/agent-qualification-v2.json --enforce-safety
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agent-qualification-v2
+          path: var/agent-qualification-v2.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

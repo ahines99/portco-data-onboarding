@@ -151,7 +151,13 @@ def _sha(path: Path) -> str:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def import_csv(manifest_path: Path, extract_root: Path, sources_root: Path) -> dict[str, Any]:
+def import_csv(
+    manifest_path: Path,
+    extract_root: Path,
+    sources_root: Path,
+    *,
+    provenance: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Validate, materialize, and atomically register one snapshot; never overwrite."""
     staging: Path | None = None
     try:
@@ -216,6 +222,8 @@ def import_csv(manifest_path: Path, extract_root: Path, sources_root: Path) -> d
             "manifest_sha256": hashlib.sha256(manifest.model_dump_json().encode()).hexdigest(),
             "inputs": inputs,
         }
+        if provenance is not None:
+            receipt["provenance"] = provenance
         (staging / "registration.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
         # Both files become visible together; a nonempty existing directory cannot be replaced.
         try:

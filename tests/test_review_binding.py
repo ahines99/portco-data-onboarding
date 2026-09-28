@@ -204,6 +204,8 @@ def test_cli_imports_current_mapping_or_certification_packet(
     runner = CliRunner()
     path = tmp_path / "review.yaml"
     assert runner.invoke(cli.app, ["review", str(run.run_id), "--export", str(path)]).exit_code == 0
+    packet = yaml.safe_load(path.read_text())
+    assert ("certification-packet" in packet["supporting_resources"]) == (gate is ReviewGate.CERTIFICATION)
     result = runner.invoke(cli.app, ["review", str(run.run_id), "--import", str(path), "--default", "approve"])
     assert result.exit_code == 0, result.output
     with binding_service.store.tx() as tx:

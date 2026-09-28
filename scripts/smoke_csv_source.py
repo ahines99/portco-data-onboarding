@@ -87,9 +87,27 @@ async def exercise(workdir: Path) -> dict[str, Any]:
     manifest = extracts(workdir / "extracts")
     settings = Settings(env="test", var_root=workdir / "runtime", log_level="WARNING")
     receipt = import_csv(manifest, manifest.parent, settings.var_root / "sources")
+    return await exercise_registered(
+        settings,
+        receipt,
+        provenance,
+        data_provenance="synthetic portco_a rows exported as CSV; no customer-data or live-system claim",
+    )
+
+
+async def exercise_registered(
+    settings: Settings,
+    receipt: dict[str, Any],
+    provenance: dict[str, Any],
+    *,
+    data_provenance: str,
+    identity_prefix: str = "csv-smoke",
+) -> dict[str, Any]:
+    """Verify the same governed workflow for an already registered source snapshot."""
     service = OnboardingService.build(settings)
-    agent = Principal(principal_id="csv-smoke:agent", role=Role.AGENT, company_ids=("csv_demo",))
-    reviewer = Principal(principal_id="csv-smoke:reviewer", role=Role.REVIEWER, company_ids=("csv_demo",))
+    companies = (receipt["company_id"],)
+    agent = Principal(principal_id=f"{identity_prefix}:agent", role=Role.AGENT, company_ids=companies)
+    reviewer = Principal(principal_id=f"{identity_prefix}:reviewer", role=Role.REVIEWER, company_ids=companies)
     run = await service.start_run(agent, receipt["connection_id"])
     for _ in range(3):
         if run.status != RunStatus.NEEDS_REVIEW:
@@ -149,7 +167,7 @@ async def exercise(workdir: Path) -> dict[str, Any]:
         raise RuntimeError("CSV smoke audit chain verification failed")
     service.store.engine.dispose()
     result = {
-        "data_provenance": "synthetic portco_a rows exported as CSV; no customer-data or live-system claim",
+        "data_provenance": data_provenance,
         "review_provenance": "automated separate reviewer test identity",
         "connection_id": receipt["connection_id"],
         "snapshot_sha256": receipt["snapshot_sha256"],

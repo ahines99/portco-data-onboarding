@@ -1,0 +1,34 @@
+{
+  "entities": {
+    "raw.posting_rubric": "gl_account",
+    "raw.daybook": "gl_entry"
+  },
+  "mappings": {
+    "raw.posting_rubric.account_code": "gl_account.account_code",
+    "raw.posting_rubric.account_name": "gl_account.account_name",
+    "raw.posting_rubric.account_type": "gl_account.account_type",
+    "raw.daybook.journal_id": "gl_entry.journal_id",
+    "raw.daybook.line_number": "gl_entry.line_number",
+    "raw.daybook.account_code": "gl_entry.account_code",
+    "raw.daybook.posting_date": "gl_entry.posting_date",
+    "raw.daybook.debit_amount": "gl_entry.debit_amount",
+    "raw.daybook.credit_amount": "gl_entry.credit_amount",
+    "raw.daybook.net_movement": null
+  },
+  "joins": [
+    [
+      "raw.daybook.account_code",
+      "raw.posting_rubric.account_code"
+    ]
+  ],
+  "units": {
+    "raw.daybook.debit_amount": null,
+    "raw.daybook.credit_amount": null
+  },
+  "must_review": [
+    "raw.daybook.net_movement"
+  ],
+  "notes": [
+    "Composite journal grain is deliberate. Account codes are semantic links; signed net_movement requires additional source documentation."
+  ]
+}

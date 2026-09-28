@@ -10,6 +10,8 @@ import argparse
 import asyncio
 import hashlib
 import json
+import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -25,31 +27,48 @@ def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def verify_manifest(root: Path = ROOT) -> dict[str, Any]:
-    if digest(root / "manifest.json") != FROZEN_MANIFEST_SHA256:
+def verify_manifest(root: Path = ROOT, expected_sha256: str = FROZEN_MANIFEST_SHA256) -> dict[str, Any]:
+    if not re.fullmatch(r"[0-9a-f]{64}", expected_sha256):
+        raise ValueError("An explicit SHA-256 manifest pin is required")
+    if digest(root / "manifest.json") != expected_sha256:
         raise ValueError("Frozen benchmark manifest changed; create a new benchmark version instead")
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+    cases = manifest["cases"]
+    if (
+        not cases
+        or any(not isinstance(case, str) or not re.fullmatch(r"[a-z0-9_-]+", case) for case in cases)
+        or len(set(cases)) != len(cases)
+    ):
+        raise ValueError("Benchmark requires unique, bounded case identifiers")
+    required = {
+        f"{folder}/{case}.{extension}"
+        for case in cases
+        for folder, extension in (("inputs", "sql"), ("labels", "json"))
+    }
+    if not required.issubset(manifest["files"]):
+        raise ValueError("Manifest must pin every case input and label file")
     for name, expected in manifest["files"].items():
-        if digest(root / name) != expected:
+        path = (root / name).resolve()
+        if not path.is_relative_to(root.resolve()) or digest(path) != expected:
             raise ValueError(f"Frozen benchmark file changed: {name}")
     return manifest
 
 
-def install_label_guard() -> None:
-    labels = (ROOT / "labels").resolve()
+def install_label_guard(root: Path = ROOT) -> None:
+    protected = {(ROOT / "labels").resolve(), (root / "labels").resolve()}
 
     def audit(event: str, args: tuple[Any, ...]) -> None:
         if event != "open" or not args or not isinstance(args[0], (str, bytes, Path)):
             return
         candidate = Path(args[0].decode() if isinstance(args[0], bytes) else args[0]).resolve()
-        if candidate == labels or labels in candidate.parents:
+        if any(candidate == labels or labels in candidate.parents for labels in protected):
             raise PermissionError("Evaluator labels are forbidden in inference worker")
 
     sys.addaudithook(audit)
 
 
-async def infer(input_path: Path, output: Path) -> None:
-    install_label_guard()
+async def infer(input_path: Path, output: Path, root: Path = ROOT) -> None:
+    install_label_guard(root)
     import duckdb
 
     from src.domain.models import Principal, Role, StepName
@@ -200,14 +219,15 @@ def score(prediction: dict[str, Any], labels: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def run_benchmark(output: Path) -> dict[str, Any]:
-    manifest = verify_manifest()
+def run_benchmark(output: Path, root: Path = ROOT, expected_sha256: str = FROZEN_MANIFEST_SHA256) -> dict[str, Any]:
+    root = root.resolve()
+    manifest = verify_manifest(root, expected_sha256)
     results = {}
     for case in manifest["cases"]:
         with tempfile.TemporaryDirectory(prefix="portco-unfamiliar-") as work:
             workdir = Path(work)
             input_copy = workdir / "input.sql"
-            input_copy.write_bytes((ROOT / "inputs" / f"{case}.sql").read_bytes())
+            input_copy.write_bytes((root / "inputs" / f"{case}.sql").read_bytes())
             prediction_path = workdir / "prediction.json"
             subprocess.run(
                 [
@@ -218,19 +238,22 @@ def run_benchmark(output: Path) -> dict[str, Any]:
                     str(input_copy),
                     "--output",
                     str(prediction_path),
+                    "--corpus",
+                    str(root),
                 ],
                 check=True,
                 capture_output=True,
                 text=True,
                 timeout=120,
+                env={k: v for k, v in os.environ.items() if not k.startswith("PORTCO_")},
             )
             # Labels first enter this evaluator after inference has terminated.
             prediction = json.loads(prediction_path.read_text(encoding="utf-8"))
-            labels = json.loads((ROOT / "labels" / f"{case}.json").read_text(encoding="utf-8"))
+            labels = json.loads((root / "labels" / f"{case}.json").read_text(encoding="utf-8"))
             results[case] = score(prediction, labels)
     report = {
-        "benchmark_version": 1,
-        "manifest_sha256": FROZEN_MANIFEST_SHA256,
+        "benchmark_version": manifest["version"],
+        "manifest_sha256": expected_sha256,
         "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
         "inference_source_sha256": {
             str(path).replace("\\", "/"): digest(path) for path in sorted(Path("src/services").glob("*.py"))
@@ -256,11 +279,17 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=Path("var/unfamiliar-benchmark.json"))
     parser.add_argument("--worker", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--enforce-safety", action="store_true")
+    parser.add_argument("--corpus", type=Path, default=ROOT, help="Versioned case directory; requires its frozen hash")
+    parser.add_argument(
+        "--manifest-sha256", help="Previously recorded manifest hash; never infer it at evaluation time"
+    )
     args = parser.parse_args()
     if args.worker:
-        asyncio.run(infer(args.worker, args.output))
+        asyncio.run(infer(args.worker, args.output, args.corpus))
         return
-    report = run_benchmark(args.output)
+    if args.corpus.resolve() != ROOT.resolve() and not args.manifest_sha256:
+        parser.error("A custom corpus requires --manifest-sha256 from its freeze record")
+    report = run_benchmark(args.output, args.corpus, args.manifest_sha256 or FROZEN_MANIFEST_SHA256)
     print(json.dumps({"report": str(args.output), "safety_passed": report["safety_passed"]}))
     if args.enforce_safety and not report["safety_passed"]:
         raise SystemExit(1)

@@ -1,0 +1,40 @@
+{
+  "entities": {
+    "raw.billing_documents": "invoice",
+    "raw.teller_slips": "payment",
+    "raw.ingest_packets": null
+  },
+  "mappings": {
+    "raw.billing_documents.invoice_id": "invoice.invoice_id",
+    "raw.billing_documents.customer_id": "invoice.customer_id",
+    "raw.billing_documents.invoice_date": "invoice.invoice_date",
+    "raw.billing_documents.total_amount": "invoice.total_amount",
+    "raw.billing_documents.currency": "invoice.currency",
+    "raw.teller_slips.payment_id": "payment.payment_id",
+    "raw.teller_slips.invoice_id": "payment.invoice_id",
+    "raw.teller_slips.paid_at": "payment.paid_at",
+    "raw.teller_slips.amount": "payment.amount",
+    "raw.teller_slips.method": "payment.method",
+    "raw.teller_slips.batch_slot": null,
+    "raw.ingest_packets.invoice_id": null,
+    "raw.ingest_packets.payload_bytes": null,
+    "raw.ingest_packets.retry_count": null
+  },
+  "joins": [
+    [
+      "raw.teller_slips.invoice_id",
+      "raw.billing_documents.invoice_id"
+    ]
+  ],
+  "units": {
+    "raw.billing_documents.total_amount": null,
+    "raw.teller_slips.amount": null
+  },
+  "must_review": [
+    "raw.teller_slips.batch_slot",
+    "raw.ingest_packets.invoice_id"
+  ],
+  "notes": [
+    "Only teller_slips.invoice_id relates to billing_documents. Value containment and matching legacy names do not make ingest packet ids invoice references."
+  ]
+}

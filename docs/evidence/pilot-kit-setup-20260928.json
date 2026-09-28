@@ -1,0 +1,48 @@
+{
+  "record_type": "automated_setup_verification",
+  "human_participation": false,
+  "source_commit": "03c4fb38b51364caf42cde2580a3e9bb933a505c",
+  "lock_sha256": "5155a6eaff746cd159fe40ca45f7760a4a1657d2d7486b36f8a559e2e48462bc",
+  "python": "3.12.10",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "started_at_utc": "2026-09-28T14:58:19.728625+00:00",
+  "steps": [
+    {
+      "step": "sync",
+      "command": [
+        "uv",
+        "sync",
+        "--all-extras",
+        "--frozen"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 5.899
+    },
+    {
+      "step": "fixtures",
+      "command": [
+        "uv",
+        "run",
+        "poe",
+        "fixtures"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 11.957
+    },
+    {
+      "step": "demo",
+      "command": [
+        "uv",
+        "run",
+        "poe",
+        "demo"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 33.068
+    }
+  ],
+  "completed_at_utc": "2026-09-28T14:59:32.208513+00:00",
+  "status": "passed",
+  "scope": "Automated isolated source install and scripted demo; no human participation or pilot results",
+  "log_policy": "Raw synthetic setup logs retained privately under ignored var/roadmap-execution"
+}

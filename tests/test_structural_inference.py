@@ -115,6 +115,26 @@ BASE = [
 
 
 @pytest.mark.anyio
+async def test_exact_column_match_in_uncertain_entity_requires_review(tmp_path: Path) -> None:
+    service, run = await run_schema(
+        tmp_path,
+        [
+            "CREATE TABLE accounts AS SELECT 'X' || i AS entry_key, 'GBP' AS currency, "
+            "i AS counter FROM range(1, 5) t(i)"
+        ],
+    )
+    entities = cast(EntityInference, service.artifact(AGENT, run.run_id, StepName.ENTITY_INFERENCE))
+    candidate = entities.for_table("incoming.accounts")
+    assert candidate and candidate.canonical_entity and candidate.confidence is not Confidence.HIGH
+    mapping = cast(MappingSet, service.artifact(AGENT, run.run_id, StepName.CANONICAL_MAPPING))
+    currency = next(p for p in mapping.proposals if p.source_column == "currency")
+    assert currency.canonical_field == "currency"
+    assert currency.requires_review and "ENTITY_UNCERTAIN" in currency.reason_codes
+    assert currency.confidence is not Confidence.HIGH
+    assert all(p.requires_review for p in mapping.proposals)
+
+
+@pytest.mark.anyio
 async def test_unknown_key_aliases_gain_reviewed_mapping_without_auto_approval(tmp_path: Path) -> None:
     service, run = await run_schema(tmp_path, BASE)
     assert run.status is RunStatus.NEEDS_REVIEW

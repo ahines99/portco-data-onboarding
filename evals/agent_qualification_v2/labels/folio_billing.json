@@ -1,0 +1,35 @@
+{
+  "entities": {
+    "raw.payor_register": "customer",
+    "raw.charge_folios": "invoice"
+  },
+  "mappings": {
+    "raw.payor_register.customer_id": "customer.customer_id",
+    "raw.payor_register.trading_style": "customer.customer_name",
+    "raw.payor_register.currency": "customer.currency",
+    "raw.payor_register.country": "customer.country",
+    "raw.charge_folios.folio_number": "invoice.invoice_id",
+    "raw.charge_folios.customer_id": "invoice.customer_id",
+    "raw.charge_folios.invoice_date": "invoice.invoice_date",
+    "raw.charge_folios.due_date": "invoice.due_date",
+    "raw.charge_folios.total_amount_cents": "invoice.total_amount",
+    "raw.charge_folios.currency": "invoice.currency",
+    "raw.charge_folios.revenue_hint": null
+  },
+  "joins": [
+    [
+      "raw.charge_folios.customer_id",
+      "raw.payor_register.customer_id"
+    ]
+  ],
+  "units": {
+    "raw.charge_folios.total_amount_cents": "cents_to_major"
+  },
+  "must_review": [
+    "raw.charge_folios.total_amount_cents",
+    "raw.charge_folios.revenue_hint"
+  ],
+  "notes": [
+    "Novel trading_style and folio terminology has author-defined billing semantics. Estimated revenue_hint must be abstained from."
+  ]
+}

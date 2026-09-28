@@ -13,6 +13,14 @@ measured analyst-time savings or investment-performance claim. The implementatio
 with substantial AI assistance. Alex approved the personal statement and delegated final acceptance;
 [the record](FINAL-ACCEPTANCE.md) distinguishes owner approval from automated execution.
 
+## Current automated qualification candidate
+
+The owner selected fully agentic or automated execution and free-only operation. The
+[automated qualification plan](AUTOMATED-QUALIFICATION.md) adds a separately authored six-case
+corpus, a read-only PostgreSQL source connector, and recorded separate operator/reviewer agent
+work. The integrated candidate and actual PostgreSQL acceptance are pending hosted verification;
+these additions do not establish a production deployment or independent human validation.
+
 ## The problem made concrete
 
 One source stores invoice-line amounts in cents while invoice headers use dollars. Another calls
@@ -55,6 +63,10 @@ and changed files. This is a useful interview example of correctness across two 
 - [Timing sample](evidence/benchmark.json): three cold/reused fixture runs, excluding human waiting.
 - [Scripted demo transcript](evidence/demo-transcript.txt) and [read-only replay](index.html).
 - [Release evidence and accepted scope](RELEASE-STATUS.md).
+- [Separate-agent operator attempt](evidence/agent-operator-qualification/README.md) and
+  [reviewer completion](evidence/agent-reviewer-qualification/README.md) on baseline `03c4fb3`.
+- [Automated candidate qualification](AUTOMATED-QUALIFICATION.md),
+  [PostgreSQL contract](POSTGRES-SOURCE.md) and [v2 corpus](../evals/agent_qualification_v2/README.md).
 
 The [release status](RELEASE-STATUS.md) and exact tagged CI/verification assets contain dated test
 counts. Local and hosted populations overlap and must not be added together. Coverage of the metric reference module is 100%; this is not whole-application coverage.
@@ -75,27 +87,59 @@ safety gate for an unreviewed competing monetary interpretation. Later fixes/rer
 post-benchmark remediation, not held-out proof of improvement. The [remediation rerun](evidence/unfamiliar-benchmark.json)
 passes safety with 32/33 correct proposals, 32/32 positive targets covered and 6/6 unit outcomes.
 Review burden increases to 7/33; one incorrect reviewed proposal and eight unresolved opaque
-fields remain. Those limits matter as much as the passing safety gate.
+fields remain. Those counts describe the preserved historical remediation. The current v1
+regression after the later entity-uncertainty repair retains safety, 32/33 correctness and 32/32
+target coverage, with 17/33 proposals requiring review and eight unresolved fields.
+Those limits matter as much as the passing safety gate.
+
+A new six-case [agent-authored v2 corpus](../evals/agent_qualification_v2/README.md) preserves another
+first safety failure. Both its initial and remediated runs produced 42/52 correct proposals and
+covered 42/43 positive targets. The repair propagates uncertain entity interpretation into
+column review: review rises from 22/52 to 48/52 and safety passes, with ten incorrect proposals
+and ten unresolved fields still disclosed. This improves the review boundary, not mapping
+accuracy. The new corpus is separate-agent authored, not an external human study; remediation is
+feedback-informed and cannot be called untouched held-out validation.
+
+## Separate agent operation and review
+
+An operator agent used the documented CLI against pinned baseline `03c4fb3`, exported the SAP-style
+mapping packet, observed a denied same-starter review attempt and handed off the run. A separate
+delegated automated reviewer inspected the packet, aggregate evidence, ontology and fixture source.
+It explicitly rejected `FKART` as invoice lifecycle status and approved the other reviewed items;
+no blanket default approval or failed-check waiver was used.
+
+The [completed run](evidence/agent-reviewer-qualification/README.md) published **six supported metrics**,
+verified **38 publication files** and an audit chain of **46 events**. It is distinct from the
+nine-metric SaaS demonstration. Unsupported metrics remain `NEEDS_EVIDENCE`; the reviewer saw fixture
+answer-key entries during source inspection, so the exercise is source-informed and not blinded.
+Both identities were controlled locally. Command durations are machine/agent execution observations,
+not human active time, independent usability measurements or business savings.
 
 ## Boundaries and next steps
 
-Sources now include DuckDB fixtures and [operator-imported typed CSV snapshots](CSV-SOURCE.md);
-publication still targets a versioned local directory. The CSV importer is an external file boundary,
-not a live source-system API connector. A 10,000-row public retail extract passed six ingestion/profile
+Accepted source evidence includes DuckDB fixtures and [operator-imported typed CSV snapshots](CSV-SOURCE.md).
+The new [PostgreSQL source connector](POSTGRES-SOURCE.md) is implemented in the candidate: it checks
+SELECT-only authority and schema contracts, extracts a bounded read-only repeatable-read snapshot,
+and registers it atomically through the CSV/DuckDB contract. Its actual PostgreSQL/full-workflow
+acceptance still awaits hosted verification. It is operator-triggered extraction, not continuous
+synchronization or a claim of access to a customer's system. Publication remains a versioned local directory. A 10,000-row public retail extract passed six ingestion/profile
 controls, retaining missing identifiers, cancellations and negative quantities; no mapping was
 approved or certified. Static HTTP tokens and trusted local reviewer identities are development
 controls. A [production JWT candidate](LIVE-DEPLOYMENT.md) is implemented, but there is no accepted
-public live MCP backend, real identity-provider integration or live warehouse deployment. The local semantic executor
+public live MCP backend or live warehouse deployment. Auth0 agent-token verification is a separate
+milestone; it does not accept the full hosted reviewer/identity workflow. The local semantic executor
 supports a defined monthly subset; actual MetricFlow compatibility is tracked separately.
 
 Six real model sessions and a captioned synthetic-voice tour have now been collected. The
 [owner-approved acceptance packet](ASSISTED-ACCEPTANCE.md) and [final acceptance](FINAL-ACCEPTANCE.md)
 record completed delegated mapping/certification and accepted annotation/personal wording. Independent
-first-use feedback is optional future validation.
+human first-use feedback remains optional future validation.
 The [operator pilot protocol](OPERATOR-PILOT.md) defines consent, source minimization, paired
 manual/assisted tasks, review burden, correction rates and actual participant signoff. It has not
-been executed. Live hosting acceptance and independent operator/customer evidence remain open;
-neither public data nor automated reviewers establish those outcomes.
+been executed. At the owner's request, the active roadmap uses automated qualification instead.
+The public presentation stays on free GitHub Pages and the workflow runs locally. Live hosting
+acceptance and independent human/customer evidence remain unverified; neither public data nor
+separate automated reviewers establish those outcomes.
 
 ## Interview prompts
 

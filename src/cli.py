@@ -50,6 +50,19 @@ def _service() -> Any:
     return OnboardingService.build()
 
 
+@sources_app.command("import-postgres")
+def sources_import_postgres(manifest: Path) -> None:
+    """Snapshot typed PostgreSQL tables; credentials only in PORTCO_SOURCE_POSTGRES_URL."""
+    from src.adapters.postgres_source import import_postgres
+
+    try:
+        receipt = import_postgres(manifest, get_settings().var_root / "sources")
+    except DomainError as exc:
+        _fail(exc)
+        return
+    typer.echo(json.dumps(receipt, indent=2))
+
+
 def _principal(spec: str, default_role: Role) -> Principal:
     pid, _, role = spec.partition(":")
     if role in {r.value for r in Role}:
@@ -147,12 +160,27 @@ def review(
                 "subject_hash": r.pending_items[0].subject_hash if r.pending_items else None,
                 "instructions": "Set decision to approve | reject | approve_with_override for each item. "
                 "Overrides: {canonical_field, transform, pii_handling}.",
+                "supporting_resources": {
+                    name: f"run://{run_id}/{name}"
+                    for name in (
+                        "profile",
+                        "entities",
+                        "joins",
+                        "mapping",
+                        "findings",
+                        *(("certification-packet",) if r.gate == ReviewGate.CERTIFICATION.value else ()),
+                    )
+                },
+                "evidence_instructions": "Read referenced evidence through an authorized MCP client. "
+                "For a CLI overview, run portco report RUN_ID --out PRIVATE_REPORT.md. "
+                "These references are context; the current run, gate and subject hash still bind decisions.",
                 "items": [
                     {
                         "item_key": i.item_key,
                         "summary": i.summary,
                         "reason_codes": i.reason_codes,
                         "options": i.options,
+                        "evidence": [f"evidence://{evidence_id}" for evidence_id in i.evidence_ids],
                         "decision": None,
                         "override": None,
                         "comment": None,

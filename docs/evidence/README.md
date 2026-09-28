@@ -16,3 +16,29 @@ Reproduce with `uv run python -m scripts.release_evidence` and
 `uv run python -m scripts.record_demo`. Both allocate fresh temporary runtime state rather than
 resetting an existing user's run. They make no model API calls. A source revision with documentation
 or evidence changes pending is explicitly marked dirty; do not interpret it as a pristine release build.
+
+## Automated qualification candidate
+
+The [current qualification plan](../AUTOMATED-QUALIFICATION.md) follows the owner's automation-only,
+free-only instruction. It adds separate-agent execution and new technical evidence; it does not
+convert automated decisions into human consent or customer validation. Candidate hosted acceptance
+is pending; consult [release status](../RELEASE-STATUS.md) for the final verified commit.
+
+| Evidence | Observed scope | Boundary |
+|---|---|---|
+| [Operator attempt](agent-operator-qualification/README.md) | CLI operation and denied same-starter review on pinned baseline `03c4fb3` | Existing prepared environment and supported synthetic source; no independent installation or human timing study |
+| [Separate reviewer completion](agent-reviewer-qualification/README.md), [verification](agent-reviewer-qualification/verification.json) | Six metrics published, 38 publication files verified, 46 audit events; explicit decisions and no waived failures | Automated, source-informed and not blinded; distinct from the nine-metric SaaS smoke |
+| [V2 first result](agent-qualification-v2-first.json) | Six separately authored cases: 42/52 correct proposals, 42/43 positive targets, safety failure | Preserved first outcome; not external human evaluation |
+| [V2 remediation](agent-qualification-v2-remediation.json) | Same accuracy, 48/52 proposals review-bound, safety passing, ten unresolved fields | Feedback-informed repair; ten wrong proposals remain wrong |
+| [PostgreSQL connector contract](../POSTGRES-SOURCE.md) | Implemented bounded read-only snapshot connector and actual-PostgreSQL acceptance harness | Hosted execution pending; no customer access, production backend or synchronization claim |
+
+[Corpus provenance, freeze hash and methodology](../../evals/agent_qualification_v2/README.md) explain
+what was frozen before inference and what changed afterward. The original 0/10 probe and v1 reports
+remain separate historical experiments; none is overwritten or combined into an invented trend.
+The historical v1 remediation had 7/33 proposals requiring review. Its current regression after the
+entity-uncertainty repair has 17/33 review-bound proposals, while retaining safety, 32/33 correct
+proposals, 32/32 target coverage and eight unresolved fields. The historical report is unchanged.
+
+The [human operator pilot](operator-pilot/README.md) remains unexecuted. Automated qualification
+reports can show reproducible execution and recorded review behavior, but not analyst savings,
+customer adoption, independent human usability or live-production acceptance.

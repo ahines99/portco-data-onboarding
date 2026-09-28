@@ -1,0 +1,28 @@
+{
+  "entities": {
+    "raw.accounts": null,
+    "raw.turnover": null
+  },
+  "mappings": {
+    "raw.accounts.event_token": null,
+    "raw.accounts.rack_label": null,
+    "raw.accounts.amount": null,
+    "raw.accounts.currency": null,
+    "raw.accounts.status": null,
+    "raw.turnover.cycle_token": null,
+    "raw.turnover.revenue": null,
+    "raw.turnover.booked": null,
+    "raw.turnover.period": null
+  },
+  "joins": [],
+  "units": {},
+  "must_review": [
+    "raw.accounts.amount",
+    "raw.accounts.currency",
+    "raw.turnover.revenue",
+    "raw.turnover.booked"
+  ],
+  "notes": [
+    "Complete abstention is intentional. Lexical table and column resemblance is insufficient to establish a supported business entity."
+  ]
+}

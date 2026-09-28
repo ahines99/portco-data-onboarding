@@ -8,7 +8,36 @@ import sys
 
 import pytest
 
-from evals.unfamiliar_benchmark import ROOT, score, verify_manifest
+from evals.unfamiliar_benchmark import ROOT, digest, score, verify_manifest
+
+
+def test_custom_corpus_requires_its_own_pin_and_all_labels(tmp_path):
+    shutil.copytree(ROOT, tmp_path / "v2")
+    root = tmp_path / "v2"
+    manifest = json.loads((root / "manifest.json").read_text())
+    manifest["version"] = 2
+    (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="manifest changed"):
+        verify_manifest(root)
+    assert verify_manifest(root, digest(root / "manifest.json"))["version"] == 2
+    del manifest["files"]["labels/opaque.json"]
+    (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="every case input and label"):
+        verify_manifest(root, digest(root / "manifest.json"))
+
+
+def test_custom_label_guard_protects_selected_corpus(tmp_path):
+    labels = tmp_path / "labels"
+    labels.mkdir()
+    (labels / "private.json").write_text("{}", encoding="utf-8")
+    code = (
+        "from pathlib import Path; import sys; "
+        "from evals.unfamiliar_benchmark import install_label_guard; "
+        "root=Path(sys.argv[1]); install_label_guard(root); (root/'labels'/'private.json').read_text()"
+    )
+    process = subprocess.run([sys.executable, "-c", code, str(tmp_path)], capture_output=True, text=True, check=False)
+    assert process.returncode != 0
+    assert "Evaluator labels are forbidden" in process.stderr
 
 
 def sample():

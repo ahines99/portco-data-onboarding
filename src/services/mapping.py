@@ -215,6 +215,13 @@ def propose_mapping(ctx: StepContext) -> StepResult:
             if table.qualified in structural_tables or (table.qualified, colname) in pk_hints:
                 reasons.append("STRUCTURAL_INFERENCE")
                 conf = Confidence.LOW if table.qualified in structural_tables else Confidence.MEDIUM
+            entity_conf = conf_of[table.qualified]
+            if entity_conf is not Confidence.HIGH:
+                # An exact field-name match cannot resolve uncertainty about the
+                # containing entity. Keep every dependent proposal review-bound.
+                reasons.append("ENTITY_UNCERTAIN")
+                if entity_conf is Confidence.LOW or conf is Confidence.HIGH:
+                    conf = entity_conf
             if conf is not Confidence.HIGH:
                 reasons.append("LOW_CONFIDENCE")
             if f"{entity}.{fieldname}" in metric_bearing:

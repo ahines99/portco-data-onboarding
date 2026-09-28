@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "raw.engagement_roster": "employee"
+  },
+  "mappings": {
+    "raw.engagement_roster.employee_id": "employee.employee_id",
+    "raw.engagement_roster.full_name": "employee.full_name",
+    "raw.engagement_roster.hire_date": "employee.hire_date",
+    "raw.engagement_roster.termination_date": "employee.termination_date",
+    "raw.engagement_roster.department": "employee.department",
+    "raw.engagement_roster.annual_salary_cents": "employee.salary",
+    "raw.engagement_roster.compensation": null,
+    "raw.engagement_roster.compensation_basis": null
+  },
+  "joins": [],
+  "units": {
+    "raw.engagement_roster.annual_salary_cents": "cents_to_major"
+  },
+  "must_review": [
+    "raw.engagement_roster.annual_salary_cents",
+    "raw.engagement_roster.compensation"
+  ],
+  "notes": [
+    "All people are artificial placeholders. This corpus does not test privacy publication. Unqualified compensation is not interchangeable with annual base salary."
+  ]
+}

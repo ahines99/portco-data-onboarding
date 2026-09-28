@@ -15,6 +15,28 @@ record for the exact shipped code, rather than treating an earlier test count as
 
 ## Current development and deployment boundary
 
+The `v0.2.0-rc.3` automated qualification candidate implements the owner's instruction that
+execution be fully agentic or automated. Its [gate ledger](AUTOMATED-QUALIFICATION.md) separates
+the pinned operator/reviewer exercise from current-source integration verification. Hosted
+acceptance and release publication are pending until the exact release record confirms them.
+
+- Separate delegated agents operated and reviewed the SAP-style workflow: six supported metrics,
+  38 verified publication files, 46 intact audit events and one rejected unsupported mapping.
+  Review was source-informed, not blinded or a human pilot.
+- The six-case [v2 corpus](../evals/agent_qualification_v2/README.md) was frozen before evaluation.
+  Its initial safety failure is retained. Entity-uncertainty remediation passes safety, with
+  accuracy unchanged at 42/52 proposals and 42/43 positive targets covered. Review rises from
+  22/52 to 48/52; ten incorrect proposals and ten unresolved fields remain.
+  On the original v1 corpus, current-source review rises to [17/33](evidence/unfamiliar-benchmark-rc3.json)
+  from the earlier 7/33, while 32/33 correctness, 32/32 target coverage and safety pass remain unchanged.
+- The [PostgreSQL source connector](POSTGRES-SOURCE.md) implements bounded, read-only snapshots
+  with explicit types/keys, verified remote transport requirements and atomic registration.
+  Its actual PostgreSQL acceptance covers synthetic extraction through nine-metric publication.
+- Agent observations led to review-packet evidence pointers, stage-appropriate context links
+  and neutral reviewer wording. A separate follow-up verified links and retained authority checks.
+- A prepared optional human-pilot kit and timing utility do not fabricate participation, consent,
+  a manual baseline or savings. Free-only delivery remains GitHub Pages plus local/CI execution.
+
 The stable portfolio release is [v0.1.1](https://github.com/ahines99/portco-data-onboarding/releases/tag/v0.1.1).
 The published [v0.2.0-rc.1 candidate](https://github.com/ahines99/portco-data-onboarding/releases/tag/v0.2.0-rc.1)
 adds production JWT verification, startup validation, readiness/resource controls and a Render/Auth0
