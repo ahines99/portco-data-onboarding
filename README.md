@@ -13,7 +13,8 @@ Synthetic-data portfolio prototype by Alex Hines, developed with substantial AI 
 The recorded fixture demo uses automated reviewer decisions. [Six real model sessions](docs/evidence/live-study/README.md)
 and a [captioned synthetic-voice tour](https://github.com/ahines99/portco-data-onboarding/releases/download/v0.1.0/portco-narrated-demo.mp4)
 are available. Alex approved finalization; [final acceptance](docs/FINAL-ACCEPTANCE.md) records delegated
-workflow completion, accepted annotations and known scope limits. No required owner actions remain.
+workflow completion, accepted annotations and known scope limits for that historical release.
+The later live-service goal still needs account access, billing approval and operational acceptance.
 
 Demonstrates governed onboarding of supported synthetic SaaS and SAP-style sources into a canonical
 private-equity data model:
@@ -23,15 +24,30 @@ private-equity data model:
 3. Routes uncertain mapping proposals to a reviewer.
 4. Generates a tested dbt project and semantic layer.
 5. Executes every generated metric in a disposable sandbox and reconciles monetary amounts to the cent.
-6. Publishes only what a human reviewer certified.
+6. Publishes only the exact bundle certified by a separate reviewer principal.
 
 It is exposed to agents (for example Claude Code) through a typed MCP server and a set of Agent
-Skills. The agent does the discovery; deterministic code does every calculation; humans hold every
-approval.
+Skills. The agent assists discovery; deterministic code performs authoritative calculations; separate
+reviewer principals hold approval authority. Demo reviewers are automated test identities; the
+accepted portfolio run used explicitly delegated owner authorization.
 
-The mapper depends on recognized schema vocabulary. An additional unfamiliar-schema probe produced
-**zero proposals and 0/10 target matches**; it was never approved or published. This is a tested
-workflow prototype, with [generalization limits reported alongside fixture results](docs/evidence/heldout-probe.json).
+The original unfamiliar-schema probe produced **zero proposals and 0/10 target matches**;
+it was never approved or published. That [historical evidence](docs/evidence/heldout-probe.json)
+remains unchanged. Current development adds reviewed structural inference and a separate-agent
+[frozen benchmark](evals/unfamiliar/README.md). Its [first post-change run](docs/evidence/unfamiliar-benchmark-first-postchange.json)
+matched 31/33 proposals (31/32 labeled targets), unchanged from the reconstructed baseline,
+and **failed the safety gate** because a competing monetary interpretation bypassed review.
+The [post-benchmark remediation](docs/evidence/unfamiliar-benchmark.json) passes safety with 32/33
+correct proposals and 32/32 positive targets covered. Review increases to 7/33; one wrong reviewed
+proposal and eight unresolved opaque fields remain. This is remediation after feedback, not fresh
+held-out validation or arbitrary-schema accuracy.
+
+An operator can now ingest [typed CSV extracts](docs/CSV-SOURCE.md). A [synthetic CSV smoke run](docs/evidence/csv-source-smoke.json)
+imported 11 tables / 14,639 rows, crossed service restarts and published nine metrics with a separate
+automated reviewer. A bounded public-data exercise imported
+and profiled [10,000 real historical retail rows](docs/PUBLIC-OPERATING-DATA.md), with six passing
+aggregate controls. This proves ingestion/profiling, not financial certification or customer impact.
+See the [operator pilot protocol](docs/OPERATOR-PILOT.md) and [resume/claims guide](docs/RESUME-AND-CLAIMS.md).
 
 ```text
 uv sync --all-extras && uv run poe demo
@@ -69,7 +85,7 @@ uv sync --all-extras && uv run poe demo
 | Guess when unsure | Routes low-confidence, metric-bearing, PII, conflicting, unit-mismatched and "looks like revenue but isn't" mappings to review. Metrics without evidence are `NEEDS_EVIDENCE`, never estimated. |
 | Let you type "approved" | Accepts approvals only from reviewer principals, never from the agent, and never from whoever started the run. Each approval is bound to a hash of exactly what was reviewed, and any later change revokes it. Publishing without a valid certification fails closed. |
 | Follow instructions it reads | Treats source text as untrusted data. Instruction-like comments and values are flagged and withheld, and cannot change workflow state (eval case G15). |
-| Be judged by vibes | Has CI gates for 37 golden evaluation cases across seven dimensions, plus 459 non-Postgres tests and four PostgreSQL tests, including security and failure injection. See the dated release evidence for exact scope. |
+| Be judged by vibes | Has golden evaluation gates across seven dimensions plus general, security, PostgreSQL, packaging and container checks. See the [release evidence](docs/RELEASE-STATUS.md) for dated results; test populations overlap. |
 
 ## Quickstart
 
@@ -105,10 +121,12 @@ uv run portco audit <run_id> --verify                     # hash-chain check
 
 `.mcp.json` registers the stdio server (`uv run portco-mcp`) as an **agent** principal. Copy
 `skills/*` into `.claude/skills/`. See [docs/agent_walkthrough.md](docs/agent_walkthrough.md). Over
-HTTP, run `uvicorn src.mcp_server:app` with `PORTCO_HTTP_TOKENS` set (the app refuses to start
-without it); each bearer token carries a role and an explicit tenant scope
-(`token=principal:role:company1|company2`, `*` for all). `GET /healthz` is the unauthenticated
-liveness probe.
+HTTP in development, run `uvicorn src.mcp_server:app` with `PORTCO_HTTP_TOKENS` set; each
+static token carries a role and tenant scope (`token=principal:role:company1|company2`, `*` for all).
+Production mode requires the [JWT deployment configuration](docs/LIVE-DEPLOYMENT.md), with
+signature, issuer, audience, lifetime, role and explicit company claims validated. `GET /healthz`
+is liveness; `GET /readyz` checks migration and writable storage readiness. Real hosted identity
+integration remains unverified.
 
 ## MCP surface
 
@@ -143,7 +161,10 @@ September audit and fixes: [docs/REMEDIATION-2026-09-27.md](docs/REMEDIATION-202
 
 Setup, tokens, upgrades and recovery: [operations](docs/operations.md).
 
-## Results (at time of writing)
+## Historical supported-fixture results
+
+These are recorded portfolio-fixture results, not measurements of arbitrary CSV inputs.
+Use [release status](docs/RELEASE-STATUS.md) for code/release-specific verification.
 
 | Measure | Result |
 |---|---|
@@ -153,17 +174,19 @@ Setup, tokens, upgrades and recovery: [operations](docs/operations.md).
 | Metric reconciliation | All nine generated metric definitions executed and reconciled; monetary amounts exact to the cent; 26/26 demo checks including structural and mart checks |
 | PII | 10/10 fixture A PII columns classified; zero canary leaks across outputs, artifacts, audit, evidence and published bundles |
 
-## Limitations and v0.2
+## Current scope and limitations
 
-- Sources are DuckDB fixtures. Snowflake, Airbyte and catalog publishing are designed as further
-  capability modules behind the same adapter and policy interfaces.
+- Sources include generated DuckDB fixtures and operator-imported, typed CSV snapshots. The
+  CSV boundary is tested independently of the fixture registry; it is not a live Snowflake,
+  Salesforce, SAP, SFTP or warehouse connector. The public retail exercise stops at profiling.
 - Publish target is a versioned local directory; warehouse deployment needs environment-scoped approvals.
 - The optional LLM mapping judge (`PORTCO_LLM_ENABLED=true`) is off by default. It can only reorder
   deterministic candidates or abstain, and it stays opt-in until a recorded live comparison beats the
   deterministic baseline ([ADR-0010](docs/adr/0010-llm-mapping-judge.md)).
-- HTTP auth uses static dev bearer tokens; production needs an OAuth/JWT verifier.
-- Postgres-specific tests are separate from the default local suite. Four tests passed against an
-  isolated PostgreSQL 14.24 instance locally and PostgreSQL 16 in hosted CI on 2026-09-27.
+- HTTP supports static development tokens and production JWT verification. Real Auth0/Render
+  acceptance, hosted persistence/recovery and runtime risk decisions remain pending.
+- PostgreSQL tests run separately from the default local suite. Do not add local and hosted test
+  counts together; use the exact release CI and verification assets for the current population.
 - Hosted CI passed minimal wheel/sdist checks on Linux and Windows, and actual Docker tests for
   migrations, auth, certified publication, file hashes, audit integrity, MCP restart and full stack
   recreation with both named volumes preserved. Local Docker is unavailable; the CI run is the proof.
@@ -182,7 +205,7 @@ Setup, tokens, upgrades and recovery: [operations](docs/operations.md).
 
 ```text
 src/domain/        contracts, ontology loader, metric reference calculators, policies, PII guard
-src/adapters/      DuckDB read-only adapter + SQL guard, repositories, artifact store, fault injection
+src/adapters/      DuckDB adapter + SQL guard, typed CSV snapshots, repositories, artifact store
 src/services/      one module per workflow step, approvals, optional LLM judge
 src/workflows/     persistent engine, step wiring, facade used by CLI and MCP
 src/capabilities/  MCP tools, resources, prompts, PII-guard middleware, auth

@@ -24,6 +24,24 @@ from src.settings import get_settings
 app = typer.Typer(no_args_is_help=True, add_completion=False, help="Portfolio-company data onboarding.")
 fixtures_app = typer.Typer(no_args_is_help=True, help="Synthetic fixture databases.")
 app.add_typer(fixtures_app, name="fixtures")
+sources_app = typer.Typer(no_args_is_help=True, help="Operator-managed external source snapshots.")
+app.add_typer(sources_app, name="sources")
+
+
+@sources_app.command("import-csv")
+def sources_import_csv(
+    manifest: Path,
+    root: Annotated[Path, typer.Option(help="Directory containing declared CSV extracts")],
+) -> None:
+    """Import explicit typed CSV extracts; local operator only, never a remote capability."""
+    from src.adapters.csv_source import import_csv
+
+    try:
+        receipt = import_csv(manifest, root, get_settings().var_root / "sources")
+    except DomainError as exc:
+        _fail(exc)
+        return
+    typer.echo(json.dumps(receipt, indent=2))
 
 
 def _service() -> Any:

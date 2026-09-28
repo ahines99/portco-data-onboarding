@@ -496,8 +496,9 @@ class DuckDBAdapter:
 class ConnectionRegistry:
     """Resolves connection ids. `fixture:<name>` maps to a generated fixture database."""
 
-    def __init__(self, fixtures_dir: Path) -> None:
+    def __init__(self, fixtures_dir: Path, sources_dir: Path | None = None) -> None:
         self.fixtures_dir = fixtures_dir
+        self.sources_dir = sources_dir
         self._extra: dict[str, ConnectionSpec] = {}
 
     def register(self, spec: ConnectionSpec) -> None:
@@ -517,6 +518,10 @@ class ConnectionRegistry:
             return registered.model_copy(update={"connection_id": connection_id, "schemas": schemas})
         if connection_id in self._extra:
             return self._extra[connection_id]
+        if connection_id.startswith("csv:") and self.sources_dir is not None:
+            from src.adapters.csv_source import resolve_csv
+
+            return resolve_csv(connection_id, self.sources_dir)
         if not connection_id.startswith("fixture:"):
             raise NotFound(f"unknown connection {connection_id!r}")
         from src.fixtures.generate import build_fixture, ensure_fixture, fixture_names

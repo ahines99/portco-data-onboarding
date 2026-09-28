@@ -6,6 +6,7 @@ from datetime import timedelta
 from itertools import combinations
 from uuid import UUID
 
+from src.adapters.external import type_family
 from src.domain.models import Confidence, EvidenceRef, Finding, StepName, utcnow
 from src.domain.ontology import EntityDef, Ontology, load_scoring
 from src.domain.project_models import (
@@ -58,17 +59,23 @@ def primary_key(ctx: StepContext, table: TableProfile) -> list[str]:
     n = table.row_count
     if n == 0:
         return []
-    singles = [c for c in table.columns if c.non_null_count == n and c.distinct_count == n]
+    canonical_ids = {f for e in ctx.ontology.entities.values() for f in e.id_fields}
+
+    def eligible(c: ColumnProfile) -> bool:
+        # Uniqueness alone is not evidence of an identifier (dates and amounts often
+        # happen to be unique in small samples). Explicit canonical IDs such as
+        # calendar.period remain eligible, but PII never does.
+        if c.pii_class:
+            return False
+        return field_owner(c.column, ctx.ontology) in canonical_ids or (
+            is_id_like(c.column) and c.inferred_semantic_type in {SemanticType.ID, SemanticType.CODE}
+        )
+
+    singles = [c for c in table.columns if eligible(c) and c.non_null_count == n and c.distinct_count == n]
     if singles:
         return [max(singles, key=_pk_rank).column]
     idish = sorted(
-        (
-            c
-            for c in table.columns
-            if c.non_null_count == n
-            and c.pii_class is None
-            and c.inferred_semantic_type in {SemanticType.ID, SemanticType.CODE, SemanticType.NUMERIC}
-        ),
+        (c for c in table.columns if c.non_null_count == n and eligible(c)),
         key=lambda c: (-_pk_rank(c), c.ordinal),
     )[:6]
     adapter = ctx.adapter()
@@ -100,6 +107,36 @@ def _column_score(table: TableProfile, edef: EntityDef, ontology: Ontology) -> f
     return num / den if den else 0.0
 
 
+def _structural_entity(table: TableProfile, ontology: Ontology) -> tuple[str, int] | None:
+    """Use known, type-compatible field anchors without needing a table alias.
+
+    Require two anchors, including one field unique to that entity, and a unique
+    best count. This is a review-only fallback, not semantic inference from values.
+    """
+    owners: dict[str, set[str]] = {}
+    for entity, edef in ontology.entities.items():
+        for name in edef.fields:
+            owners.setdefault(name, set()).add(entity)
+    supported = []
+    for entity, edef in ontology.entities.items():
+        anchors = set()
+        for col in table.columns:
+            field = field_owner(col.column, ontology)
+            if not field or field not in edef.fields or col.pii_class or not col.non_null_count:
+                continue
+            expected = edef.fields[field].type
+            actual = type_family(col.dtype)
+            if actual == expected or (expected == "decimal" and actual == "integer"):
+                anchors.add(field)
+        if len(anchors) >= 2 and any(owners[field] == {entity} for field in anchors):
+            supported.append((len(anchors), entity))
+    supported.sort(reverse=True)
+    if not supported or (len(supported) > 1 and supported[0][0] == supported[1][0]):
+        return None
+    count, entity = supported[0]
+    return entity, count
+
+
 def classify_table(table: TableProfile, pk: list[str], ontology: Ontology) -> EntityCandidate:
     cfg = load_scoring()["entity"]
     w = cfg["weights"]
@@ -117,6 +154,18 @@ def classify_table(table: TableProfile, pk: list[str], ontology: Ontology) -> En
     best_score, best, feats = scored[0]
     alts = [ScoredEntity(entity=n, score=s) for s, n, _ in scored[1:4] if s > 0]
     if best_score < cfg["min_score"]:
+        structural = _structural_entity(table, ontology)
+        if structural:
+            entity, anchors = structural
+            return EntityCandidate(
+                table=table.qualified,
+                canonical_entity=entity,
+                score=0.49,
+                confidence=Confidence.LOW,
+                feature_breakdown={"structural_anchors": float(anchors)},
+                primary_key_columns=pk,
+                alternatives=alts,
+            )
         return EntityCandidate(
             table=table.qualified,
             canonical_entity=None,

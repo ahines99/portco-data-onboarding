@@ -1,6 +1,7 @@
 # Local operations and recovery
 
-Scope: synthetic fixtures and trusted local operators. Python 3.12 is required. Linux CI and Windows
+Scope: synthetic fixtures, authorized operator-imported CSV snapshots and trusted local operators.
+Python 3.12 is required. Linux CI and Windows
 verification are supported; macOS has not been verified. All state paths below belong to this project.
 
 ## First run
@@ -70,8 +71,10 @@ The container smoke automates reviewer decisions for synthetic CI data, not for 
 
 ## Upgrade and backups
 
-Stop writes before backing up. Preserve the state database, `artifacts/`, `published/`, fixtures and
-required configuration together. SQLite backups must use the SQLite backup API or a cleanly closed
+Stop workflow writes and CSV imports before backing up. Preserve the state database, `artifacts/`,
+`published/`, fixtures, `<var_root>/sources/` and required configuration together. The source directory
+contains registered CSV snapshots and their hash receipts; upstream extracts cannot replace it.
+SQLite backups must use the SQLite backup API or a cleanly closed
 database; copying only a live `.db` can omit WAL data. PostgreSQL requires a consistent database dump
 and matching artifact backup while workflow writes are quiesced. Store tokens separately.
 

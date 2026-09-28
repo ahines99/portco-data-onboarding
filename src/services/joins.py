@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from uuid import UUID
 
 from src.adapters.external import type_family
@@ -62,6 +63,7 @@ def infer_joins(ctx: StepContext) -> StepResult:
     pk_of = {c.table: c.primary_key_columns for c in entities.candidates if c.canonical_entity}
 
     best: dict[tuple[str, str], JoinCandidate] = {}
+    contenders: dict[tuple[str, str], list[JoinCandidate]] = defaultdict(list)
     evidence: list[Evidence] = []
     parents: dict[UUID, list[UUID]] = {}  # lineage: containment evidence -> both tables' profile evidence
     for rq, rpk in pk_of.items():
@@ -69,6 +71,8 @@ def infer_joins(ctx: StepContext) -> StepResult:
             continue
         rt = tables[rq]
         rc = rt.column(rpk[0])
+        if rc.pii_class:
+            continue
         for lq, lt in tables.items():
             if lq == rq or lq not in entity_of:
                 continue
@@ -85,18 +89,31 @@ def infer_joins(ctx: StepContext) -> StepResult:
                 ns = name_score(lc, rc, rt, ctx)
                 if (entity_of[lq], entity_of[rq]) in rels:
                     ns = min(1.0, ns + cfg["relationship_bonus"])
-                if ns < cfg["min_name_score"]:
+                weak_name = ns < cfg["min_name_score"]
+                structural = weak_name or (field_owner(lc.column, ctx.ontology) is None and not same_field)
+                if weak_name and not (
+                    (entity_of[lq], entity_of[rq]) in rels
+                    and lc.inferred_semantic_type is SemanticType.ID
+                    and lc.column not in own_pk
+                    and lc.non_null_count >= 5
+                    and (lc.distinct_count or 0) >= 3
+                    and type_family(lc.dtype) == type_family(rc.dtype)
+                ):
                     continue
                 cont = adapter.containment(
                     (lt.schema_name, lt.table_name, lc.column), (rt.schema_name, rt.table_name, rc.column)
                 )
                 if cont.ratio < cfg["min_containment"]:
                     continue
+                if weak_name and cont.ratio < cfg["review_containment_below"]:
+                    continue
                 w = cfg["weights"]
                 score = round(w["name"] * ns + w["containment"] * cont.ratio, 4)
                 left_unique = lc.distinct_count == lc.non_null_count
                 cardinality: Cardinality = "1:1" if left_unique else "N:1"
                 reasons: list[str] = []
+                if structural:
+                    reasons.append("STRUCTURAL_JOIN")
                 if cont.ratio < cfg["review_containment_below"]:
                     reasons.append("ORPHANS")
                 if frozenset({lq, rq}) <= next((o for o in overlap_tables if lq in o and rq in o), frozenset()):
@@ -138,15 +155,38 @@ def infer_joins(ctx: StepContext) -> StepResult:
                     evidence_id=ev.evidence_id,
                 )
                 key = (lq, lc.column)
+                contenders[key].append(cand)
+                evidence.append(ev)
                 if key not in best or cand.score > best[key].score:
                     best[key] = cand
-                    evidence = [e for e in evidence if e.payload.get("join") != best[key].join_id] + [ev]
 
+    # Aggregate overlap alone cannot choose between two plausible reference
+    # tables. Do not turn alphabetical iteration order into an asserted FK.
+    ambiguous = {
+        key: candidates
+        for key, candidates in contenders.items()
+        if len(candidates) > 1
+        and any("STRUCTURAL_JOIN" in c.reason_codes for c in candidates)
+        and sum(best[key].score - c.score <= 0.05 for c in candidates) > 1
+    }
+    for key in ambiguous:
+        del best[key]
     joins = sorted(best.values(), key=lambda j: j.join_id)
-    keep_ev = {j.evidence_id for j in joins}
+    keep_ev = {j.evidence_id for j in joins} | {j.evidence_id for candidates in ambiguous.values() for j in candidates}
     evidence = [e for e in evidence if e.evidence_id in keep_ev]
     ev_by_id = {e.evidence_id: e for e in evidence}
     findings = []
+    for (table, column), candidates in ambiguous.items():
+        findings.append(
+            Finding(
+                code="JOIN_AMBIGUOUS",
+                title=f"Ambiguous relationship for {table}.{column}",
+                statement="Multiple target keys have similar aggregate support; no join was proposed.",
+                confidence=Confidence.LOW,
+                evidence=[ev_by_id[j.evidence_id].ref() for j in candidates if j.evidence_id],
+                metadata={"table": table, "column": column, "candidate_count": len(candidates)},
+            )
+        )
     for j in joins:
         assert j.evidence_id is not None
         refs = [ev_by_id[j.evidence_id].ref()]

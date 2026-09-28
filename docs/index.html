@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Evidence-backed data onboarding with deterministic financial reconciliation and independent review gates.">
+  <meta name="description" content="Evidence-backed data onboarding with deterministic financial reconciliation and separate reviewer gates.">
   <title>Portco Data Onboarding · Alex Hines</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23006d68'/%3E%3Cpath d='M8 23V15h4v8zm6 0V9h4v14zm6 0V5h4v18z' fill='white'/%3E%3C/svg%3E">
   <style>
@@ -31,12 +31,12 @@
   <div class="eyebrow">Portfolio company data onboarding</div>
   <h1>Source data.<br>Explainable mappings.<br>Certified metrics.</h1>
   <p class="lead">A governed workflow for supported synthetic SaaS and SAP-style schemas—carrying evidence, review decisions and reconciliation through to publication.</p>
-  <p class="note">Scope matters: an unfamiliar-schema probe produced zero proposals and matched 0/10 labeled targets. It was never approved or published. <a href="evidence/heldout-probe.json">Inspect the generalization result</a>.</p>
+  <p class="note">Historical limitation: the original unfamiliar-schema probe produced zero proposals and matched 0/10 labeled targets. It was never approved or published. <a href="evidence/heldout-probe.json">Inspect the original result</a>. A later frozen benchmark found no mapping-accuracy improvement and exposed a safety failure; subsequent repairs are post-benchmark remediation, not held-out validation.</p>
   <div class="actions"><a class="button primary" href="#demo">Watch the scripted replay</a><a class="button" href="https://github.com/ahines99/portco-data-onboarding/blob/main/docs/portfolio_case_study.md">Read the case study</a></div>
   <div class="cards">
     <div class="card"><strong>Evidence before action</strong><p>Unit mismatches and ambiguous revenue meanings become review items with traceable evidence.</p></div>
     <div class="card"><strong>Deterministic calculations</strong><p>Nine generated monthly metrics are executed and checked against independent reference calculations.</p></div>
-    <div class="card"><strong>Separate human gates</strong><p>The agent role cannot approve. Publication requires current certification for the bundle and its metrics.</p></div>
+    <div class="card"><strong>Separate reviewer gates</strong><p>The agent role cannot approve. Publication requires current certification; demo reviewers are automated identities.</p></div>
   </div>
   <section aria-labelledby="workflow"><h2 id="workflow">A workflow you can inspect</h2>
     <div class="flow" aria-label="Source to profile to mapping review to dbt and reconciliation to certification to publication">
@@ -62,7 +62,12 @@
     <a href="evidence/reconciliation.json">Metric reconciliation details →</a><a href="evidence/recovery.json">Populated upgrade and restore proof →</a>
     <a href="https://github.com/ahines99/portco-data-onboarding/actions">Hosted CI →</a><a href="https://github.com/ahines99/portco-data-onboarding/blob/main/docs/RELEASE-STATUS.md">Release status and accepted scope →</a>
   </div></section>
-  <section><h2>Deliberate boundaries</h2><p>Synthetic DuckDB sources. Versioned local publication. Development authentication. No production deployment or measured business savings. General Skill efficacy and independent usability remain unclaimed. Owner-approved annotations and delegated workflow completion are documented.</p><p>The implementation was developed with substantial AI assistance. The case study distinguishes implemented behavior, automated verification and owner-approved evidence and optional future validation.</p></section>
+  <section><h2>Extending the source boundary</h2>
+    <p>Typed CSV extracts can be imported as registered read-only snapshots. A bounded public-data exercise imported and profiled 10,000 historical retail rows, passing six aggregate controls while retaining missing IDs, cancellations and negative quantities. No mapping, financial certification or customer benefit is claimed for that exercise.</p>
+    <p>The first separately authored frozen benchmark produced 31 correct mappings from 33 proposals (31 of 32 targets), unchanged from baseline, and failed safety because a competing monetary interpretation bypassed review. Post-benchmark remediation passes safety at 32/33 correct proposals and 32/32 positive targets covered. Review rises to 7/33; one wrong reviewed proposal and eight unresolved opaque fields remain. Original results are preserved; this is not a fresh held-out study.</p>
+    <div class="links"><a href="https://github.com/ahines99/portco-data-onboarding/blob/main/docs/CSV-SOURCE.md">CSV import contract</a><a href="https://github.com/ahines99/portco-data-onboarding/blob/main/docs/PUBLIC-OPERATING-DATA.md">Public retail source and evidence</a><a href="https://github.com/ahines99/portco-data-onboarding/blob/main/evals/unfamiliar/README.md">Frozen separate-agent benchmark</a><a href="https://github.com/ahines99/portco-data-onboarding/blob/main/docs/OPERATOR-PILOT.md">Operator pilot protocol (not yet run)</a></div>
+  </section>
+  <section><h2>Deliberate boundaries</h2><p>Synthetic financial workflows, typed CSV ingestion and bounded public-data profiling. Versioned local publication. Production JWT controls are implemented in a deployment candidate; the actual host and identity provider have not been accepted. No production deployment or measured business savings. General Skill efficacy and independent usability remain unclaimed. Owner-approved annotations and delegated workflow completion are documented.</p><p>The implementation was developed with substantial AI assistance. The case study distinguishes implemented behavior, automated verification and owner-approved evidence and outstanding live/operator validation. Separate-agent benchmark authorship is not external human evaluation.</p></section>
   <footer>Python · dbt · DuckDB · PostgreSQL · MCP · MIT licensed. <a href="https://github.com/ahines99">GitHub profile</a></footer>
 </main><script>
   const terminal=document.getElementById('terminal'),seek=document.getElementById('seek'),time=document.getElementById('time'),play=document.getElementById('play');

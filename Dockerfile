@@ -21,7 +21,10 @@ FROM python:3.12-slim
 RUN python -m pip uninstall -y pip
 RUN useradd --create-home --uid 10001 portco
 WORKDIR /app
-COPY --from=build --chown=portco:portco /app /app
+COPY --from=build /app /app
+# Application code and its environment stay root-owned. Runtime writes belong in /data
+# or temporary directories; remove inherited privilege-bearing file permissions.
+RUN find / -xdev -type f -perm /6000 -exec chmod a-s {} +
 ENV PATH="/app/.venv/bin:$PATH" PORTCO_VAR_ROOT=/data
 RUN mkdir -p /data && chown portco:portco /data
 USER portco

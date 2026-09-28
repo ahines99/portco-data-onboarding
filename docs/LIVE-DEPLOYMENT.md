@@ -99,6 +99,15 @@ do not switch the runtime to root to make a failed mount check pass. `/healthz` 
 at least 100 MiB free. Readiness returns no private diagnostics. Configure provider alerts for
 unhealthy service, restart loops and disk growth; readiness is not an alert-delivery system.
 
+Application code under `/app` stays root-owned; the image strips SUID/SGID bits. After deployment,
+run `python -m src.runtime_evidence --assert-image` inside an operator session and save its JSON
+with the provider image identity and source SHA. It checks non-root identity and the scoped
+filesystem inventory and records capabilities, `NoNewPrivs`, process names, mount boundaries and
+available cgroup v2 limits without reading tokens or process arguments. Review paths before sharing.
+The stricter `--assert-compose` mode is for the local Compose CI environment; its zero capabilities,
+no-new-privileges and resource limits must not be attributed to Render without actual evidence.
+See the [collector scope and limitations](image-risk-assessment.md#collecting-measured-container-evidence).
+
 Production rejects local identity fallback, unauthenticated transport, SQLite state, disabled
 reviewer separation and fault injection. MCP admits only the configured Host/Origin, limits request
 bodies to 256 KiB, sessions to 64 with ten-minute idle expiry, and expensive tool work to one
@@ -130,6 +139,8 @@ not restart services or prove backup recovery; those separate checks remain belo
 - Rehearse a quiesced database-plus-artifact backup and restore in an isolated deployment at the
   same `/data` path. Automatic independent database and disk snapshots alone are not proof of a
   consistent application recovery point. Record achieved recovery time and data-loss window.
+  If CSV sources are registered, stop imports too and include `/data/sources` with its snapshot
+  databases and registrations; verify source digests and connection resolution after restoration.
 - Inspect the fresh image scan and decide on every residual HIGH/CRITICAL vulnerability before
   exposure. The image gate rejects fixable HIGH/CRITICAL findings; it does not certify unfixed ones
   harmless. Use the [per-CVE assessment](image-risk-assessment.md) to record actual runtime evidence;
@@ -141,7 +152,10 @@ not restart services or prove backup recovery; those separate checks remain belo
 
 ## Remaining boundary
 
-Unfamiliar-schema generalization remains 0/10, full MetricFlow is unsupported, and live business data
-needs a separate data/PII review and least-privilege source integration. Production authentication
+The historical unfamiliar-schema probe remains 0/10; the separate
+[frozen benchmark](../evals/unfamiliar/README.md) does not establish arbitrary-source accuracy.
+Full MetricFlow is unsupported, and live business data needs a separate data/PII review and
+least-privilege source access. The [CSV importer](CSV-SOURCE.md) provides a bounded operator-file
+integration, not a live SaaS connector. Production authentication
 does not change those product limitations. See [operations](operations.md) and
 [security review](security-review.md) for recovery instructions and residual risks.

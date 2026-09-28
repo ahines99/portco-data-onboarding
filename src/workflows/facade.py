@@ -77,7 +77,7 @@ class OnboardingService:
         if run_migrations:
             migrate(settings.db_url)
         store = Store(make_engine(settings.db_url), ArtifactStore(settings.artifact_root))
-        connections = ConnectionRegistry(settings.fixtures_dir)
+        connections = ConnectionRegistry(settings.fixtures_dir, settings.var_root / "sources")
         faults = faults if faults is not None else FaultInjector.parse(settings.faults, settings.env)
         services: dict[str, Any] = {"faults": faults}
         if judge is None and settings.llm_enabled:

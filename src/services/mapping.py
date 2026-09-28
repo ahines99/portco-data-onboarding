@@ -90,7 +90,7 @@ def _score_column(
 
 
 def _fk_hints(
-    joins: JoinGraph, entity_of: dict[str, str], ontology: Ontology
+    joins: JoinGraph, entity_of: dict[str, str], ontology: Ontology, entities: EntityInference
 ) -> dict[tuple[str, str], tuple[str, float]]:
     """A column that joins to another table's key inherits that key's canonical field name."""
     hints: dict[tuple[str, str], tuple[str, float]] = {}
@@ -100,6 +100,15 @@ def _fk_hints(
         if not right_entity or not left_entity:
             continue
         right_field = field_owner(j.right_columns[0], ontology)
+        right_candidate = entities.for_table(j.right_table)
+        ids = ontology.entities[right_entity].id_fields
+        if (
+            right_field is None
+            and len(ids) == 1
+            and right_candidate
+            and right_candidate.primary_key_columns == j.right_columns
+        ):
+            right_field = ids[0]
         if right_field is None or right_field not in ontology.entities[right_entity].fields:
             continue
         if right_field in ontology.entities[left_entity].fields:
@@ -118,7 +127,27 @@ def propose_mapping(ctx: StepContext) -> StepResult:
 
     entity_of = {c.table: c.canonical_entity for c in entities.candidates if c.canonical_entity}
     conf_of = {c.table: c.confidence for c in entities.candidates}
-    fk_hints = _fk_hints(joins, entity_of, ontology)
+    fk_hints = _fk_hints(joins, entity_of, ontology, entities)
+    pk_hints: dict[tuple[str, str], tuple[str, float]] = {}
+    structural_tables = set()
+    for candidate in entities.candidates:
+        if not candidate.canonical_entity:
+            continue
+        ids = ontology.entities[candidate.canonical_entity].id_fields
+        if candidate.feature_breakdown.get("structural_anchors"):
+            structural_tables.add(candidate.table)
+        if (
+            len(ids) == 1
+            and len(candidate.primary_key_columns) == 1
+            and (
+                candidate.confidence is Confidence.HIGH
+                or candidate.feature_breakdown.get("name") == 1.0
+                or candidate.table in structural_tables
+            )
+        ):
+            column = candidate.primary_key_columns[0]
+            if field_owner(column, ontology) is None:
+                pk_hints[(candidate.table, column)] = (ids[0], 0.85)
     minor_units = {
         (t.qualified, c.column)
         for t in profile.tables
@@ -140,10 +169,11 @@ def propose_mapping(ctx: StepContext) -> StepResult:
         ref = EvidenceRef(source_id=str(table.evidence_id), uri=f"profile://{table.qualified}", retrieved_at=utcnow())
         ranked: dict[str, list[ScoredTarget]] = {}
         for col in table.columns:
-            hint = fk_hints.get((table.qualified, col.column))
+            hint = fk_hints.get((table.qualified, col.column)) or pk_hints.get((table.qualified, col.column))
             ranked[col.column] = _score_column(col, entity, conf_of[table.qualified], ontology, hint)
 
-        # Assign targets: each canonical field goes to at most one column per table.
+        # Normally a target has one source per table. Competing interpretations
+        # deliberately retain the same target and must be resolved at review.
         assigned: dict[str, str] = {}
         conflicts: dict[str, list[str]] = defaultdict(list)
         order = sorted(ranked, key=lambda c: -ranked[c][0].score)
@@ -157,7 +187,18 @@ def propose_mapping(ctx: StepContext) -> StepResult:
                 if holder is None:
                     assigned[colname] = cand.field
                     break
-                if abs(ranked[holder][0].score - cand.score) <= cfg["conflict_margin"] and cand is ranked[colname][0]:
+                monetary_competition = (
+                    cand is ranked[colname][0]
+                    and ontology.field(entity, cand.field).unit in {"currency_major", "currency_minor"}
+                    and type_family(table.column(colname).dtype) in {"integer", "decimal"}
+                )
+                if cand is ranked[colname][0] and (
+                    monetary_competition or abs(ranked[holder][0].score - cand.score) <= cfg["conflict_margin"]
+                ):
+                    # An amount variant is not evidence for a different financial
+                    # role simply because its first-choice target is occupied.
+                    # Both the exact match and its variant require review, even
+                    # when their lexical scores are far apart.
                     assigned[colname] = cand.field
                     conflicts[cand.field] += [holder, colname]
                     break
@@ -171,6 +212,9 @@ def propose_mapping(ctx: StepContext) -> StepResult:
             fdef = ontology.field(entity, fieldname)
             reasons: list[str] = []
             conf = confidence_for(top.score)
+            if table.qualified in structural_tables or (table.qualified, colname) in pk_hints:
+                reasons.append("STRUCTURAL_INFERENCE")
+                conf = Confidence.LOW if table.qualified in structural_tables else Confidence.MEDIUM
             if conf is not Confidence.HIGH:
                 reasons.append("LOW_CONFIDENCE")
             if f"{entity}.{fieldname}" in metric_bearing:
@@ -181,7 +225,15 @@ def propose_mapping(ctx: StepContext) -> StepResult:
             if fieldname in conflicts:
                 reasons.append("CONFLICT")
             transform = None
-            if (table.qualified, colname) in minor_units and fdef.unit == "currency_major":
+            unit_tokens = set(raw_tokens(colname))
+            explicit_cents = bool(unit_tokens & {"cent", "cents"})
+            ambiguous_minor = "minor" in unit_tokens and not explicit_cents
+            if ambiguous_minor and fdef.unit == "currency_major":
+                reasons.append("UNIT_UNCERTAIN")
+            elif (
+                (table.qualified, colname) in minor_units
+                or (explicit_cents and type_family(col.dtype) in {"integer", "decimal"})
+            ) and fdef.unit == "currency_major":
                 reasons.append("UNIT_MISMATCH")
                 transform = "cents_to_major"
             if col.inferred_semantic_type is SemanticType.DATE_STRING and fdef.type == "date":

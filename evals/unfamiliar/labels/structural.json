@@ -1,0 +1,14 @@
+{
+  "entities": {"raw.r17":"invoice", "raw.r29":"customer"},
+  "mappings": {
+    "raw.r17.invoice_id":"invoice.invoice_id", "raw.r17.customer_id":"invoice.customer_id",
+    "raw.r17.invoice_date":"invoice.invoice_date", "raw.r17.due_date":"invoice.due_date",
+    "raw.r17.total_amount":"invoice.total_amount", "raw.r17.currency":"invoice.currency",
+    "raw.r17.batch_marker":null, "raw.r29.customer_id":"customer.customer_id",
+    "raw.r29.customer_name":"customer.customer_name", "raw.r29.currency":"customer.currency"
+  },
+  "joins":[["raw.r17.customer_id","raw.r29.customer_id"]],
+  "units":{"raw.r17.total_amount":null},
+  "must_review":[],
+  "rationale":"Unfamiliar table names, meaningful structural fields; batch marker is operational metadata with no canonical target."
+}

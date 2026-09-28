@@ -89,6 +89,13 @@ jobs:
       - run: uv run poe fixtures
       - name: Golden evaluation (gating)
         run: uv run poe eval
+      - name: Frozen unfamiliar-schema integrity and review safety
+        run: uv run python -m evals.unfamiliar_benchmark --output var/unfamiliar-benchmark.json --enforce-safety
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unfamiliar-benchmark
+          path: var/unfamiliar-benchmark.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -135,6 +142,13 @@ jobs:
           echo "PORTCO_HTTP_TOKENS=$token=agent:ci:agent:portco_a;$reviewer=ci-reviewer:reviewer:portco_a" >> "$GITHUB_ENV"
       - run: docker compose --profile full up --build -d
       - run: uv run python scripts/smoke_container.py
+      - name: Record and enforce actual container runtime restrictions
+        run: docker compose --profile full exec -T mcp python -m src.runtime_evidence --assert-compose > runtime-evidence.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: runtime-evidence
+          path: runtime-evidence.json
       - name: Scan actual application image
         run: |
           image=$(docker compose --profile full images -q mcp)

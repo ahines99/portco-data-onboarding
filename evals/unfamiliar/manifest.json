@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "authorship": "Independent agent; public contracts and ontology only; no mapper/scoring/old probe inspected",
+  "baseline_commit": "e09be37f9e99f6c805698af50b3d13b5f421a923",
+  "cases": [
+    "structural",
+    "opaque",
+    "noisy",
+    "units"
+  ],
+  "files": {
+    "inputs/noisy.sql": "fee18943bbadf164ca4bf1b64191ce6efcebcf457212563fa1b0a08cb1491533",
+    "inputs/opaque.sql": "fbcd12b812f551aadcfee807a27d9b92b911b3dc9c6acc19abe47e8c2aaeff21",
+    "inputs/structural.sql": "fc3f611310628b63affb9b15e2dcf55a2ece21290afc543c5417877479b0cef6",
+    "inputs/units.sql": "d8e61161b90a3861edf5eeb7b91eaee9c79b6015c6459681c92c33c9e8a07536",
+    "labels/noisy.json": "753a668ce9d43a52c44a9e8cc854a2a47ab87fde7f669723afedf22911fc52bc",
+    "labels/opaque.json": "40898d953735202c996de90893c4303956325a0d94a44029ab09213e7c8f5bdb",
+    "labels/structural.json": "1c6576e27f8d58878cd301a12f7e4fe6cfc4f7e13dce017850de6f207cd66d44",
+    "labels/units.json": "25d78a656d2488d17760479d00f42402f221614b2cd14bf02686a2c2a734a8c5"
+  }
+}

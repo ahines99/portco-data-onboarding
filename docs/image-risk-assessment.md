@@ -19,7 +19,12 @@ shell execution and archive extraction found no direct invocation of mount, nsen
 infocmp, systemd-homed, Perl or Archive::Tar. This is a limited source inspection: dependencies,
 native extensions, a compromised process and privileged operator actions are not ruled out.
 
-The Dockerfile sets the application user to UID 10001. The local Compose service additionally
+The Dockerfile sets the application user to UID 10001. The audit-gap changes also retain root
+ownership of `/app` and strip SUID/SGID bits from regular files in the final image's root filesystem.
+This reduces application code mutation and privilege-helper exposure; it does **not** patch the
+flagged packages or remove the requirement for a fresh unfiltered scan. Those changes postdate the
+release scan above and must be proved by the new image's CI evidence before relying on them.
+The local Compose service additionally
 drops all capabilities, sets `no-new-privileges`, and binds the host port to loopback. **Those
 Compose settings are not declared by the Render Blueprint and must not be attributed to Render.**
 The production service is intended to be reachable through Render's HTTPS proxy.
@@ -43,6 +48,28 @@ make a scanner count smaller.
 | [CVE-2026-9538](https://security-tracker.debian.org/tracker/CVE-2026-9538) | Perl Archive::Tar reads a crafted oversized tar entry and exhausts memory. | No application Perl archive ingestion. Verify whether the module is installed in the rebuilt image and keep arbitrary archive processing outside the service. Container memory limits reduce impact, but do not fix the parser. |
 
 ## Deployment decision record still required
+
+### Collecting measured container evidence
+
+Run `python -m src.runtime_evidence --assert-image` in an operator session inside the actual
+Linux application container and retain its JSON output alongside the deployed source SHA, provider
+image identity and fresh scan. The collector is read-only and does not read environment variables,
+process arguments, mount sources or mount options. Its output still includes filesystem paths and
+process names; review it before publishing as an operational artifact.
+
+The image profile fails on root UID, missing identity evidence, SUID/SGID files in the inspected
+executable/application directories, non-root ownership or group/other writability in `/app`, or
+unreadable inventory paths. Its inventory is explicitly scoped to `/usr/bin`, `/usr/sbin`,
+`/usr/local` and `/app`; it does not claim to enumerate a provider's host or arbitrary mounted data.
+Symlink targets are checked, but linked directories are not recursively followed. The Docker build
+strips privilege bits across the image root filesystem, independently of this narrower runtime check.
+
+Container CI additionally invokes `--assert-compose`, requiring zero capability masks,
+`NoNewPrivs=1`, and the declared cgroup v2 limits (2 GiB memory, one CPU, 256 PIDs) for the local
+Compose service. CI retains the `runtime-evidence` artifact. These stronger assertions describe
+Compose only. Render must be inspected separately; unavailable cgroup fields or provider restrictions
+remain unknown, never assumed safe. Neither profile certifies CVE exploitability, host isolation,
+application integrity after compromise, nor a successful live deployment.
 
 Before exposing the actual service, record its source SHA, image identity, fresh unfiltered scan,
 effective UID, process tree, Linux capability fields, `NoNewPrivs`, SUID/SGID inventory and mounted

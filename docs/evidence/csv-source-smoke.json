@@ -1,0 +1,295 @@
+{
+  "format_version": 1,
+  "generated_at": "2026-09-28T03:01:44.680372+00:00",
+  "source_commit": "e09be37f9e99f6c805698af50b3d13b5f421a923",
+  "worktree_dirty": true,
+  "implementation_sha256": {
+    "src/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/adapters/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/adapters/artifact_store.py": "159181433ee4c7f65a82e15f6d4d82093c2ebefc9ef59b40d337153720d6ccdd",
+    "src/adapters/csv_source.py": "210be237f62768864aa00db271b2141f115dab3d5ccae3eedae0aca7f98f54d1",
+    "src/adapters/db.py": "e9dc432296c9ef235ff6c69b2c62d947a9b943c1a9713922e85a55ec4b2978a1",
+    "src/adapters/external.py": "9b4823874e07b39f03231f2b7ed62ff79bc6d4a8059f39ec1357cf5804e59521",
+    "src/adapters/faults.py": "b5d7260fd1c682cb5ef849dcb4cf13f47a9263979b1527824675d845a0b83df9",
+    "src/adapters/repositories.py": "fdabab49baaef60dfce10a533143ef1587d16335bca2263add4fecff587e23fb",
+    "src/adapters/sql_guard.py": "aaa8851b1ddeab56ef0dd65c48800d48b88ea6e890767920ce7f0edf4519e4ff",
+    "src/capabilities/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/capabilities/auth.py": "df8a8bea6449e7ae886307dc0588343d77b1bbf3e4b1c75621780ad265b4e229",
+    "src/capabilities/common.py": "ef7e0ffe33e2b652fef6bc97149e385999dffeb2f61eb18096ebfc574d7529c0",
+    "src/capabilities/guard.py": "88afb0bd80c28b7668dd18357c56c0fbbec89379606f1570de5594cc46b09116",
+    "src/capabilities/jwt_auth.py": "0827020192657fef7348374a110a76ae2a020f33b925d14d2ae9b5559244beeb",
+    "src/capabilities/prompts.py": "a4b489076f07bb00eadb47ee12f16d88f1cd78a0977bd16deb0d35d999863c78",
+    "src/capabilities/resources.py": "e2531092696d093c309453d630eeeb3e4ed112dae8fb3a46c6fd119c6421c2a6",
+    "src/capabilities/schemas.py": "393369f84f0fa415517db15e3035a6cc7186e69ec85f27d4fc750009d866dae7",
+    "src/capabilities/summaries.py": "84032b189c06a6ddcc6413f8f04acb8d9e8bd87a7ca4f440eef47ff7c4878638",
+    "src/capabilities/tools.py": "d88c254211aa82ba00cff52a515a3ccb5f3b1df0e92eee1f3142aebb1887a476",
+    "src/capabilities/workload.py": "437b4d02c3043b93142f7d882ea2d06a152dddddff08c77b0fc231825d1da420",
+    "src/cli.py": "0a9ce430fbad961ab320531121fe067f7b28399bfe2e2de1d7e53174f1d534a5",
+    "src/demo.py": "419ec3e02addc2496b4b224a554bbee68391e7056302bcce2a30b5b22c07d2bd",
+    "src/domain/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/domain/errors.py": "aa250e5c8e8415764dd3377c846b8ec1e96771bde2b55b3f4cca59e98a651a34",
+    "src/domain/hashing.py": "c9c4a01378e3bd634253b43b8cad2bd6e922cd19c7872d3f483ba6e4966b5e5f",
+    "src/domain/identifiers.py": "29ecda61dbde261e555b36038af0e302a3aae5d9cd33db2e7da7dc126f289ed8",
+    "src/domain/metrics_reference.py": "7794af6ade0b94974fb27fb87a122471942def204bbfa831fc99b45e1bfa24fc",
+    "src/domain/models.py": "a7fafbd5f91b18d4b7e060955d836df1ab829c3252d754395cec30d82d7543a1",
+    "src/domain/ontology.py": "f03539a215cf746d27cbe1308e48afb3a09b77d55d829c746095d48fb49ae659",
+    "src/domain/pii_guard.py": "e024268040f98b0125a800d1a125442fb62afbc3ee9f103d096d0aaa4bc205ef",
+    "src/domain/policies.py": "6fc22d7fa0435f9e9414a61f0bba5aef7dc17ffb240b9c6a38488845f16b37e4",
+    "src/domain/project_models.py": "aa999f1ed3cee0da4592535f5856feed5de30ead4435dc87257cad7cdb469f5c",
+    "src/domain/run_states.py": "301c67fe22feb2ddb4a7b451890002361b3403f4e0810b835de022d3131b3244",
+    "src/domain/untrusted.py": "be15fde8c11695b4b814910aa7e9970bc203e78940ab2f52194206121fe92a03",
+    "src/fixtures/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/fixtures/base.py": "d018e43368e8deee16cf6dbae34d7d2403ce05409bc45a3de98b645c44a347b7",
+    "src/fixtures/category_domains.py": "6f471b01c3d5823b1ef7f5080e0bfc4433b2f444a7367ce016d2dfb7b127bc86",
+    "src/fixtures/generate.py": "dfa2809d251b9b2db46b75a8377d8e882ba84b659e4859733c8a5a786e1371e7",
+    "src/fixtures/portco_a.py": "a1ca78c07d08bc516ae6bb3f5cfe205bcee534e97e8498647386362337c4e9fc",
+    "src/fixtures/portco_b.py": "04fc1fa1d67354049bdc7d03ca2454473450ecd4a8a4476abeb37ab8985596a3",
+    "src/fixtures/variants.py": "3b34e069846b11af2b4c077ddfcf54aac03a0339978954e2573ed016bf5af8fd",
+    "src/fsutil.py": "b70a1f382661c68ad6d7142f314ecb9fa9b896d14a144f03a24cbdbbea6a0631",
+    "src/mcp_server.py": "0e90b8c6869d60f2c111c0f514cd06fdf2531a235e0bec4a66a7ab090cdaa2d2",
+    "src/observability.py": "6e70cde3ab0f59487a403f0aa213706f9359cad5042c555d0669ea9fecbc1aa0",
+    "src/paths.py": "fcbb3b4b28b33de063eccf0ee36998296bbcb2648f9755d35318619f99745981",
+    "src/readiness.py": "7451d39ca40b27d01e40dcbb0bf54913b1d6283a3c62ca984bafb1fcdd18df95",
+    "src/reporting.py": "2e28eef82f1052a4bf018456d75cab1a9e29202805730356f74a843704f5fdd4",
+    "src/run_metrics.py": "ddcbeeff17c0f3c5483bc9fdaa3aa6f1823b9248f1401d0bba8c24325cbd661b",
+    "src/runtime_evidence.py": "7a1bac8a95669fafffa7a51969afc82ba82f7c08cdf8dac76e90e792520fd98a",
+    "src/serve.py": "6fed6401c554c96e2dbf9f6dab3af2945cfed0fd42cb0fc7534757e61eb19a51",
+    "src/services/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/services/approvals.py": "8b8ec9ca569ffcd56ca8b13e03584d33c246774c654020cdcc27af6e1fa92dbe",
+    "src/services/certification.py": "8c6cf45bb6c0a5fbed5616095064a61ef8506abbd57c51aa4b042fb0342ce07a",
+    "src/services/connection.py": "d2d29e70e25bb2b6c8f9583ea39f83ff6f9629b5c17074a84b1e90cf6ee2f6c5",
+    "src/services/entities.py": "1f1f71ffd0eee6d2e1a2739ff12c83d26a3796251deb49f78525c148649aa117",
+    "src/services/gates.py": "256b7d3b4ed201595b201bfc79fdaf25069ae3873cfc5833be23c7f133b83406",
+    "src/services/generation.py": "ae2212675714018b321b75c8e87e7fe88b07b87f04ce22bea39f7581a2e26c3d",
+    "src/services/joins.py": "2c91aff9547067b8a3da017512bff6be02c6c53e4a818fddd479d5faa3135571",
+    "src/services/judge.py": "36a89d41a51883d9e19eed49018189bdc80a338a5d2640719f8cc45f7bf24c69",
+    "src/services/mapping.py": "80c750a0f26da7f5499031f67922853d97ad64446d290713a42a2160b7b2c888",
+    "src/services/pii.py": "6b5f8d23b2e85a7ccade54c075611bb5451e6fd678ba4fd566280678d18e543c",
+    "src/services/profiling.py": "465855d2eec0b435b35705152f76b65a7fedef8bf354635ff49a696ab67c444b",
+    "src/services/publish.py": "f10fc68674bb3a6cf8b2ad931828aba6ae71f9083341eeaa6a3128ef58bed6c1",
+    "src/services/sandbox.py": "1f109494643799083b4f19d239a367fcc2fd1aa7975ef7f29427be5fbcf3b6f2",
+    "src/services/semantic.py": "06dd93bcb89d83fb5a151fac33aca4bb47c264c7e017cde746707c8a3af8b6e7",
+    "src/services/text.py": "9cf8bb14ac4279176b6f3c86d6a0d2f04ac631262eb8c5edbfcbd21ff34efa9e",
+    "src/settings.py": "76f46f0e48433cccee99e6509db8131aad49daaec867ca61c381d7c150a3e282",
+    "src/version.py": "a0b74e3d395c6dd503a735579fd31cf2d8beddacfbceb8cf0267d22eb813d449",
+    "src/workflows/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/workflows/base.py": "73a27d48554f4a45c218782ea5046d5d5326d0e7b041228bafe50c307797f8f8",
+    "src/workflows/contracts.py": "2b7f1ade883eb13f5031096d220545c00d2113b9004e1baf1943b57ed9a1e5a3",
+    "src/workflows/facade.py": "ce5e90f364b7de6b36b1a02bcd263b8c7644b7c33da7600ffe69108f50f26433",
+    "src/workflows/primary.py": "07a4b215845758feb7614a6bac619e91879fd9b15913c26d4f8905122845e5c6",
+    "src/workflows/versioning.py": "95bc712e0fbdc800fb919189f726df633517abf599ec2b5be3610fe3c63a6109",
+    "scripts/smoke_csv_source.py": "cd83d9c89eaf08f9b497b2156172803a7ac0e09b8d826eb89b3fb0315f733e75"
+  },
+  "data_provenance": "synthetic portco_a rows exported as CSV; no customer-data or live-system claim",
+  "review_provenance": "automated separate reviewer test identity",
+  "connection_id": "csv:synthetic-extract-v1",
+  "snapshot_sha256": "bbfd55fda12a9f1d21c8943fbdacd833b175d7f916a75d7db078485a66a9ff1c",
+  "input_tables": 11,
+  "input_rows": 14639,
+  "run_id": "99f19f0a-260c-4670-8ed1-f63705fad908",
+  "status": "complete",
+  "service_rebuilt_at_review_gates": true,
+  "test_report_passed": true,
+  "dbt_exit_code": 0,
+  "reconciliation": [
+    {
+      "name": "rowcount:billing.customers",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 2,
+      "actual_group_count": 2
+    },
+    {
+      "name": "rowcount:billing.invoice_lines",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 2,
+      "actual_group_count": 2
+    },
+    {
+      "name": "rowcount:billing.invoices",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 2,
+      "actual_group_count": 2
+    },
+    {
+      "name": "rowcount:billing.payments",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 2,
+      "actual_group_count": 2
+    },
+    {
+      "name": "rowcount:billing.subscriptions",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 2,
+      "actual_group_count": 2
+    },
+    {
+      "name": "rowcount:crm.accounts",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 2,
+      "actual_group_count": 2
+    },
+    {
+      "name": "rowcount:crm.contacts",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 2,
+      "actual_group_count": 2
+    },
+    {
+      "name": "rowcount:crm.opportunities",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 2,
+      "actual_group_count": 2
+    },
+    {
+      "name": "rowcount:erp.gl_accounts",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 2,
+      "actual_group_count": 2
+    },
+    {
+      "name": "rowcount:erp.journal_lines",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 2,
+      "actual_group_count": 2
+    },
+    {
+      "name": "rowcount:hr.employees",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 2,
+      "actual_group_count": 2
+    },
+    {
+      "name": "mart:billings",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 1,
+      "actual_group_count": 1
+    },
+    {
+      "name": "mart:arr",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 1,
+      "actual_group_count": 1
+    },
+    {
+      "name": "mart:active_customers",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 1,
+      "actual_group_count": 1
+    },
+    {
+      "name": "mart:revenue_recognized",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 1,
+      "actual_group_count": 1
+    },
+    {
+      "name": "consistency:invoice_lines_sum_to_header",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 1,
+      "actual_group_count": 5
+    },
+    {
+      "name": "orphans:billing.customers.crm_account_ref->crm.accounts.acct_id",
+      "passed": true,
+      "blocking": false,
+      "expected_group_count": 1,
+      "actual_group_count": 1
+    },
+    {
+      "name": "metric:active_customers",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 32,
+      "actual_group_count": 32
+    },
+    {
+      "name": "metric:arr",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 95,
+      "actual_group_count": 95
+    },
+    {
+      "name": "metric:billings",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 72,
+      "actual_group_count": 72
+    },
+    {
+      "name": "metric:cogs",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 24,
+      "actual_group_count": 24
+    },
+    {
+      "name": "metric:ebitda",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 24,
+      "actual_group_count": 24
+    },
+    {
+      "name": "metric:gross_margin_pct",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 24,
+      "actual_group_count": 24
+    },
+    {
+      "name": "metric:mrr",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 95,
+      "actual_group_count": 95
+    },
+    {
+      "name": "metric:opex",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 24,
+      "actual_group_count": 24
+    },
+    {
+      "name": "metric:revenue_recognized",
+      "passed": true,
+      "blocking": true,
+      "expected_group_count": 24,
+      "actual_group_count": 24
+    }
+  ],
+  "waived_checks": [],
+  "published_metrics": [
+    "active_customers",
+    "arr",
+    "billings",
+    "cogs",
+    "ebitda",
+    "gross_margin_pct",
+    "mrr",
+    "opex",
+    "revenue_recognized"
+  ],
+  "manifest_hash": "a7bb03e72a1c9b024602b36b904582ed7379567316954aa28acf7ced525be74b",
+  "generated_file_hashes_verified": 58,
+  "published_file_count": 59,
+  "audit_chain_valid": true,
+  "audit_event_count": 45
+}

@@ -1,0 +1,7 @@
+{
+  "entities":{"raw.z8":null,"raw.z9":null},
+  "mappings":{"raw.z8.x1":null,"raw.z8.x2":null,"raw.z8.n7":null,"raw.z8.d3":null,"raw.z9.x1":null,"raw.z9.x2":null,"raw.z9.n7":null,"raw.z9.d3":null},
+  "joins":[], "units":{},
+  "must_review":["raw.z8.x1","raw.z8.x2","raw.z8.n7","raw.z8.d3","raw.z9.x1","raw.z9.x2","raw.z9.n7","raw.z9.d3"],
+  "rationale":"Intentionally observationally indistinguishable tables with no business semantics. Numerical overlap alone does not establish a business relationship. Null means no uniquely defensible canonical target, not a hidden target the system should guess."
+}

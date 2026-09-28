@@ -1,3 +1,6 @@
 * text=auto eol=lf
 *.duckdb binary
 *.png binary
+# Frozen benchmark provenance hashes cover exact bytes across platforms.
+evals/unfamiliar/manifest.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/evidence/unfamiliar-benchmark*.json -text whitespace=trailing-space,space-before-tab,cr-at-eol

@@ -1,0 +1,8 @@
+{
+  "entities":{"raw.invoice":"invoice","raw.invoice_line":"invoice_line","raw.opportunity":"opportunity"},
+  "mappings":{"raw.invoice.invoice_id":"invoice.invoice_id","raw.invoice.customer_id":"invoice.customer_id","raw.invoice.invoice_date":"invoice.invoice_date","raw.invoice.total_amount":"invoice.total_amount","raw.invoice.currency":"invoice.currency","raw.invoice_line.invoice_line_id":"invoice_line.invoice_line_id","raw.invoice_line.invoice_id":"invoice_line.invoice_id","raw.invoice_line.amount_cents":"invoice_line.amount","raw.invoice_line.amount":"invoice_line.amount","raw.invoice_line.quantity":"invoice_line.quantity","raw.opportunity.opportunity_id":"opportunity.opportunity_id","raw.opportunity.rev":"opportunity.amount","raw.opportunity.stage":"opportunity.stage","raw.opportunity.close_date":"opportunity.close_date"},
+  "joins":[["raw.invoice_line.invoice_id","raw.invoice.invoice_id"]],
+  "units":{"raw.invoice.total_amount":null,"raw.invoice_line.amount_cents":"cents_to_major","raw.invoice_line.amount":null,"raw.opportunity.rev":null},
+  "must_review":["raw.invoice_line.amount_cents","raw.invoice_line.amount","raw.opportunity.rev"],
+  "rationale":"Two line amount representations require reviewer choice, not summation. rev is pipeline booking value, not recognized revenue. Currency-major decimals and explicitly cent-denominated integers coexist."
+}

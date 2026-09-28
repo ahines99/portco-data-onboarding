@@ -6,7 +6,9 @@ This portfolio project explores a practical data engineering problem: a portfoli
 does not automatically share the definitions, units or data quality expected by an investor's
 reporting model. A plausible-looking column mapping can produce a financially wrong answer.
 
-The demonstration uses synthetic SaaS and SAP-style fixtures. It has no production customers,
+The complete financial demonstration uses synthetic SaaS and SAP-style fixtures. A later
+[public retail exercise](PUBLIC-OPERATING-DATA.md) adds real historical ingestion/profiling evidence,
+without financial certification. It has no production customers,
 measured analyst-time savings or investment-performance claim. The implementation was developed
 with substantial AI assistance. Alex approved the personal statement and delegated final acceptance;
 [the record](FINAL-ACCEPTANCE.md) distinguishes owner approval from automated execution.
@@ -54,9 +56,8 @@ and changed files. This is a useful interview example of correctness across two 
 - [Scripted demo transcript](evidence/demo-transcript.txt) and [read-only replay](index.html).
 - [Release evidence and accepted scope](RELEASE-STATUS.md).
 
-The earlier audit baseline passed 451 non-Postgres tests and four PostgreSQL tests. The release
-adds packaging and test-isolation coverage; the release status and linked CI run contain the final
-counts. Coverage of the metric reference module is 100%; this is not whole-application coverage.
+The [release status](RELEASE-STATUS.md) and exact tagged CI/verification assets contain dated test
+counts. Local and hosted populations overlap and must not be added together. Coverage of the metric reference module is 100%; this is not whole-application coverage.
 Fixture accuracy does not establish accuracy on a new real company. The timing sample is neither
 a scalability benchmark nor proof of business time savings.
 
@@ -64,21 +65,37 @@ The [additional unfamiliar-schema probe](evidence/heldout-probe.json) matched **
 targets** because it produced no proposals. It reached a certification review with no accepted
 source mappings; no reviewer approved or published the probe. This exposes dependence on recognized
 schema vocabulary. The probe is small and was authored by the implementation assistant, not an
-external blinded evaluator. No mapper rules were tuned after observing the result.
+external blinded evaluator. The historical probe was not tuned to make that recorded result pass. Later development adds
+reviewed structural inference and a [frozen separate-agent benchmark](../evals/unfamiliar/README.md).
+That benchmark has distinct inputs, immutable labels and separate baseline/candidate reports; it is
+not external human validation or fully blinded research. Its results do not replace the original failure.
+The [first post-change run](evidence/unfamiliar-benchmark-first-postchange.json) matched 31 of 33
+proposals (31 of 32 labeled targets), unchanged from the reconstructed baseline, and failed its
+safety gate for an unreviewed competing monetary interpretation. Later fixes/reruns are
+post-benchmark remediation, not held-out proof of improvement. The [remediation rerun](evidence/unfamiliar-benchmark.json)
+passes safety with 32/33 correct proposals, 32/32 positive targets covered and 6/6 unit outcomes.
+Review burden increases to 7/33; one incorrect reviewed proposal and eight unresolved opaque
+fields remain. Those limits matter as much as the passing safety gate.
 
 ## Boundaries and next steps
 
-The source adapter targets DuckDB fixtures; publication targets a local directory. Static HTTP
-tokens and trusted local reviewer identities are development controls. There is no public live
-MCP backend, production identity provider or live warehouse deployment. The local semantic executor
+Sources now include DuckDB fixtures and [operator-imported typed CSV snapshots](CSV-SOURCE.md);
+publication still targets a versioned local directory. The CSV importer is an external file boundary,
+not a live source-system API connector. A 10,000-row public retail extract passed six ingestion/profile
+controls, retaining missing identifiers, cancellations and negative quantities; no mapping was
+approved or certified. Static HTTP tokens and trusted local reviewer identities are development
+controls. A [production JWT candidate](LIVE-DEPLOYMENT.md) is implemented, but there is no accepted
+public live MCP backend, real identity-provider integration or live warehouse deployment. The local semantic executor
 supports a defined monthly subset; actual MetricFlow compatibility is tracked separately.
 
 Six real model sessions and a captioned synthetic-voice tour have now been collected. The
 [owner-approved acceptance packet](ASSISTED-ACCEPTANCE.md) and [final acceptance](FINAL-ACCEPTANCE.md)
 record completed delegated mapping/certification and accepted annotation/personal wording. Independent
 first-use feedback is optional future validation.
-Broader schema coverage, independent usability feedback and stronger controlled model studies are
-possible next steps. They would extend the evidence beyond the accepted synthetic portfolio scope.
+The [operator pilot protocol](OPERATOR-PILOT.md) defines consent, source minimization, paired
+manual/assisted tasks, review burden, correction rates and actual participant signoff. It has not
+been executed. Live hosting acceptance and independent operator/customer evidence remain open;
+neither public data nor automated reviewers establish those outcomes.
 
 ## Interview prompts
 
@@ -91,3 +108,5 @@ portfolio-company sources, proposes evidence-linked mappings, generates dbt mode
 financial metrics and publishes only after separate reviewer certification.” The
 [owner-approved personal statement](ASSISTED-ACCEPTANCE.md) describes Alex's role and substantial
 AI assistance without claiming production outcomes or sole implementation authorship.
+
+For role-specific wording and the boundary of each claim, see [the resume and claims matrix](RESUME-AND-CLAIMS.md).

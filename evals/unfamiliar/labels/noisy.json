@@ -1,0 +1,8 @@
+{
+  "entities":{"raw.customer":"customer","raw.vendor":"vendor","raw.invoice":"invoice"},
+  "mappings":{"raw.customer.customer_id":"customer.customer_id","raw.customer.customer_name":"customer.customer_name","raw.vendor.vendor_id":"vendor.vendor_id","raw.vendor.vendor_name":"vendor.vendor_name","raw.invoice.invoice_id":"invoice.invoice_id","raw.invoice.customer_id":"invoice.customer_id","raw.invoice.invoice_date":"invoice.invoice_date","raw.invoice.total_amount":"invoice.total_amount","raw.invoice.currency":"invoice.currency"},
+  "joins":[["raw.invoice.customer_id","raw.customer.customer_id"]],
+  "units":{"raw.invoice.total_amount":null},
+  "must_review":[],
+  "rationale":"One invoice has an orphan customer. Vendor identifiers coincidentally overlap customer identifiers; those joins are semantically invalid despite containment."
+}

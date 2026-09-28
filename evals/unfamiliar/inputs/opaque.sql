@@ -1,0 +1,5 @@
+CREATE SCHEMA raw;
+CREATE TABLE raw.z8 (x1 VARCHAR, x2 VARCHAR, n7 DECIMAL(12,2), d3 DATE);
+INSERT INTO raw.z8 SELECT 'K-' || i, 'T-' || (i % 3), 100.0 + i, DATE '2025-03-01' + CAST(i AS INTEGER) FROM range(1,10) t(i);
+CREATE TABLE raw.z9 (x1 VARCHAR, x2 VARCHAR, n7 DECIMAL(12,2), d3 DATE);
+INSERT INTO raw.z9 SELECT 'K-' || i, 'T-' || (i % 3), 100.0 + i, DATE '2025-03-01' + CAST(i AS INTEGER) FROM range(1,10) t(i);

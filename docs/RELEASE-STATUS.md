@@ -1,6 +1,6 @@
 # Portfolio release status
 
-Updated 2026-09-27. The owner approved the hiring-focused, MIT-licensed public release at
+Current-state update: 2026-09-28 UTC. Historical release evidence retains its original dates. The owner approved the hiring-focused, MIT-licensed public release at
 [ahines99/portco-data-onboarding](https://github.com/ahines99/portco-data-onboarding).
 The [public project page](https://ahines99.github.io/portco-data-onboarding/) is a static presentation
 and actual scripted-output replay; it has no live backend or model API calls. Supplemental evidence
@@ -13,6 +13,50 @@ Independent usability and general Skill efficacy remain unclaimed optional valid
 The tagged GitHub release links its source commit, final CI run and distribution checksums; use that
 record for the exact shipped code, rather than treating an earlier test count as a permanent guarantee.
 
+## Current development and deployment boundary
+
+The stable portfolio release is [v0.1.1](https://github.com/ahines99/portco-data-onboarding/releases/tag/v0.1.1).
+The published [v0.2.0-rc.1 candidate](https://github.com/ahines99/portco-data-onboarding/releases/tag/v0.2.0-rc.1)
+adds production JWT verification, startup validation, readiness/resource controls and a Render/Auth0
+recipe. It is not an accepted live service. Its verified baseline includes 553 non-PostgreSQL tests,
+five dedicated PostgreSQL tests, 37 evaluation cases and ten passing CI jobs. Local and hosted test
+populations overlap; these are dated candidate results, not guarantees about every future commit.
+
+The `v0.2.0-rc.2` audit-response candidate adds the following evidence. Consult the
+[release list](https://github.com/ahines99/portco-data-onboarding/releases) and each release's exact
+CI/verification assets before describing a candidate as published or fully verified.
+
+| Workstream | Evidence and boundary |
+|---|---|
+| External extract ingestion | [CSV snapshots](CSV-SOURCE.md): explicit types, source digests, tenant ownership and restart-safe registration; [synthetic smoke](evidence/csv-source-smoke.json) imported 11 tables / 14,639 rows and published nine metrics; no remote SaaS credentials or network connector |
+| Operational input | [Public retail exercise](PUBLIC-OPERATING-DATA.md): 10,000 rows imported/profiled and six aggregate controls passed; no mapping, approval or financial publication |
+| Generalization | [Frozen unfamiliar-schema benchmark](../evals/unfamiliar/README.md): separate-agent-authored cases and immutable labels; first post-change run failed safety with unchanged accuracy; post-benchmark remediation passes safety at 32/33 correct proposals, with remaining errors/abstentions; not external human evaluation |
+| Business impact | [Operator pilot protocol](OPERATOR-PILOT.md) and blank evidence template prepared; no participating company, completed pilot or measured savings |
+| Portfolio positioning | [Resume and claims matrix](RESUME-AND-CLAIMS.md), preserving AI-assisted ownership and limits |
+| Live service | [Deployment acceptance](LIVE-DEPLOYMENT.md) remains pending account/billing access and actual host/identity/recovery evidence |
+
+### Frozen benchmark and subsequent remediation
+
+The [reconstructed baseline](evidence/unfamiliar-benchmark-baseline.json) and
+[first post-change run](evidence/unfamiliar-benchmark-first-postchange.json) both produced 31 correct
+mappings out of 33 proposals, covering 31 of 32 positive labeled targets. Entity outcomes were 10/10
+including two appropriate no-match abstentions; joins were 3/3 and unit outcomes 5/6. Six of 33
+proposals required review. The first post-change run **failed the safety gate**: a competing monetary
+interpretation was not routed to review. Accuracy did not improve on these cases.
+
+The cases/labels were frozen by a separate agent before mapper edits, and the original baseline was
+later reconstructed from an isolated archive of the prior commit. The first result remains intact.
+The [final rerun](evidence/unfamiliar-benchmark.json) is **post-benchmark remediation**, not a new
+held-out evaluation. It passes the safety gate with 32/33 correct proposals (96.97% precision),
+32/32 positive targets covered, 10/10 entity outcomes including two no-match abstentions, 3/3 joins
+and 6/6 unit outcomes. Review burden rises from 6/33 (18.18%) to 7/33 (21.21%). One incorrect
+review-required proposal and eight unresolved opaque fields remain. Passing safety does not make
+the remaining proposal correct, prove uncertainty calibration or establish customer generalization.
+
+Historical acceptance below closed the original synthetic portfolio scope. The owner subsequently
+requested a live service; the old scope closure does not close that expanded requirement. Security
+acceptance must use the [current image assessment](image-risk-assessment.md), not an old scan count.
+
 ## Final audit patch
 
 The final three-agent review identified and reproduced review-packet binding, invoice consistency,
@@ -22,7 +66,7 @@ See [audit closeout](FINAL-AUDIT-CLOSEOUT.md) and the exact tagged CI run linked
 [release](https://github.com/ahines99/portco-data-onboarding/releases/tag/v0.1.1).
 The verification below is historical v0.1.0 evidence; it is not a fresh v0.1.1 measurement.
 
-## Completed verification
+## Historical v0.1.0 verification
 
 The first hosted run [36356573053](https://github.com/ahines99/portco-data-onboarding/actions/runs/36356573053)
 passed all nine jobs on `b61d559`: lint/types, tests, security, PostgreSQL 16, eval, demo, Linux and
@@ -52,7 +96,7 @@ records source, fixture/lock hashes and shared file hashes. Later documentation 
 do not turn those fixture outputs into a new run. The replay is a separate actual recording with its
 own provenance. Private workspace paths are normalized; the shareable files are not signed audit exports.
 
-## Roadmap disposition
+## Historical portfolio-roadmap disposition
 
 | Task | Status and remaining boundary |
 |---|---|
@@ -77,7 +121,7 @@ own provenance. Private workspace paths are normalized; the shareable files are 
 | PF-19 Publication | Public repository and Pages site delivered; v0.1.0 promoted to final portfolio release with immutable tag, wheel and checksums |
 | PF-20 Maintenance | Monthly/pre-release dependency review and verification runbook documented; no automatic paid tasks |
 
-## Results that did not pass
+## Historical results that did not pass
 
 The unfamiliar-schema probe returned **0/10 target matches with zero proposals**. Its zero
 wrong-without-review count therefore does not mean successful mapping. No review or publication

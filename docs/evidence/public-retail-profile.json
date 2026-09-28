@@ -1,0 +1,49 @@
+{
+  "generated_at": "2026-09-28T02:48:34.634377+00:00",
+  "source_commit": "e09be37f9e99f6c805698af50b3d13b5f421a923",
+  "worktree_dirty": true,
+  "implementation_sha256": {
+    "scripts/public_retail_probe.py": "b97c3ad7fa0e67a1872770a823b0f3ae17bcb7f474dec09bef756d0d66ec012b",
+    "src/adapters/csv_source.py": "210be237f62768864aa00db271b2141f115dab3d5ccae3eedae0aca7f98f54d1"
+  },
+  "source": {
+    "url": "https://archive.ics.uci.edu/static/public/352/online%2Bretail.zip",
+    "page": "https://archive.ics.uci.edu/dataset/352/online+retail",
+    "archive_sha256": "f5385cbb54bbebf7196389109c6b0621faab0c304e3702548165e71c84aede8b",
+    "citation": "Chen, D. (2015). Online Retail. UCI Machine Learning Repository. DOI:10.24432/C5BW33",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "selection": "First 10000 transaction rows in source worksheet order; not random or representative.",
+  "adaptation": "Drop Description/Country; hash invoice/product/customer IDs with a public namespace; retain missing IDs and all negative/cancelled/zero-price records; add cancellation flag and documented GBP currency.",
+  "privacy_limit": "Deterministic hashes are pseudonyms, not a guarantee of anonymization; public IDs can be guessed. Raw inputs remain local.",
+  "extract_sha256": "1d817c70efd3eb731021ea41428943f6f2e0f05f7c652bd063a79c680ec9992e",
+  "manifest_sha256": "8c4de7528558d4850ff259d012a6df875b9a07e16fecfd18dba1e3cacc188355",
+  "import_control_checks": {
+    "row_count": true,
+    "exact_quantity_price_sum": true,
+    "missing_customer_count": true,
+    "cancellation_count": true,
+    "negative_quantity_count": true,
+    "profile_row_count": true
+  },
+  "observed_extract": {
+    "rows": 10000,
+    "cancellations": 100,
+    "negative_quantities": 130,
+    "nonpositive_unit_prices": 46,
+    "missing_customer_ids": 2291,
+    "first_timestamp": "2010-12-01T08:26:00",
+    "last_timestamp": "2010-12-05T16:24:00",
+    "quantity_times_unit_price_sum_gbp": "180667.74999999999928940"
+  },
+  "workflow": {
+    "connection_id": "csv:uci_retail_10000",
+    "status": "pending",
+    "stop_after": "schema_profiling",
+    "profile_table_count": 1,
+    "approved": false,
+    "published": false
+  },
+  "limitations": "Public historical retail data, not a participating portfolio company or independently labeled financial benchmark. Quantity-times-price is an extract control sum, not recognized revenue. No mapping, certified metrics, adoption, time saving or business impact is established."
+}
