@@ -78,7 +78,7 @@ financial ground truth. Large downloads and raw extracts remain under ignored `v
 
 | Requirement | Codex preparation/execution | Owner or external party input |
 | --- | --- | --- |
-| Live service | Deployment configuration, identity actions, smoke/runtime/restore procedures | Authenticated Render/Auth0 access and explicit recurring-spend approval; previous estimate is provisional |
+| Live service (optional paid path) | Provider access and real agent-token preflight verified; deployment configuration, identity actions and acceptance procedures prepared | Owner chose free-only delivery on 2026-09-28; paid deployment is not authorized |
 | Cloud acceptance | Run actual HTTPS/tenant/reviewer, persistence, isolation and coordinated recovery checks once provisioned | Account controls and access to provider operations |
 | Real operating dataset | CSV intake, validation and documented data handling | Authorized dataset and permitted use; agree deidentification and retention before ingestion |
 | Customer/business impact | Predefined pilot metrics, evidence forms and reporting rules | Real operator participation, manual baseline, separate review and actual signoff |

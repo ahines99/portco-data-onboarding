@@ -17,9 +17,10 @@ all development work is already shipped. [Resume wording](RESUME-AND-CLAIMS.md) 
 
 ## What still needs the owner's participation
 
-- **Live hosting:** provide authenticated Render/Auth0 access and approve actual recurring charges.
-  The [deployment guide](LIVE-DEPLOYMENT.md) records provisioning and live acceptance requirements.
-  Do not send secrets in repository files or conversation messages.
+- **Free hosting decision:** on 2026-09-28, Alex chose to keep the project free. Render/Auth0 access
+  and the real agent-token preflight succeeded; no paid resources were created. The public GitHub
+  Pages presentation and local workflow are the current delivery. No billing action is requested.
+  The [deployment guide](LIVE-DEPLOYMENT.md) preserves the optional paid path and unverified checks.
 - **Operating pilot:** recruit a consenting data owner and operator, obtain source-use authorization,
   choose the task and comparison before timing, and name a separate reviewer. The assistant can
   prepare/run tooling but cannot invent consent, operator observations, or reviewer signoff.
@@ -27,5 +28,5 @@ all development work is already shipped. [Resume wording](RESUME-AND-CLAIMS.md) 
   Until a pilot is completed, customer adoption, time savings and business impact remain unclaimed.
 
 No paid hosting or customer-data use is authorized merely by this document. Personal narration and
-additional model studies remain optional portfolio additions; actual live acceptance remains required
-for the expanded live-service goal.
+additional model studies remain optional portfolio additions. Any future production-service claim
+still requires actual live acceptance; the free portfolio does not establish that claim.

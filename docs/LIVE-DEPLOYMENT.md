@@ -1,9 +1,26 @@
 # Live deployment: Render + Auth0
 
-Status: deployment candidate, **not a verified live service**. The v0.1.1 synthetic portfolio
-release remains available. The owner requested a live service after that release. Cloud account
-access, spending authorization, identity configuration, and the live acceptance checks below are
-still required; local tests or a successful container build do not establish live readiness.
+Status: **free portfolio delivery; backend not deployed**. On 2026-09-28, the owner chose
+"Keep this project free" after reviewing the recurring hosting estimate. GitHub Pages remains
+the public project page and recorded replay, with local execution for the full workflow.
+No paid hosting or Auth0 upgrade is authorized. The paid recipe below is retained as an optional
+future deployment path, not the current plan.
+
+Render's free web service cannot attach the persistent disk this application uses for artifacts
+and source snapshots, and free Render PostgreSQL expires after 30 days. It does not satisfy this
+project's durable production acceptance criteria. See [Render free limits](https://render.com/docs/free).
+
+The v0.2.0-rc.2 portfolio
+prerelease is available. Render and Auth0 account access was verified on 2026-09-28. The custom
+API, agent and reviewer application registrations, and both entitlement Actions are created.
+A real Auth0 agent token passed the application's verifier using live JWKS; the wrong audience
+was rejected. Reviewer login/MFA, spending authorization, billing setup and the live acceptance
+checks below remain incomplete. These identity checks do not establish live service readiness.
+
+Render's authenticated Blueprint validation found that `maxShutdownDelaySeconds` is unsupported
+with a persistent disk; that setting has been removed. Validation now reports `need_payment_info`
+for the app and database. No paid Render resources have been created. See the
+[preflight record](evidence/cloud-preflight-20260928.json).
 
 ## Recommended first deployment
 
@@ -16,9 +33,13 @@ tenant's MFA and machine-to-machine entitlements before purchasing; do not rely 
 The first service contains only generated synthetic data; no source connector for customer data
 is enabled by this deployment recipe. Machine clients are agents; human accounts hold reviewer access.
 
-The app was listed at $25/month when checked on 2026-09-27; database, storage and possible usage
-charges are additional. Allow approximately $50–60/month for Render plus $35/month for Auth0;
-use a provisional total budget of $100/month before tax and review the actual provider quote
+Published prices checked on 2026-09-28 total approximately **$83/month**: $25 for the app,
+$19 for PostgreSQL compute, $1.50 for 5 GB database storage, $2.50 for the 10 GB persistent disk,
+and $35 for Auth0 B2C Essentials. This assumes Render's free workspace plan and excludes taxes,
+usage overages and temporary recovery-test resources. Auth0's published Essentials allowance is
+1,000 machine-to-machine token requests per month; request tokens on demand and reuse them until
+expiry instead of renewing continuously while idle. Confirm the actual account entitlements.
+Use a provisional total budget of $100/month before tax and review the actual provider quote
 before provisioning. This estimate is not authorization to spend. Avoid paid workspace upgrades,
 custom-domain purchases and automatic storage scaling for the initial service. This is an estimate,
 not a provider-enforced spending cap; monitor usage charges and configure available billing alerts.

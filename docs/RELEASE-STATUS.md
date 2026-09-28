@@ -33,7 +33,7 @@ CI/verification assets before describing a candidate as published or fully verif
 | Generalization | [Frozen unfamiliar-schema benchmark](../evals/unfamiliar/README.md): separate-agent-authored cases and immutable labels; first post-change run failed safety with unchanged accuracy; post-benchmark remediation passes safety at 32/33 correct proposals, with remaining errors/abstentions; not external human evaluation |
 | Business impact | [Operator pilot protocol](OPERATOR-PILOT.md) and blank evidence template prepared; no participating company, completed pilot or measured savings |
 | Portfolio positioning | [Resume and claims matrix](RESUME-AND-CLAIMS.md), preserving AI-assisted ownership and limits |
-| Live service | [Deployment acceptance](LIVE-DEPLOYMENT.md) remains pending account/billing access and actual host/identity/recovery evidence |
+| Live service | Owner selected free-only delivery on 2026-09-28. Provider access and real agent-token preflight passed; paid backend remains undeployed and [live acceptance](LIVE-DEPLOYMENT.md) unverified |
 
 ### Frozen benchmark and subsequent remediation
 

@@ -1,0 +1,76 @@
+{
+  "observed_at_utc": "2026-09-28T14:13:21.642350+00:00",
+  "status": "free-only portfolio; paid backend not deployed",
+  "render": {
+    "authenticated": true,
+    "existing_services": 0,
+    "existing_projects": 0,
+    "blueprint_validation": {
+      "errors": [
+        {
+          "column": 5,
+          "error": "need_payment_info",
+          "line": 42,
+          "path": "databases[0]"
+        },
+        {
+          "column": 5,
+          "error": "need_payment_info",
+          "line": 3,
+          "path": "services[0]"
+        }
+      ],
+      "valid": false
+    },
+    "fixed_issue": "Removed maxShutdownDelaySeconds, unsupported with persistent disks",
+    "paid_resources_created": false
+  },
+  "auth0": {
+    "authenticated": true,
+    "api_created": true,
+    "signing_algorithm": "RS256",
+    "access_token_lifetime_seconds": 600,
+    "agent_application_created": true,
+    "agent_grants": [
+      "https://portco-data-onboarding-api"
+    ],
+    "reviewer_application_registered": true,
+    "reviewer_login_configured": false,
+    "mfa_configured": false,
+    "actions_deployed_and_bound": [
+      "credentials-exchange",
+      "post-login"
+    ],
+    "real_agent_token_passed_application_verifier": true,
+    "wrong_audience_rejected": true,
+    "secrets_or_tokens_in_this_record": false
+  },
+  "monthly_list_price_usd": {
+    "application": 25,
+    "postgres_compute": 19,
+    "postgres_5gb_storage": 1.5,
+    "persistent_10gb_disk": 2.5,
+    "auth0_b2c_essentials": 35,
+    "total": 83
+  },
+  "pricing_exclusions": [
+    "tax",
+    "usage overages",
+    "temporary recovery-test resources"
+  ],
+  "remaining": [
+    "Optional future live service requires revised hosting decision and full live acceptance",
+    "Independent consented operator pilot is required before impact claims"
+  ],
+  "sources": [
+    "https://render.com/pricing",
+    "https://auth0.com/pricing",
+    "https://render.com/docs/free"
+  ],
+  "owner_decision": {
+    "recorded_at_utc": "2026-09-28T14:14:54.323428+00:00",
+    "instruction": "Keep this project free",
+    "paid_provisioning_authorized": false,
+    "current_delivery": "GitHub Pages project page and recorded replay; reproducible local workflow"
+  }
+}

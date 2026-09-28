@@ -1,7 +1,8 @@
 # Portfolio Company Data Onboarding Agent
 
-Live-service preparation: [Render + Auth0 deployment candidate](docs/LIVE-DEPLOYMENT.md).
-The live backend has not been provisioned or accepted; the finalized v0.1.1 portfolio release is separate.
+Hosting decision: **keep the portfolio free**, using GitHub Pages and the reproducible local workflow.
+The live backend is not deployed. The [Render + Auth0 recipe](docs/LIVE-DEPLOYMENT.md) is an optional
+paid deployment path; no recurring charges are authorized.
 
 [![CI](https://github.com/ahines99/portco-data-onboarding/actions/workflows/ci.yml/badge.svg)](https://github.com/ahines99/portco-data-onboarding/actions/workflows/ci.yml)
 
@@ -14,7 +15,8 @@ The recorded fixture demo uses automated reviewer decisions. [Six real model ses
 and a [captioned synthetic-voice tour](https://github.com/ahines99/portco-data-onboarding/releases/download/v0.1.0/portco-narrated-demo.mp4)
 are available. Alex approved finalization; [final acceptance](docs/FINAL-ACCEPTANCE.md) records delegated
 workflow completion, accepted annotations and known scope limits for that historical release.
-The later live-service goal still needs account access, billing approval and operational acceptance.
+Render/Auth0 account access and the real agent-token preflight are verified. Paid deployment was
+declined; live reviewer, hosting and recovery acceptance remain unverified.
 
 Demonstrates governed onboarding of supported synthetic SaaS and SAP-style sources into a canonical
 private-equity data model:

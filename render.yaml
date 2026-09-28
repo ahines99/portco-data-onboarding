@@ -1,4 +1,5 @@
-# Review costs before applying. First deployment is a restricted synthetic-data service.
+# Optional PAID deployment recipe. Owner selected free-only delivery on 2026-09-28.
+# Do not apply without new spending authorization. Synthetic data only for first deployment.
 services:
   - type: web
     name: portco-data-onboarding
@@ -9,7 +10,6 @@ services:
     autoDeployTrigger: "off"
     dockerCommand: python -m src.serve
     healthCheckPath: /readyz
-    maxShutdownDelaySeconds: 45
     disk:
       name: portco-data
       mountPath: /data
