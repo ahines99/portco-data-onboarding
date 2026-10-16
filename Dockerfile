@@ -2,7 +2,7 @@
 # Multi-stage image serving the MCP server over streamable HTTP (POD-906).
 # Base and tool images are pinned to multi-arch index digests (tag kept for readability);
 # Dependabot (.github/dependabot.yml) proposes reviewed digest updates.
-FROM python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1 AS build
+FROM python:3.14-slim@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 AS build
 COPY --from=ghcr.io/astral-sh/uv:0.12.18@sha256:3adc3706091ce7c2fe595e669628caedd6d951551b92b258b7e7dbe06d9440bc /uv /usr/local/bin/uv
 WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
@@ -17,7 +17,7 @@ COPY fixtures ./fixtures
 COPY demo ./demo
 RUN uv sync --frozen --no-dev --extra postgres
 
-FROM python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1
+FROM python:3.14-slim@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170
 # The runtime never installs packages. Remove the base image's unused global installer,
 # including its vendored dependencies; uv has already built the application environment.
 RUN python -m pip uninstall -y pip
