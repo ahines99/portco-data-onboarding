@@ -45,6 +45,7 @@ from src.services import approvals as approval_service
 from src.settings import PROJECT_ROOT, Settings, get_settings
 from src.workflows.base import WorkflowEngine
 from src.workflows.primary import OUTPUT_TYPES, PROJECT_STEPS
+from src.workflows.threads import run_daemon
 
 SYSTEM = Principal(principal_id="system", role=Role.ADMIN)
 
@@ -154,7 +155,7 @@ class OnboardingService:
             raise ValidationFailed("connection does not belong to that company")
         assert_safe_company(company)
         self._authorize(principal, "start_run", company_id=company)
-        spec = await anyio.to_thread.run_sync(self.connections.resolve, connection_id, abandon_on_cancel=True)
+        spec = await run_daemon(partial(self.connections.resolve, connection_id))
         if spec.company_id != company:
             raise ValidationFailed("connection does not belong to that company")
         with self.store.tx() as tx:
@@ -193,8 +194,8 @@ class OnboardingService:
         with self._executions_lock:
             self._executions.setdefault(run_id, set()).add(interrupted)
         try:
-            return await anyio.to_thread.run_sync(
-                self._run_blocking, run_id, actor, stop_after, interrupted, abandon_on_cancel=True
+            return await run_daemon(
+                partial(self._run_blocking, run_id, actor, stop_after, interrupted), interrupted=interrupted
             )
         finally:
             # A request cancellation must reach the worker's independent event loop. Simply

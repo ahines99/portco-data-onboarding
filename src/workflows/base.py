@@ -22,6 +22,7 @@ import random
 from collections.abc import Callable
 from contextvars import ContextVar
 from dataclasses import dataclass, field
+from threading import Event
 from time import monotonic
 from typing import Any
 from uuid import UUID, uuid4
@@ -499,6 +500,7 @@ class WorkflowEngine:
     async def _execute(self, spec: StepSpec, ctx: StepContext) -> StepResult:
         timeout = spec.timeout_seconds or self.settings.step_timeout_seconds
         ctx.execution_deadline = monotonic() + timeout
+        finished = Event()
 
         def execute_and_close() -> StepResult:
             # An abandoned step may still be using its adapter. Close on its owning thread,
@@ -508,16 +510,27 @@ class WorkflowEngine:
                     raise LeaseLost("step attempt was cancelled before execution")
                 return spec.fn(ctx)
             finally:
-                ctx.close()
+                try:
+                    ctx.close()
+                finally:
+                    finished.set()
+
+        async def cancel_attempt() -> None:
+            ctx.execution_cancelled.set()
+            # Reap cancellation-aware work (notably dbt) before the outer daemon worker exits.
+            # An arbitrary synchronous step may ignore cancellation, so this wait is bounded.
+            with anyio.move_on_after(1, shield=True):
+                while not finished.is_set():
+                    await anyio.sleep(0.01)
 
         try:
             with anyio.fail_after(timeout):
                 return await anyio.to_thread.run_sync(execute_and_close, abandon_on_cancel=True)
         except TimeoutError as exc:
-            ctx.execution_cancelled.set()
+            await cancel_attempt()
             raise SourceTimeout(f"step {spec.name.value} exceeded {timeout:.0f}s") from exc
         except BaseException:
-            ctx.execution_cancelled.set()
+            await cancel_attempt()
             raise
 
     def _persist(

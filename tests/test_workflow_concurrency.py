@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import textwrap
 import threading
 from pathlib import Path
 from typing import Any
@@ -278,3 +279,91 @@ async def test_dbt_process_is_reaped_on_interruption(
                 ctx.execution_cancelled.set()
             await wait_for(finished)
     assert len(processes) == 1 and processes[0].poll() is not None
+
+
+def test_process_exits_after_shutdown_with_an_unfinished_synchronous_step(tmp_path: Path, fixtures_dir: Path) -> None:
+    program = textwrap.dedent("""\
+        import sys
+        import threading
+        from pathlib import Path
+        import anyio
+        from src.domain.models import Principal, Role, StepName
+        from src.settings import Settings
+        from src.workflows.base import StepSpec
+        from src.workflows.contracts import StepResult
+        from src.workflows.facade import OnboardingService
+
+        svc = OnboardingService.build(Settings(
+            _env_file=None, env="test", var_root=Path(sys.argv[1]),
+            fixtures_root=Path(sys.argv[2]), log_level="ERROR",
+        ))
+        agent = Principal(principal_id="test", role=Role.AGENT)
+        with svc.store.tx() as tx:
+            run = tx.runs.create(company_id="portco_a", connection_id="fixture:portco_a", requested_by="test")
+        started = threading.Event()
+
+        def blocked(ctx):
+            started.set()
+            threading.Event().wait(30)
+            return StepResult(audit=[("too_late", {})])
+
+        svc.engine.steps = [StepSpec(StepName.CONNECTION_VALIDATION, blocked, None)]
+
+        async def main():
+            async with anyio.create_task_group() as tasks:
+                tasks.start_soon(svc.resume, agent, run.run_id)
+                while not started.is_set():
+                    await anyio.sleep(0.01)
+                tasks.cancel_scope.cancel()
+
+        anyio.run(main)
+        print("LOOP_EXITED", flush=True)
+    """)
+    with subprocess.Popen(
+        [sys.executable, "-c", program, str(tmp_path), str(fixtures_dir)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    ) as proc:
+        try:
+            stdout, stderr = proc.communicate(timeout=8)
+        except subprocess.TimeoutExpired as exc:
+            proc.kill()
+            stdout, stderr = proc.communicate()
+            pytest.fail(f"process remained alive after task cancellation: {stdout!r}; {stderr!r}; {exc}")
+    assert proc.returncode == 0, stderr
+    assert "LOOP_EXITED" in stdout
+
+
+async def test_workflow_shutdown_reaps_dbt_before_returning(
+    tmp_path: Path, fixtures_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    svc = make_service(tmp_path)
+    run = pending_run(svc)
+    launched = threading.Event()
+    processes: list[subprocess.Popen[str]] = []
+    original = subprocess.Popen
+
+    def capture(*args: Any, **kwargs: Any) -> Any:
+        proc = original(*args, **kwargs)
+        if args[0][0] == sys.executable:
+            processes.append(proc)
+            launched.set()
+        return proc
+
+    def build(ctx: StepContext) -> StepResult:
+        _run_dbt_process(ctx, [sys.executable, "-c", "import time; time.sleep(30)"], dict(os.environ))
+        return StepResult(audit=[("late_build", {})])
+
+    monkeypatch.setattr(subprocess, "Popen", capture)
+    svc.engine.steps = [StepSpec(StepName.CONNECTION_VALIDATION, build, None)]
+    with anyio.fail_after(10):
+        async with anyio.create_task_group() as tasks:
+            tasks.start_soon(svc.resume, AGENT, run.run_id)
+            await wait_for(launched)
+            tasks.cancel_scope.cancel()
+
+    assert len(processes) == 1 and processes[0].poll() is not None
+    stopped = svc.get_run(AGENT, run.run_id)
+    assert stopped.status is RunStatus.PENDING and stopped.lease_owner is None
+    assert not any(event.event_type == "late_build" for event in svc.audit(REVIEWER, run.run_id)[0])

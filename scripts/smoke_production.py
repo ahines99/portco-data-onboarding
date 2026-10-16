@@ -287,19 +287,30 @@ def production_server(env: dict[str, str], log: Path) -> Iterator[subprocess.Pop
                 proc.wait(timeout=30)
 
 
-def stop_gracefully(proc: subprocess.Popen[bytes], timeout: float = 45) -> dict[str, Any]:
-    """SIGTERM as a platform would send it; on POSIX a clean uvicorn shutdown exits 0."""
+def stop_gracefully(proc: subprocess.Popen[bytes], log: Path, timeout: float = 45) -> dict[str, Any]:
+    """Require completed lifespan shutdown, including uvicorn's post-cleanup SIGTERM re-raise."""
     if proc.poll() is not None:
         raise RuntimeError(f"production server exited early with {proc.returncode}")
     graceful_signal = os.name == "posix"
+    log_offset = log.stat().st_size
     if graceful_signal:
         proc.send_signal(signal.SIGTERM)
     else:  # Windows has no SIGTERM delivery to a console child; this is a forced stop
         proc.terminate()
     code = proc.wait(timeout=timeout)
-    if graceful_signal and code != 0:
-        raise RuntimeError(f"production server did not shut down cleanly after SIGTERM (exit {code})")
-    return {"signal": "SIGTERM" if graceful_signal else "TerminateProcess", "exit_code": code}
+    if graceful_signal:
+        with log.open("rb") as stream:
+            stream.seek(log_offset)
+            shutdown_log = stream.read().decode("utf-8", errors="replace")
+        # Current uvicorn restores signal handlers and re-raises SIGTERM after graceful cleanup.
+        # A -SIGTERM exit alone also describes a killed process, so require fresh lifecycle evidence.
+        if code not in {0, -signal.SIGTERM} or "Application shutdown complete." not in shutdown_log:
+            raise RuntimeError(f"production server did not complete application shutdown after SIGTERM (exit {code})")
+    return {
+        "signal": "SIGTERM" if graceful_signal else "TerminateProcess",
+        "exit_code": code,
+        "application_shutdown_complete": graceful_signal,
+    }
 
 
 async def wait_ready(base: str, proc: subprocess.Popen[bytes], timeout: float) -> float:
@@ -491,7 +502,7 @@ def smoke(database_url: str, port: int, out: Path, startup_timeout: float) -> di
             result["alembic_after_startup"] = schema["alembic_version"]
             observed = asyncio.run(exercise_http(base, tokens))
             result["http"] = observed
-            result["first_stop"] = stop_gracefully(proc)
+            result["first_stop"] = stop_gracefully(proc, log)
         failures = assert_http(observed, base)
         if schema["alembic_version"] != head:
             failures.append(f"database schema {schema['alembic_version']!r} is not at head {head!r}")
@@ -504,7 +515,7 @@ def smoke(database_url: str, port: int, out: Path, startup_timeout: float) -> di
                 "status": after.get("status"),
                 "gate": after.get("gate"),
             }
-            result["second_stop"] = stop_gracefully(proc)
+            result["second_stop"] = stop_gracefully(proc, log)
         if (after.get("status"), after.get("gate")) != ("needs_review", "mapping_review"):
             failures.append(f"run did not persist across restart: {result['after_restart']}")
         result["jwks_requests"] = jwks.requests

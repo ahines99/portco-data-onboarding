@@ -157,3 +157,60 @@ def test_production_http_checks_pass_against_a_real_jwt_server(
         finally:
             server.should_exit = True
             thread.join(timeout=30)
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(os.name != "posix", reason="POSIX signal delivery; exercised in hosted CI")
+def test_production_smoke_accepts_real_uvicorn_graceful_sigterm(tmp_path: Path) -> None:
+    import subprocess
+    import sys
+
+    app = tmp_path / "lifespan_app.py"
+    app.write_text(
+        "async def app(scope, receive, send):\n"
+        "    while True:\n"
+        "        message = await receive()\n"
+        "        if message['type'] == 'lifespan.startup':\n"
+        "            await send({'type': 'lifespan.startup.complete'})\n"
+        "        elif message['type'] == 'lifespan.shutdown':\n"
+        "            await send({'type': 'lifespan.shutdown.complete'})\n"
+        "            return\n",
+        encoding="utf-8",
+    )
+    log = tmp_path / "server.log"
+    with log.open("wb") as output:
+        proc = subprocess.Popen(
+            [sys.executable, "-m", "uvicorn", "lifespan_app:app", "--port", str(_free_port())],
+            cwd=tmp_path,
+            stdout=output,
+            stderr=subprocess.STDOUT,
+        )
+        try:
+            deadline = time.monotonic() + 30
+            while "Uvicorn running" not in log.read_text(encoding="utf-8"):
+                assert proc.poll() is None and time.monotonic() < deadline
+                time.sleep(0.05)
+            result = smoke.stop_gracefully(proc, log, timeout=10)
+            assert result["application_shutdown_complete"]
+        finally:
+            if proc.poll() is None:
+                proc.kill()
+                proc.wait(timeout=10)
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(os.name != "posix", reason="POSIX signal delivery; exercised in hosted CI")
+def test_production_smoke_rejects_sigterm_without_new_shutdown_evidence(tmp_path: Path) -> None:
+    import subprocess
+    import sys
+
+    log = tmp_path / "server.log"
+    log.write_text("Application shutdown complete.\n", encoding="utf-8")  # a previous server's log
+    proc = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+    try:
+        with pytest.raises(RuntimeError, match="did not complete application shutdown"):
+            smoke.stop_gracefully(proc, log, timeout=10)
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+            proc.wait(timeout=10)

@@ -30,11 +30,43 @@ TARBALL = "portco_data_onboarding-0.2.0rc3.tar.gz"
 ORIGINAL_TARBALL_SHA = "964d1a317bc1214f6ef4c0d075aca6fa2f9409d9a7a604308a36ef9cf573f7b7"
 CLEAN_TARBALL_SHA = "92886c0eb632303dfdfd08b68d273d7b31ce74793c2149cab2dd94ef3db7868d"
 ORIGINAL_CHECKSUMS_SHA = "e26f4c076e10f2e85d1b9e2c7614f97b975b27b45e7fec28d3f64e7f116a25b4"
+RETAINED_ARCHIVE_FINGERPRINT = "50c23c4dad6dace808d477d1a5cdb349bb6728e5a541f4bea6a8ee5b837813a1"
 NOTICE_MARKER = "<!-- october-2026-package-hygiene -->"
+REQUIRED_CI_JOBS = {
+    "lint-and-types",
+    "test",
+    "security",
+    "test-postgres",
+    "eval",
+    "demo",
+    "wheel-smoke",
+    "container-smoke",
+    "production-smoke",
+    "dependency-audit",
+}
+MEMBER_FIELDS = ("name", "mode", "uid", "gid", "size", "mtime", "type", "linkname", "uname", "gname", "pax_headers")
 
 
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def archive_fingerprint(path: Path, *, allow_config: bool = False) -> str:
+    """Identify ordered member bytes/metadata independently of gzip implementation."""
+    members = []
+    with tarfile.open(path) as archive:
+        for member in archive.getmembers():
+            parts = PurePosixPath(member.name).parts
+            if len(parts) >= 2 and parts[1] == ".config":
+                if allow_config:
+                    continue
+                raise ValueError("Sanitized archive still contains local configuration")
+            record = {field: getattr(member, field) for field in MEMBER_FIELDS}
+            record["type"] = member.type.hex()
+            body = archive.extractfile(member) if member.isfile() else None
+            record["content_sha256"] = hashlib.sha256(body.read()).hexdigest() if body is not None else None
+            members.append(record)
+    return hashlib.sha256(json.dumps(members, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 def parse_checksums(data: bytes) -> dict[str, str]:
@@ -52,22 +84,24 @@ def parse_checksums(data: bytes) -> dict[str, str]:
 def sanitize_archive(source: Path, destination: Path) -> list[str]:
     """Remove only root .config members; retain every other member's bytes and metadata."""
     removed: list[str] = []
-    with tarfile.open(source) as archive, destination.open("wb") as raw:
-        with gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0) as compressed:
-            with tarfile.open(fileobj=compressed, mode="w|", format=tarfile.PAX_FORMAT) as output:
-                for member in archive.getmembers():
-                    parts = PurePosixPath(member.name).parts
-                    if len(parts) >= 2 and parts[1] == ".config":
-                        removed.append(member.name)
-                        continue
-                    output.addfile(member, archive.extractfile(member) if member.isfile() else None)
+    with (
+        tarfile.open(source) as archive,
+        destination.open("wb") as raw,
+        gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0) as compressed,
+        tarfile.open(fileobj=compressed, mode="w|", format=tarfile.PAX_FORMAT) as output,
+    ):
+        for member in archive.getmembers():
+            parts = PurePosixPath(member.name).parts
+            if len(parts) >= 2 and parts[1] == ".config":
+                removed.append(member.name)
+                continue
+            output.addfile(member, archive.extractfile(member) if member.isfile() else None)
     with tarfile.open(source) as before, tarfile.open(destination) as after:
         if after.getnames() != [name for name in before.getnames() if name not in removed]:
             raise ValueError("Sanitization changed retained archive membership")
         for current in after.getmembers():
             previous = before.getmember(current.name)
-            fields = ("name", "mode", "uid", "gid", "size", "mtime", "type", "linkname", "uname", "gname", "pax_headers")
-            if any(getattr(previous, field) != getattr(current, field) for field in fields):
+            if any(getattr(previous, field) != getattr(current, field) for field in MEMBER_FIELDS):
                 raise ValueError(f"Sanitization changed member metadata: {current.name}")
             if current.isfile():
                 old_data = before.extractfile(previous)
@@ -82,41 +116,47 @@ def prepare_rc3(downloads: Path, output: Path) -> dict[str, Any]:
     original_sums = (downloads / "SHA256SUMS.txt").read_bytes()
     checksums = parse_checksums(original_sums)
     listed_tarball = checksums.get(TARBALL)
-    if listed_tarball not in {ORIGINAL_TARBALL_SHA, CLEAN_TARBALL_SHA}:
-        raise ValueError("rc.3 tarball does not match the original or sanitized release")
+    if listed_tarball is None:
+        raise ValueError("rc.3 checksum list omits its source tarball")
     baseline = original_sums.replace(listed_tarball.encode(), ORIGINAL_TARBALL_SHA.encode())
     if hashlib.sha256(baseline).hexdigest() != ORIGINAL_CHECKSUMS_SHA:
         raise ValueError("The original rc.3 checksum list changed beyond the tarball correction")
     names = {path.name for path in downloads.iterdir() if path.is_file()}
     if names != {*checksums, "SHA256SUMS.txt"}:
         raise ValueError("Downloaded rc.3 assets differ from the complete checksum list")
+    original_hash = digest(downloads / TARBALL)
+    if (
+        original_hash != ORIGINAL_TARBALL_SHA
+        and archive_fingerprint(downloads / TARBALL) != RETAINED_ARCHIVE_FINGERPRINT
+    ):
+        raise ValueError("rc.3 source tarball does not preserve the original retained members")
     for name, expected in checksums.items():
         actual = digest(downloads / name)
         allowed = {expected}
         if name == TARBALL:
             # A retry after uploading the tarball but before uploading its checksum is safe.
-            allowed |= {ORIGINAL_TARBALL_SHA, CLEAN_TARBALL_SHA}
+            allowed |= {ORIGINAL_TARBALL_SHA, original_hash}
         if actual not in allowed:
             raise ValueError(f"rc.3 checksum mismatch: {name}")
     output.mkdir(parents=True, exist_ok=True)
-    original_hash = digest(downloads / TARBALL)
-    removed = []
     if original_hash == ORIGINAL_TARBALL_SHA:
-        removed = sanitize_archive(downloads / TARBALL, output / TARBALL)
+        sanitize_archive(downloads / TARBALL, output / TARBALL)
     else:
         shutil.copyfile(downloads / TARBALL, output / TARBALL)
-    if digest(output / TARBALL) != CLEAN_TARBALL_SHA:
+    if archive_fingerprint(output / TARBALL) != RETAINED_ARCHIVE_FINGERPRINT:
         raise ValueError("Sanitized rc.3 archive differs from the independently verified correction")
-    corrected_sums = baseline.replace(ORIGINAL_TARBALL_SHA.encode(), CLEAN_TARBALL_SHA.encode())
+    clean_hash = digest(output / TARBALL)
+    corrected_sums = baseline.replace(ORIGINAL_TARBALL_SHA.encode(), clean_hash.encode())
     (output / "SHA256SUMS.txt").write_bytes(corrected_sums)
     return {
         "source_tag": OLD_TAG,
         "source_tag_unchanged": True,
         "original_tarball_sha256": ORIGINAL_TARBALL_SHA,
-        "sanitized_tarball_sha256": CLEAN_TARBALL_SHA,
-        "removed_paths": removed,
+        "sanitized_tarball_sha256": clean_hash,
+        "retained_member_fingerprint": RETAINED_ARCHIVE_FINGERPRINT,
+        "removed_paths": [TARBALL.removesuffix(".tar.gz") + "/.config/auth0/config.json"],
         "original_assets_verified": len(checksums),
-        "upload_required": original_hash != CLEAN_TARBALL_SHA or original_sums != corrected_sums,
+        "upload_required": original_hash != clean_hash or original_sums != corrected_sums,
     }
 
 
@@ -161,23 +201,42 @@ def tag_commit(tag: str) -> str | None:
     raise ValueError(f"Cannot resolve release tag {tag} to a commit")
 
 
+def ci_job_results(*, required: bool) -> dict[str, str]:
+    raw = os.environ.get("CI_JOB_RESULTS", "")
+    if not raw and not required:
+        return {}
+    try:
+        needs = json.loads(raw)
+        if not isinstance(needs, dict):
+            raise ValueError("CI results must be an object")
+        results = {name: job["result"] for name, job in needs.items()}
+    except (ValueError, TypeError, KeyError) as exc:
+        raise ValueError("CI_JOB_RESULTS must contain the gated workflow's needs results") from exc
+    if required and (not results.keys() >= REQUIRED_CI_JOBS or any(value != "success" for value in results.values())):
+        raise ValueError("Every required CI job must succeed before publication")
+    return results
+
+
 def publication_context(publish: bool, repo: Path) -> tuple[str, str]:
     source_sha = (command("git", "rev-parse", "HEAD", cwd=repo) or "").strip()
     if not re.fullmatch(r"[a-f0-9]{40}", source_sha):
         raise ValueError("Cannot identify release source commit")
+    if (command("git", "status", "--porcelain", "--untracked-files=no", cwd=repo) or "").strip():
+        raise ValueError("Refusing to prepare release provenance from a modified source checkout")
     if publish:
         expected = {
-            "GITHUB_ACTIONS": "true", "GITHUB_REPOSITORY": REPOSITORY,
-            "GITHUB_REF": "refs/heads/main", "GITHUB_SHA": source_sha,
+            "GITHUB_ACTIONS": "true",
+            "GITHUB_REPOSITORY": REPOSITORY,
+            "GITHUB_REF": "refs/heads/main",
+            "GITHUB_SHA": source_sha,
         }
         if any(os.environ.get(key) != value for key, value in expected.items()):
             raise ValueError("Publication requires the exact main-branch GitHub Actions checkout")
         if os.environ.get("GITHUB_EVENT_NAME") not in {"push", "workflow_dispatch"}:
             raise ValueError("Publication is permitted only on main push or explicit dispatch")
-        if command("git", "status", "--porcelain", "--untracked-files=no", cwd=repo).strip():
-            raise ValueError("Refusing to publish a modified source checkout")
         if not os.environ.get("GITHUB_RUN_ID", "").isdigit():
             raise ValueError("Publication requires a GitHub Actions run identity")
+        ci_job_results(required=True)
     run_id = os.environ.get("GITHUB_RUN_ID", "")
     ci_url = f"https://github.com/{REPOSITORY}/actions/runs/{run_id}" if run_id else "local preparation only"
     return source_sha, ci_url
@@ -192,13 +251,23 @@ def prepare_rc4(repo: Path, output: Path, source_sha: str, ci_url: str, correcti
     verify_distribution_hygiene(output)
     packages = sorted(path for path in output.iterdir() if path.is_file())
     if {path.name for path in packages} != {
-        "portco_data_onboarding-0.2.0rc4.tar.gz", "portco_data_onboarding-0.2.0rc4-py3-none-any.whl",
+        "portco_data_onboarding-0.2.0rc4.tar.gz",
+        "portco_data_onboarding-0.2.0rc4-py3-none-any.whl",
     }:
         raise ValueError("Unexpected rc.4 package filenames")
+    results = ci_job_results(required=False)
+    gated = results.keys() >= REQUIRED_CI_JOBS and all(value == "success" for value in results.values())
     verification = {
-        "release": NEW_TAG, "package_version": "0.2.0rc4", "source_commit": source_sha,
+        "release": NEW_TAG,
+        "package_version": "0.2.0rc4",
+        "source_commit": source_sha,
         "ci_run": ci_url,
-        "validation": "Publication is gated on all required CI jobs; distribution contents were inspected again.",
+        "ci_job_results": results,
+        "validation": (
+            "All required CI jobs passed; distribution contents were inspected again."
+            if gated
+            else "Preparation only: hosted CI success is not established; distribution contents were inspected."
+        ),
         "package_sha256": {path.name: digest(path) for path in packages},
         "rc3_packaging_correction": {key: value for key, value in correction.items() if key != "upload_required"},
         "scope": "Synthetic/local and CI validation; no live customer deployment or human pilot is claimed.",
@@ -234,13 +303,18 @@ def main() -> None:
     old_notes = workspace / "rc3-notes.md"
     old_notes.write_text(rc3_notes(old_release.get("body") or ""), encoding="utf-8")
     new_notes = workspace / "rc4-notes.md"
+    ci_statement = (
+        "Production-entry-point, PostgreSQL, container PORT, Linux/Windows packaging, evaluation and "
+        "security CI gates passed before publication."
+        if args.publish
+        else "Prepared locally; hosted CI success and publication are not established."
+    )
     new_notes.write_text(
         "October audit remediation: 23 findings addressed, including revenue categories that previously "
         "produced zero revenue while every check passed. Regression coverage includes parallel workflows, "
         "mid-run cancellation, source packaging and fresh-clone audit checksums.\n\n"
-        "The demo now shows 28 review items and 27/27 reconciliation checks. Production-entry-point, "
-        "PostgreSQL, container PORT, Linux/Windows packaging, evaluation and security CI gates passed "
-        f"before publication. [Exact CI run]({ci_url}); source commit `{source_sha}`.\n\n"
+        "The demo now shows 28 review items and 27/27 reconciliation checks. "
+        f"{ci_statement} CI reference: {ci_url}; source commit `{source_sha}`.\n\n"
         "The rc.3 source tarball was separately sanitized without changing its tag or retained files. "
         "`verification.json` records this release's provenance and package hashes; `SHA256SUMS.txt` "
         "covers every attached asset except itself.\n\n"
@@ -253,7 +327,9 @@ def main() -> None:
         return
     if correction["upload_required"]:
         command("gh", "release", "upload", OLD_TAG, str(corrected / TARBALL), "--repo", REPOSITORY, "--clobber")
-        command("gh", "release", "upload", OLD_TAG, str(corrected / "SHA256SUMS.txt"), "--repo", REPOSITORY, "--clobber")
+        command(
+            "gh", "release", "upload", OLD_TAG, str(corrected / "SHA256SUMS.txt"), "--repo", REPOSITORY, "--clobber"
+        )
     if old_notes.read_text(encoding="utf-8") != (old_release.get("body") or ""):
         command("gh", "release", "edit", OLD_TAG, "--repo", REPOSITORY, "--notes-file", str(old_notes))
     if tag_commit(OLD_TAG) != old_tag_sha:
@@ -262,9 +338,20 @@ def main() -> None:
     assets = [str(path) for path in sorted(rc4.iterdir())]
     if existing_release is None:
         command(
-            "gh", "release", "create", NEW_TAG, *assets, "--repo", REPOSITORY,
-            "--target", source_sha, "--prerelease", "--title", "v0.2.0-rc.4 — October audit remediation",
-            "--notes-file", str(new_notes),
+            "gh",
+            "release",
+            "create",
+            NEW_TAG,
+            *assets,
+            "--repo",
+            REPOSITORY,
+            "--target",
+            source_sha,
+            "--prerelease",
+            "--title",
+            "v0.2.0-rc.4 — October audit remediation",
+            "--notes-file",
+            str(new_notes),
         )
     else:
         if tag_commit(NEW_TAG) != source_sha:

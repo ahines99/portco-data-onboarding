@@ -42,6 +42,11 @@ example, a cancelled run could be made RUNNING again.
   lease and leave an owned RUNNING run PENDING for resume (`run_interrupted`). An explicit operator
   cancellation remains terminal CANCELLED. Cancellation during initial source resolution creates
   no run. Current ownership checks prevent interruption from changing a successor's run state.
+- Amendment 2026-10-16 (process shutdown regression): task cancellation alone did not let the Python
+  process exit because AnyIO's worker threads inherited the non-daemon flag of the server thread.
+  Source resolution and workflow driving now use explicitly daemon threads, retain request tracing
+  context and the AnyIO capacity limit, and make nested step threads daemon too. Cancellation gives
+  the owning workflow at most two seconds to finish cleanup before returning to server shutdown.
 
 ## Alternatives considered
 - `SELECT ... FOR UPDATE` held for the whole run: rejected. It would hold a transaction open for
@@ -62,6 +67,12 @@ same thread after the operation exits, avoiding concurrent close/use. Publicatio
 attempt cancellation, deadline and ownership around its filesystem side effects, as described in
 [ADR-0012](0012-recoverable-publication.md).
 
+Step cancellation allows up to one second for cooperative cleanup, including dbt termination, inside
+the outer two-second shutdown handshake. If a synchronous operation ignores cancellation, its daemon
+thread cannot prevent interpreter exit. Daemonization does not prove that arbitrary Python work stopped
+or that its cleanup ran: interrupted publication still depends on the execution fences and recovery
+protocol, and an interrupted database cleanup can leave a lease to expire normally.
+
 ## Evaluation
 `tests/test_engine_leases.py`: the table-driven transition tests, exclusive claims, recovery of an
 expired lease, cancellation during a step, crash-while-persisting, the timeout validator, and
@@ -72,3 +83,6 @@ exit; simultaneous full discovery workflows on one service; cancellation during 
 request cancellation, server task-group shutdown and operator cancellation during an unfinished
 step; late-result fencing, adapter cleanup ownership and resume; real subprocess cancellation and
 timeout cleanup.
+The subprocess shutdown regression starts a real interpreter with a blocked 30-second step, cancels
+its request task group and requires the process itself to exit within eight seconds. A service-level
+shutdown test also requires the dbt subprocess to be reaped before cancellation returns.

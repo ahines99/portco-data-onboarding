@@ -293,4 +293,7 @@ jobs:
         if: always()
         with:
           name: release-verification
-          path: var/release-publication/
+          path: |
+            var/release-publication/**/rc3-corrected/*
+            var/release-publication/**/rc4/*
+            var/release-publication/**/*-notes.md

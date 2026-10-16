@@ -117,21 +117,31 @@ worker thread prevented request cancellation or shutdown from interrupting it.
 - dbt output collection polls for cancellation and timeout and kills/reaps the process tree. Other
   synchronous Python steps may finish in the background, but their late results cannot persist.
   Adapters close on the step's owning thread after its operation exits.
+- A real subprocess regression exposed a remaining shutdown defect: the event loop exited, but the
+  interpreter waited for AnyIO's non-daemon step thread. Workflow driving and source resolution now
+  use explicit daemon threads, preserving tracing context and the usual capacity limit. A bounded
+  two-second handshake gives orchestration time to fence its attempt and release its lease; step
+  cancellation permits up to one second for cooperative cleanup such as terminating dbt. An
+  uninterruptible synchronous call can no longer hold interpreter shutdown open.
 
-`tests/test_workflow_concurrency.py` adds eight regressions: deterministic overlapping policy resolution;
+`tests/test_workflow_concurrency.py` adds ten regressions: deterministic overlapping policy resolution;
 two simultaneous discovery workflows through the public service; cancellation during source resolution;
 request cancellation, task-group shutdown and operator cancellation mid-step; and real subprocess
-cancellation and timeout. The mid-step tests prove the caller returns before the blocked step does,
+cancellation and timeout; actual interpreter shutdown with a blocked 30-second step; and service
+shutdown that reaps its dbt subprocess before returning. The mid-step tests prove the caller returns before the blocked step does,
 the next step does not run, no late result is recorded, cleanup stays on the owning thread, and a
 successor can finish the resumed run before the abandoned step returns without being overwritten.
 
 Local Windows validation for this follow-up:
 
 - The engine lease, October workflow/runtime, production runtime, publication recovery and concurrency
-  suites passed: **120 passed, 1 skipped**.
-- The final concurrency suite passed: **8 passed**.
-- Ruff check and format check passed for the four changed implementation/test files.
-- Mypy passed for `src/workflows` and `src/services/sandbox.py` (**7 source files**).
+  suites passed before the process-shutdown follow-up: **120 passed, 1 skipped**.
+- The final concurrency suite passed: **10 passed**. The real-interpreter shutdown test was first
+  observed failing with `LOOP_EXITED` printed while the process remained alive past its eight-second budget.
+- After the daemon-thread fix, the concurrency, October runtime and engine-lease suites passed together:
+  **66 passed**.
+- Ruff check and format check passed for the changed implementation/test files.
+- Mypy passed for `src/workflows` and `src/services/sandbox.py` (**8 source files**).
 
 These are local results, not a substitute for hosted CI. The skipped test is the PostgreSQL-specific
 case; current hosted checks and release publication belong in [release status](RELEASE-STATUS.md).
