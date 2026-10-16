@@ -42,7 +42,8 @@ source data, a retried timeout and an instruction planted in a table comment.
 <!-- demo-output:end -->
 
 See the [recorded replay](https://ahines99.github.io/portco-data-onboarding/#demo) and
-[full transcript](docs/evidence/demo-transcript.txt). Reviewers in this demo are automated test identities.
+[full transcript](docs/evidence/demo-transcript.txt). Reviewers in this demo are automated test identities. Diagnostic logs are saved beside the reports
+in `var/demo/diagnostics.log`; use `uv run portco demo --verbose` to show them.
 
 ## How it works
 

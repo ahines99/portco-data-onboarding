@@ -10,6 +10,7 @@ import re
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
+from threading import Event
 from types import SimpleNamespace
 from typing import Any
 from uuid import uuid4
@@ -209,6 +210,8 @@ def _sandbox(tmp_path: Path, gen: Generator, files: dict[str, str], resolved: Re
         settings=Settings(_env_file=None, env="test", var_root=(tmp_path / "var").resolve()),
         run=SimpleNamespace(run_id=uuid4()),
         services={},
+        execution_deadline=None,
+        execution_cancelled=Event(),
         blobs=blobs,
         adapter=lambda: SimpleNamespace(spec=spec),
         close=lambda: None,
