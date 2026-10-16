@@ -1,163 +1,86 @@
-# From synthetic source schemas to certified metrics
+# From ambiguous source data to reviewable financial metrics
 
-**Portfolio Company Data Onboarding Agent** · Alex Hines · Python / dbt / DuckDB / PostgreSQL / MCP
+**Alex Hines · Python / SQL / dbt / DuckDB / PostgreSQL / MCP**
 
-This portfolio project explores a practical data engineering problem: a portfolio-company schema
-does not automatically share the definitions, units or data quality expected by an investor's
-reporting model. A plausible-looking column mapping can produce a financially wrong answer.
+[Project page](https://ahines99.github.io/portco-data-onboarding/) → **Case study** →
+[Architecture](architecture.md) → [Evaluation and limitations](EVALUATION.md) →
+[Release status](RELEASE-STATUS.md)
 
-The complete financial demonstration uses synthetic SaaS and SAP-style fixtures. A later
-[public retail exercise](PUBLIC-OPERATING-DATA.md) adds real historical ingestion/profiling evidence,
-without financial certification. It has no production customers,
-measured analyst-time savings or investment-performance claim. The implementation was developed
-with substantial AI assistance. Alex approved the personal statement and delegated final acceptance;
-[the record](FINAL-ACCEPTANCE.md) distinguishes owner approval from automated execution.
+## The problem
 
-## Current automated qualification release
+A company's schema does not automatically share an investor's reporting definitions. One source
+stores invoice lines in cents and headers in dollars. Another labels potential CRM bookings `rev`.
+Matching familiar names can produce a financially wrong answer that still looks reasonable.
 
-The owner selected fully agentic or automated execution and free-only operation. The
-[automated qualification plan](AUTOMATED-QUALIFICATION.md) adds a separately authored six-case
-corpus, a read-only PostgreSQL source connector, and recorded separate operator/reviewer agent
-work. Actual PostgreSQL acceptance passed on `25c6937` in
-[hosted CI](https://github.com/ahines99/portco-data-onboarding/actions/runs/36443092813).
-The [v0.2.0-rc.3 release record](https://github.com/ahines99/portco-data-onboarding/releases/tag/v0.2.0-rc.3)
-and [release status](RELEASE-STATUS.md) identify integrated verification and exact release provenance.
-These additions do not establish a production deployment or independent human validation.
+This prototype turns that ambiguity into a reviewable workflow. It profiles metadata and aggregates,
+proposes evidence-linked mappings, generates dbt and semantic definitions, reconciles the results,
+and waits for a separate reviewer to certify the exact bundle before publication. The complete
+financial demonstration uses synthetic SaaS and SAP-style sources.
 
-## The problem made concrete
+## My role
 
-One source stores invoice-line amounts in cents while invoice headers use dollars. Another calls
-a CRM opportunity amount `rev`, despite it representing potential bookings rather than recognized
-revenue. The workflow profiles metadata and aggregates, proposes an evidence-linked mapping and
-stops for review. A model cannot turn those proposals into certification by saying “approved.”
+I chose this project to explore how AI-assisted onboarding can remain auditable when definitions,
+units and schemas disagree. My role included setting the portfolio direction, reviewing
+recommendations and deciding which capabilities to pursue. I used AI coding tools extensively
+for implementation, tests, audits and documentation. I distinguish what the prototype demonstrates
+from what still needs external validation; automated reviewer identities are not a human usability study.
 
-The output is a tested dbt project, semantic metric definitions, a reconciliation report and a
-versioned local publication carrying the certification metadata. Monetary calculations execute in
-deterministic code; the nine generated metrics include ARR, MRR, billings, recognized revenue,
-COGS, OPEX, EBITDA, gross-margin percentage and active customers.
+## The engineering decisions
 
-## Engineering decisions
+| Decision | Reason |
+|---|---|
+| Persist state outside the conversation | Runs need to survive interrupted clients, reviewer waiting and service restarts. |
+| Give agents typed MCP capabilities | Explicit principal and tenant checks constrain each action. |
+| Calculate financial values in code | Generated SQL must reconcile with independent reference calculations. |
+| Bind approval to content | A changed mapping or artifact cannot inherit an earlier decision. |
+| Separate mapping review from certification | Source interpretation and approval of the tested result are distinct decisions. |
+| Recover publication across two stores | Filesystem rename and database commit can fail separately; retries must verify exact files. |
+| Restrict profiling to aggregates and approved domains | A seemingly harmless category can still contain personal information. |
 
-| Decision | Why it matters | Evidence |
-|---|---|---|
-| State lives in the database | A lost conversation or restarted process must not lose review state | Engine tests; container restart/recreation checks |
-| Models call typed MCP capabilities | Principal checks and contracts constrain available actions | MCP integration and permission evals |
-| Financial math is deterministic | Plausible prose is not a reconciliation | Independent reference calculators and generated semantic execution |
-| Approval binds a content hash | Changing a mapping must invalidate what was reviewed | Stale-approval and resume/configuration regressions |
-| Publication has prepared/complete states | Filesystem rename and database commit can fail separately | [Recovery ADR](adr/0012-recoverable-publication.md) |
-| Profiles restrict category disclosure | A low-cardinality value can still be a person's name | Explicit per-column approved category domains |
-| Optional model judge defaults off | Additional model calls need demonstrated value | Recorded/replay comparison harness; no live uplift claimed |
+The [architecture](architecture.md) and its decision records explain the mechanisms and trust boundaries.
 
-## A consequential failure and repair
+## The audit that changed the correctness model
 
-The audit reproduced a publication failure window: a database receipt could exist even when the
-directory rename had failed. Reusing the receipt then appeared successful while files were absent.
-The repair introduced a durable prepared state, reserved version, exact file verification and retry
-recovery. Certification and execution ownership are rechecked at finalization. The tests cover both
-rename-before-commit and receipt-before-rename failure windows, cancellation, concurrent finalizers
-and changed files. This is a useful interview example of correctness across two persistence systems.
+In October 2026, a ten-agent audit recorded 23 findings. Its most consequential financial
+reproduction passed a real generated dbt build and every reconciliation check while turning
+a 100.00 revenue credit into zero recognized revenue. The source category was `Revenue`;
+both calculators expected lowercase canonical categories and silently omitted it.
 
-## Inspect the results
+The lesson was specific: independent arithmetic does not ensure independent semantic validation.
+The repair gives canonical categories executable constraints. Unknown or null classifications
+withhold affected metrics; case and whitespace normalization require an explicit reviewed transform.
+An independent domain check can now fail even when the monetary calculations agree.
 
-- [Successful report](evidence/success-report.md): mappings, evidence, tests and publication.
-- [Failure report](evidence/failure-report.md): malformed source stops at review.
-- [Reconciliation details](evidence/reconciliation.json): actual generated metric checks.
-- [Upgrade/restore rehearsal](evidence/recovery.json): populated local state survives migration and restoration.
-- [Timing sample](evidence/benchmark.json): three cold/reused fixture runs, excluding human waiting.
-- [Scripted demo transcript](evidence/demo-transcript.txt) and [read-only replay](index.html).
-- [Release evidence and accepted scope](RELEASE-STATUS.md).
-- [Separate-agent operator attempt](evidence/agent-operator-qualification/README.md) and
-  [reviewer completion](evidence/agent-reviewer-qualification/README.md) on baseline `03c4fb3`.
-- [Automated release qualification](AUTOMATED-QUALIFICATION.md),
-  [PostgreSQL contract](POSTGRES-SOURCE.md) and [v2 corpus](../evals/agent_qualification_v2/README.md).
+The same audit found rejected relationships returning in generated SQL, cached generation skipping
+revoked authority and a stale worker adopting its successor's lease. The
+[remediation record](REMEDIATION-2026-10-11.md) connects those fixes to regression tests at the
+reproduced boundaries. The [audit, probes and results](AUDIT-2026-10-10.md) preserve the earlier failures.
+[Release status](RELEASE-STATUS.md) separates implementation from exact-source CI and release verification.
 
-The [release status](RELEASE-STATUS.md) and exact tagged CI/verification assets contain dated test
-counts. Local and hosted populations overlap and must not be added together. Coverage of the metric reference module is 100%; this is not whole-application coverage.
-Fixture accuracy does not establish accuracy on a new real company. The timing sample is neither
-a scalability benchmark nor proof of business time savings.
+## What the evidence supports
 
-The [additional unfamiliar-schema probe](evidence/heldout-probe.json) matched **0 of 10 labeled
-targets** because it produced no proposals. It reached a certification review with no accepted
-source mappings; no reviewer approved or published the probe. This exposes dependence on recognized
-schema vocabulary. The probe is small and was authored by the implementation assistant, not an
-external blinded evaluator. The historical probe was not tuned to make that recorded result pass. Later development adds
-reviewed structural inference and a [frozen separate-agent benchmark](../evals/unfamiliar/README.md).
-That benchmark has distinct inputs, immutable labels and separate baseline/candidate reports; it is
-not external human validation or fully blinded research. Its results do not replace the original failure.
-The [first post-change run](evidence/unfamiliar-benchmark-first-postchange.json) matched 31 of 33
-proposals (31 of 32 labeled targets), unchanged from the reconstructed baseline, and failed its
-safety gate for an unreviewed competing monetary interpretation. Later fixes/reruns are
-post-benchmark remediation, not held-out proof of improvement. The [remediation rerun](evidence/unfamiliar-benchmark.json)
-passes safety with 32/33 correct proposals, 32/32 positive targets covered and 6/6 unit outcomes.
-Review burden increases to 7/33; one incorrect reviewed proposal and eight unresolved opaque
-fields remain. Those counts describe the preserved historical remediation. The [current v1
-regression](evidence/unfamiliar-benchmark-rc3.json) after the later entity-uncertainty repair retains safety, 32/33 correctness and 32/32
-target coverage, with 17/33 proposals requiring review and eight unresolved fields.
-Those limits matter as much as the passing safety gate.
+The SaaS demo publishes nine reconciled metrics after scripted separate-reviewer decisions.
+A separate source-informed agent review published six supported SAP-style metrics and explicitly
+rejected a misleading status mapping. Typed CSV and read-only PostgreSQL extraction have synthetic
+end-to-end verification. A 10,000-row real historical retail exercise demonstrates ingestion and
+profiling only.
 
-A new six-case [agent-authored v2 corpus](../evals/agent_qualification_v2/README.md) preserves another
-first safety failure. Both its initial and remediated runs produced 42/52 correct proposals and
-covered 42/43 positive targets. The repair propagates uncertain entity interpretation into
-column review: review rises from 22/52 to 48/52 and safety passes, with ten incorrect proposals
-and ten unresolved fields still disclosed. This improves the review boundary, not mapping
-accuracy. The new corpus is separate-agent authored, not an external human study; remediation is
-feedback-informed and cannot be called untouched held-out validation.
+Unfamiliar schemas expose the limits. The original probe matched 0/10 targets. Later frozen
+agent-authored corpora preserved failed safety gates; remediation increased review coverage,
+leaving wrong proposals and substantial reviewer effort. These are useful regression experiments,
+not proof of arbitrary-schema accuracy or independent human validation.
 
-## Separate agent operation and review
+Start with the [replay and transcript](index.html#demo), then use
+[evaluation and limitations](EVALUATION.md) for the complete result populations and evidence links.
+The workflow publishes locally. No live backend, customer outcome, analyst-time savings or
+independent human usability result is claimed.
 
-An operator agent used the documented CLI against pinned baseline `03c4fb3`, exported the SAP-style
-mapping packet, observed a denied same-starter review attempt and handed off the run. A separate
-delegated automated reviewer inspected the packet, aggregate evidence, ontology and fixture source.
-It explicitly rejected `FKART` as invoice lifecycle status and approved the other reviewed items;
-no blanket default approval or failed-check waiver was used.
+## Questions this project lets me examine
 
-The [completed run](evidence/agent-reviewer-qualification/README.md) published **six supported metrics**,
-verified **38 publication files** and an audit chain of **46 events**. It is distinct from the
-nine-metric SaaS demonstration. Unsupported metrics remain `NEEDS_EVIDENCE`; the reviewer saw fixture
-answer-key entries during source inspection, so the exercise is source-informed and not blinded.
-Both identities were controlled locally. Command durations are machine/agent execution observations,
-not human active time, independent usability measurements or business savings.
+How does a cent become a dollar without rounding away evidence? Why can two agreeing calculators
+both be wrong? What happens when an approval expires during a retry? How do you recover after a
+directory rename succeeds but its database transaction fails? What does a perfect fixture score
+leave untested?
 
-## Boundaries and next steps
-
-Accepted source evidence includes DuckDB fixtures and [operator-imported typed CSV snapshots](CSV-SOURCE.md).
-The [PostgreSQL source connector](POSTGRES-SOURCE.md) checks
-SELECT-only authority and schema contracts, extracts a bounded read-only repeatable-read snapshot,
-and registers it atomically through the CSV/DuckDB contract. Actual PostgreSQL acceptance extracted
-11 synthetic tables / 14,639 rows, then removed the source database before onboarding. The snapshot
-completed nine-metric reconciliation and publication with 58 generated-file hashes checked,
-59 published files, 45 verified audit events and zero waived checks. The separate reviewer identity
-in this smoke is scripted automation, distinct from the source-informed SAP-style agent review above.
-It is operator-triggered extraction, not continuous synchronization or customer-system access.
-Publication remains a versioned local directory. A 10,000-row public retail extract passed six ingestion/profile
-controls, retaining missing identifiers, cancellations and negative quantities; no mapping was
-approved or certified. Static HTTP tokens and trusted local reviewer identities are development
-controls. A [production JWT candidate](LIVE-DEPLOYMENT.md) is implemented, but there is no accepted
-public live MCP backend or live warehouse deployment. Auth0 agent-token verification is a separate
-milestone; it does not accept the full hosted reviewer/identity workflow. The local semantic executor
-supports a defined monthly subset; actual MetricFlow compatibility is tracked separately.
-
-Six real model sessions and a captioned synthetic-voice tour have now been collected. The
-[owner-approved acceptance packet](ASSISTED-ACCEPTANCE.md) and [final acceptance](FINAL-ACCEPTANCE.md)
-record completed delegated mapping/certification and accepted annotation/personal wording. Independent
-human first-use feedback remains optional future validation.
-The [operator pilot protocol](OPERATOR-PILOT.md) defines consent, source minimization, paired
-manual/assisted tasks, review burden, correction rates and actual participant signoff. It has not
-been executed. At the owner's request, the active roadmap uses automated qualification instead.
-The public presentation stays on free GitHub Pages and the workflow runs locally. Live hosting
-acceptance and independent human/customer evidence remain unverified; neither public data nor
-separate automated reviewers establish those outcomes.
-
-## Interview prompts
-
-Explain how cents become dollars; trace one metric through evidence, mapping, reconciliation and
-certification; explain why role names alone do not secure an operator-controlled machine; describe
-recovery after a crash between rename and commit; explain what a perfect fixture score cannot prove.
-
-Suggested portfolio description: “A governed data-onboarding prototype that profiles synthetic
-portfolio-company sources, proposes evidence-linked mappings, generates dbt models, reconciles
-financial metrics and publishes only after separate reviewer certification.” The
-[owner-approved personal statement](ASSISTED-ACCEPTANCE.md) describes Alex's role and substantial
-AI assistance without claiming production outcomes or sole implementation authorship.
-
-For role-specific wording and the boundary of each claim, see [the resume and claims matrix](RESUME-AND-CLAIMS.md).
+Those questions guide the implementation and its regression tests. The public reading path ends
+with [release status](RELEASE-STATUS.md), where each verification claim is tied to a revision.

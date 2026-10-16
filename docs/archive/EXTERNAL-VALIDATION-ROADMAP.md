@@ -1,5 +1,10 @@
 # Roadmap from verified portfolio to externally validated workflow
 
+> **Historical document (banner updated 2026-10-11).** Automated qualification under this plan is
+> complete, and live hosting is optional under the 2026-09-28 free-only decision. For the current
+> state and next work, use [release status](../RELEASE-STATUS.md), the single current index. The text
+> below, including its execution amendment, is retained unchanged for traceability.
+
 Prepared 2026-09-28 against repository commit `03c4fb38b51364caf42cde2580a3e9bb933a505c`.
 Execution amendment: the owner subsequently instructed, "Everything should be fully agentic or
 automated." The active execution scope is therefore the
@@ -98,8 +103,8 @@ and coordinate a session. Codex can draft a recruitment message, but Alex contro
 Gate P0: one coherent kit; baseline pinned; installation path checked; no credentials or sensitive
 records committed; no invented participant or outcome. Proposed artifacts: `docs/pilot-kit/` for
 generic instructions and ignored `var/operator-pilot/<pilot-id>/` for private session material.
-The existing [pilot protocol](OPERATOR-PILOT.md) and
-[record template](evidence/operator-pilot/TEMPLATE.json) remain authoritative.
+The existing [pilot protocol](../OPERATOR-PILOT.md) and
+[record template](../evidence/operator-pilot/TEMPLATE.json) remain authoritative.
 
 **Phase 1 records whether someone else can actually complete the workflow.**
 
@@ -254,7 +259,7 @@ production substitute. Do not weaken authentication or reviewer controls to fit 
 
 If a viable arrangement is selected, complete the reviewer identity flow, HTTPS and authorization
 denials, certified synthetic workflow, actual runtime assessment, restart persistence, coordinated
-restore, monitoring and rollback checks in [LIVE-DEPLOYMENT.md](LIVE-DEPLOYMENT.md). Until then,
+restore, monitoring and rollback checks in [LIVE-DEPLOYMENT.md](../LIVE-DEPLOYMENT.md). Until then,
 retain the claim "production deployment controls implemented; live acceptance incomplete."
 
 **The first execution batch is bounded and unblocked.**

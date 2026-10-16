@@ -6,11 +6,13 @@ Approvals are never accepted as caller-supplied booleans: `generate_dbt_artifact
 (ADR-0004), and only reviewer principals can create approvals (ADR-0009).
 """
 
-from typing import Literal
+from typing import Any, Literal
+from uuid import UUID
 
 from mcp.server import MCPServer
 from mcp.types import ToolAnnotations
 
+from src.adapters.repositories import RunRecord
 from src.capabilities.common import ServerState, parse_uuid, tool_errors
 from src.capabilities.schemas import (
     ApprovalResult,
@@ -28,7 +30,15 @@ from src.capabilities.schemas import (
 )
 from src.capabilities.summaries import finding_counts, review_item_out, run_summary
 from src.domain.errors import ApprovalRequired, Conflict, DomainError, NotFound, ValidationFailed
-from src.domain.models import SCHEMA_VERSION, AuditEvent, ReviewDecision, ReviewGate, RunStatus, StepName
+from src.domain.models import (
+    SCHEMA_VERSION,
+    AuditEvent,
+    Principal,
+    ReviewDecision,
+    ReviewGate,
+    RunStatus,
+    StepName,
+)
 from src.domain.project_models import (
     ArtifactBundle,
     CertificationPacket,
@@ -58,6 +68,31 @@ PUBLISH = ToolAnnotations(
     open_world_hint=False,
     title="Publish certified artifacts (requires certification)",
 )
+
+# Named capabilities are bounded server-side: annotations are hints, not enforcement. Each tool may
+# only start work from a cursor at or before its last permitted step, and stops after its own phase.
+STEP_ORDER = list(StepName)
+
+
+def _cursor(run: RunRecord) -> int:
+    if run.status is RunStatus.COMPLETE:
+        return len(STEP_ORDER)
+    return STEP_ORDER.index(StepName(run.current_step)) if run.current_step else 0
+
+
+async def bounded_resume(
+    svc: Any, principal: Principal, run_id: UUID, *, latest_start: StepName, stop_after: StepName
+) -> RunRecord:
+    """Resume only if the run has not advanced beyond this capability's phase; never past `stop_after`.
+
+    A run already past `latest_start` is returned unchanged: re-invoking an earlier capability must
+    not drive later side effects (for example publication) just because their approvals exist.
+    """
+    run = svc.get_run(principal, run_id)
+    if run.status is RunStatus.CANCELLED or _cursor(run) > STEP_ORDER.index(latest_start):
+        return run  # type: ignore[no-any-return]
+    return await svc.resume(principal, run_id, stop_after=stop_after)  # type: ignore[no-any-return]
+
 
 TOOL_ANNOTATIONS = {
     "healthcheck": READ,
@@ -117,9 +152,19 @@ def register(mcp: MCPServer, state: ServerState) -> None:
     @mcp.tool(annotations=TOOL_ANNOTATIONS["resume_run"])
     @tool_errors
     async def resume_run(run_id: str) -> RunSummary:
-        """Continue a paused or failed run. Gates re-check approvals; completed steps are reused, not recomputed."""
+        """Continue a paused or failed run up to (not including) publication.
+
+        Gates re-check approvals; completed steps are reused, not recomputed. A run that is ready to
+        publish is returned unchanged: publication only happens through publish_run.
+        """
         svc, principal = state.svc(), state.principal()
-        run = await svc.resume(principal, parse_uuid(run_id, "run_id"))
+        run = await bounded_resume(
+            svc,
+            principal,
+            parse_uuid(run_id, "run_id"),
+            latest_start=StepName.HUMAN_CERTIFICATION,
+            stop_after=StepName.HUMAN_CERTIFICATION,
+        )
         return run_summary(svc, principal, run)
 
     @mcp.tool(annotations=TOOL_ANNOTATIONS["list_pending_reviews"])
@@ -169,8 +214,8 @@ def register(mcp: MCPServer, state: ServerState) -> None:
     async def certify_run(
         run_id: str,
         subject_hash: str,
-        bundle_decision: str = "approve",
-        metric_decisions: dict[str, str] | None = None,
+        bundle_decision: Literal["approve", "reject"] = "approve",
+        metric_decisions: dict[str, Literal["approve", "reject"]] | None = None,
         comment: str | None = None,
     ) -> ApprovalResult:
         """Certify the generated bundle and its metrics. Reviewer principals only.
@@ -259,7 +304,9 @@ def register(mcp: MCPServer, state: ServerState) -> None:
         rid = parse_uuid(run_id, "run_id")
         run = svc.get_run(principal, rid)
         if run.status is RunStatus.PENDING:
-            run = await svc.resume(principal, rid)
+            run = await bounded_resume(
+                svc, principal, rid, latest_start=StepName.MAPPING_REVIEW, stop_after=StepName.MAPPING_REVIEW
+            )
         ms = svc.artifact(principal, rid, StepName.CANONICAL_MAPPING)
         assert isinstance(ms, MappingSet)
         n_review = sum(p.requires_review for p in ms.proposals)
@@ -293,7 +340,9 @@ def register(mcp: MCPServer, state: ServerState) -> None:
         ms = svc.artifact(principal, rid, StepName.CANONICAL_MAPPING)
         assert isinstance(ms, MappingSet)
         svc.verify_approval(rid, parse_uuid(approval_id, "approval_id"), ReviewGate.MAPPING_REVIEW, ms.content_hash())
-        run = await svc.resume(principal, rid, stop_after=StepName.ARTIFACT_GENERATION)
+        run = await bounded_resume(
+            svc, principal, rid, latest_start=StepName.ARTIFACT_GENERATION, stop_after=StepName.ARTIFACT_GENERATION
+        )
         try:
             bundle = svc.artifact(principal, rid, StepName.ARTIFACT_GENERATION)
         except NotFound as exc:
@@ -316,11 +365,14 @@ def register(mcp: MCPServer, state: ServerState) -> None:
         """Build the generated project with dbt in a disposable sandbox and reconcile metrics exactly.
 
         On success the run pauses at the certification gate; on failure at the test-failures gate.
+        A run already past testing is not advanced: its existing report is returned and nothing publishes.
         """
         svc, principal = state.svc(), state.principal()
         rid = parse_uuid(run_id, "run_id")
-        # Continue into the certification gate: it pauses the run for a human either way.
-        run = await svc.resume(principal, rid)
+        # Continue into the certification gate (it pauses for a human) but never into publication.
+        run = await bounded_resume(
+            svc, principal, rid, latest_start=StepName.AUTOMATED_TESTS, stop_after=StepName.HUMAN_CERTIFICATION
+        )
         with svc.store.tx() as tx:
             rec = tx.steps.active(rid, StepName.AUTOMATED_TESTS.value)
         if rec is None or rec.output_ref is None:
@@ -369,7 +421,8 @@ def register(mcp: MCPServer, state: ServerState) -> None:
                     )
                 )
             raise
-        run = await svc.resume(principal, rid)
+        # An explicit terminal step replaces any pause point an earlier bounded capability recorded.
+        run = await svc.resume(principal, rid, stop_after=StepName.PUBLISH)
         receipt = None
         if run.status is RunStatus.COMPLETE:
             receipt = svc.artifact(principal, rid, StepName.PUBLISH)

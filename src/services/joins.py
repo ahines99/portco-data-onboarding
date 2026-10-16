@@ -61,6 +61,7 @@ def infer_joins(ctx: StepContext) -> StepResult:
     tables = {t.qualified: t for t in profile.tables if t.row_count > 0}
     entity_of = {c.table: c.canonical_entity for c in entities.candidates if c.canonical_entity}
     pk_of = {c.table: c.primary_key_columns for c in entities.candidates if c.canonical_entity}
+    conf_of = {c.table: c.confidence for c in entities.candidates if c.canonical_entity}
 
     best: dict[tuple[str, str], JoinCandidate] = {}
     contenders: dict[tuple[str, str], list[JoinCandidate]] = defaultdict(list)
@@ -86,6 +87,16 @@ def infer_joins(ctx: StepContext) -> StepResult:
                 )
                 if lc.column in own_pk and not same_field:
                     continue  # a table's own key (or key part, e.g. a line number) rarely references another key
+                related = (entity_of[lq], entity_of[rq]) in rels or (entity_of[rq], entity_of[lq]) in rels
+                # A generic surrogate name (`id`) carries no business meaning: two independent
+                # sequences 1..n overlap completely. Same-name generic keys are never evidence alone.
+                generic = (
+                    lc.column.lower() == rc.column.lower()
+                    and field_owner(lc.column, ctx.ontology) is None
+                    and field_owner(rc.column, ctx.ontology) is None
+                )
+                if generic and lc.column in own_pk and not related:
+                    continue  # key-to-key between unrelated entities: coincidental sequences, not a reference
                 ns = name_score(lc, rc, rt, ctx)
                 if (entity_of[lq], entity_of[rq]) in rels:
                     ns = min(1.0, ns + cfg["relationship_bonus"])
@@ -114,6 +125,11 @@ def infer_joins(ctx: StepContext) -> StepResult:
                 reasons: list[str] = []
                 if structural:
                     reasons.append("STRUCTURAL_JOIN")
+                if generic:
+                    reasons.append("GENERIC_KEY")
+                if conf_of.get(lq) is not Confidence.HIGH or conf_of.get(rq) is not Confidence.HIGH:
+                    # Entity assignment of either endpoint is uncertain, so is the relationship.
+                    reasons.append("ENTITY_UNCERTAIN")
                 if cont.ratio < cfg["review_containment_below"]:
                     reasons.append("ORPHANS")
                 if frozenset({lq, rq}) <= next((o for o in overlap_tables if lq in o and rq in o), frozenset()):
@@ -161,13 +177,12 @@ def infer_joins(ctx: StepContext) -> StepResult:
                     best[key] = cand
 
     # Aggregate overlap alone cannot choose between two plausible reference
-    # tables. Do not turn alphabetical iteration order into an asserted FK.
+    # tables. Do not turn alphabetical iteration order into an asserted FK,
+    # even when the competing candidates are exact lexical matches.
     ambiguous = {
         key: candidates
         for key, candidates in contenders.items()
-        if len(candidates) > 1
-        and any("STRUCTURAL_JOIN" in c.reason_codes for c in candidates)
-        and sum(best[key].score - c.score <= 0.05 for c in candidates) > 1
+        if len(candidates) > 1 and sum(best[key].score - c.score <= 0.05 for c in candidates) > 1
     }
     for key in ambiguous:
         del best[key]

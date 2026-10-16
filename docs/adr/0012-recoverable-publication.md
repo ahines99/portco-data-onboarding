@@ -42,3 +42,12 @@ SQLite serializes transactions more broadly, limiting throughput compared with P
 Tests in `tests/test_publication_recovery.py`, `tests/test_engine_leases.py` and
 `tests/test_postgres.py` cover failure windows, stale certifications, content tampering,
 concurrency, cancellation and recovery.
+
+## Amendment 2026-10-11 (audit A10)
+
+Authorization for a new side effect and acknowledgement of a completed one are distinct. A
+`prepared` operation whose final directory already exists was renamed in the same locked
+transaction that re-checked certification and execution ownership. Retry therefore reconciles it
+to `complete` after verifying the exact files, including `certification.json`, even if the
+certification has expired since then (`publication_recovered` in the audit log). Prepared work that
+was never made visible, and reuse of completed publications, still require current certification.

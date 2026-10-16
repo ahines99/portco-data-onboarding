@@ -1,0 +1,107 @@
+{
+  "audit_date": "2026-10-10",
+  "timezone": "America/New_York",
+  "source_commit": "e1f8e36936f832b019dbd9418994ea95dc47f7a5",
+  "remote_main_matched": true,
+  "initial_working_tree_clean": true,
+  "specialist_agents": 10,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.10",
+  "packages": {
+    "duckdb": "1.5.5",
+    "psycopg": "3.3.6",
+    "mcp": "2.2.0",
+    "sqlalchemy": "2.0.54",
+    "dbt-core": "1.11.15",
+    "dbt-duckdb": "1.10.1"
+  },
+  "pytest": {
+    "command": "uv run --frozen pytest -q -m 'not postgres' --durations=20 --junitxml=var/audit-2026-10-10/pytest.xml",
+    "exit_code": 0,
+    "passed": 674,
+    "skipped": 1,
+    "deselected": 15,
+    "duration_seconds": 495.06,
+    "skip_reason": "OS account cannot create symbolic links",
+    "skipped_test": "tests/test_csv_source.py::test_symlink_input_rejected",
+    "caveat": "Concurrent audit work; duration is not an isolated performance measurement."
+  },
+  "lint": {
+    "command": "uv run --frozen ruff check src tests evals scripts",
+    "passed": true
+  },
+  "format": {
+    "command": "uv run --frozen ruff format --check src tests evals scripts",
+    "passed": true,
+    "files": 149
+  },
+  "types": {
+    "command": "uv run --frozen mypy src",
+    "passed": true,
+    "source_files": 75
+  },
+  "auth0_actions": {
+    "command": "node --test deploy/auth0/actions.test.js",
+    "passed": 6
+  },
+  "lock": {
+    "command": "uv lock --check",
+    "passed": true
+  },
+  "dependencies": {
+    "command": "uv tool run pip-audit --path .venv/Lib/site-packages --format json",
+    "audited": 121,
+    "known_vulnerabilities": 0,
+    "skipped_project": "portco-data-onboarding 0.2.0rc3 not available as an auditable PyPI distribution"
+  },
+  "metrics_reference_coverage": {
+    "tests_passed": 16,
+    "statements": 201,
+    "branches": 58,
+    "coverage_percent": 100,
+    "note": "Test population overlaps full suite; not whole-project coverage."
+  },
+  "golden_eval": {
+    "command": "uv run --frozen python -m evals.run",
+    "passed": 37,
+    "total": 37,
+    "duration_seconds": 134.8,
+    "gate": "PASS"
+  },
+  "wheel": {
+    "command": "uv run --frozen python scripts/smoke_wheel.py --offline",
+    "exit_code": 0,
+    "passed": [
+      "sdist-to-wheel",
+      "isolated base-only install outside checkout",
+      "three demo paths",
+      "installed stdio MCP"
+    ]
+  },
+  "hosted_ci": {
+    "url": "https://github.com/ahines99/portco-data-onboarding/actions/runs/36443938234",
+    "head_sha": "e1f8e36936f832b019dbd9418994ea95dc47f7a5",
+    "date_utc": "2026-09-28",
+    "conclusion": "success",
+    "successful_jobs": 10,
+    "note": "Historical exact-source CI, not a new October container/PostgreSQL run."
+  },
+  "not_run": [
+    "Local Docker: daemon unavailable",
+    "Local PostgreSQL integration",
+    "New container/OS vulnerability scan",
+    "New secret-history scan",
+    "Hosted provider/identity/recovery acceptance",
+    "Paid LLM evaluation",
+    "Human usability study"
+  ],
+  "site": {
+    "url": "https://ahines99.github.io/portco-data-onboarding/",
+    "http_status": 200,
+    "matches_local_html_ignoring_newlines": true,
+    "bounded_documents_checked": 44,
+    "missing_relative_file_targets": 0,
+    "visual_browser_test": false
+  },
+  "artifact_policy": "No application changes, commits, publication, deployment or external messages; audit documentation and synthetic evidence only."
+}

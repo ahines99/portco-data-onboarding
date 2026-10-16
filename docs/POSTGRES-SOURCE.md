@@ -13,11 +13,16 @@ from the application's workflow database.
 
 ## Installation and execution
 
-Install the existing PostgreSQL extra:
+Install the existing PostgreSQL extra into the project environment:
 
 ```powershell
-python -m uv sync --extra postgres --frozen
+uv sync --frozen --extra postgres
 ```
+
+Every command below runs inside that environment through `uv run --frozen --extra postgres`.
+A bare `python` may resolve to a different interpreter without psycopg or the project
+installed. If uv is installed as a Python module but not on PATH, replace `uv` with
+`python -m uv`; the command still executes in the project's `.venv`.
 
 Set `PORTCO_SOURCE_POSTGRES_URL` through the operator's secret environment or
 secret manager. The URL must contain one TCP host, database, username, password,
@@ -29,8 +34,8 @@ configuration. The connector never uses `PORTCO_DATABASE_URL` as its source.
 Then run:
 
 ```powershell
-python -m src.cli sources import-postgres path/to/postgres-manifest.json
-python -m src.cli run --connection csv:business-2025-12-31
+uv run --frozen --extra postgres portco sources import-postgres path/to/postgres-manifest.json
+uv run --frozen --extra postgres portco run --connection csv:business-2025-12-31
 ```
 
 The registered connection retains the `csv:` prefix because PostgreSQL extraction
@@ -71,7 +76,13 @@ key in key order. It accepts no query, filter, join, expression, incremental
 watermark, or file path. New source data requires a new `source_id`; existing
 registrations cannot be overwritten. `as_of` is an operator-supplied business
 interpretation date, not a historical database query or a verified capture date.
-Optional `category_domains` uses the same contract as CSV ingestion.
+Optional `category_domains` uses the same contract as CSV ingestion, as do the schema
+naming rules: the reserved names `main`, `information_schema`, `pg_catalog`, `source`,
+`system`, `temp` and `memory` are rejected, and so are schemas whose names differ only by
+letter case. PostgreSQL treats quoted `"Billing"` and `billing` as distinct schemas, but the
+DuckDB snapshot would merge them, so such a manifest is rejected before connecting. The
+largest possible registration, including PostgreSQL provenance, is also checked against
+the 1 MiB registration limit before connecting.
 
 | PostgreSQL type | Manifest type |
 |---|---|
@@ -136,7 +147,9 @@ additional safeguard, not a replacement for least-privilege credentials.
   checked between tables and rows; a currently running statement can finish or
   time out after that deadline. Local DuckDB materialization happens afterward.
 
-A server cursor transfers one row at a time. Primary-key order makes input CSV
+A server cursor transfers rows in batches of 32 (one `FETCH` round trip per batch),
+so client memory holds at most about 32 MiB of field content at a time; every row is
+still checked individually against the row, byte and deadline limits. Primary-key order makes input CSV
 hashes reproducible for unchanged values. PostgreSQL may still scan or sort data
 on the server; row/byte limits are transfer limits, not a claim of zero source
 load. Use an appropriate source instance and maintenance window when needed.
@@ -167,7 +180,7 @@ PostgreSQL CI uses plaintext loopback transport. Remote `verify-full` configurat
 and unit-tested; these checks do not establish a real remote provider's TLS integration.
 
 ```powershell
-python -m pytest -q tests/test_postgres_source.py
+uv run --frozen --extra postgres python -m pytest -q tests/test_postgres_source.py
 ```
 
 The existing `test-postgres` CI job also discovers
@@ -197,7 +210,7 @@ To run that complete acceptance outside pytest against a disposable local test
 server with the two `PORTCO_TEST_POSTGRES_*` variables set:
 
 ```powershell
-python -m scripts.smoke_postgres_source --workdir var/postgres-smoke --summary var/postgres-smoke-summary.json
+uv run --frozen --extra postgres python -m scripts.smoke_postgres_source --workdir var/postgres-smoke --summary var/postgres-smoke-summary.json
 ```
 
 The pytest acceptance test writes the same shareable evidence when

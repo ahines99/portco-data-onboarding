@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: Publish the October audit candidate after every check passes
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -17,40 +22,50 @@ env:
   PORTCO_ENV: test
   PORTCO_LOG_LEVEL: WARNING
 
+# Third-party inputs are pinned (audit DEL-03): actions to full commit SHAs with the release tag in a
+# comment, container images to multi-arch index digests with their tag, and uv to the Dockerfile's
+# version. .github/dependabot.yml proposes reviewed updates for actions, the Dockerfile, Compose and
+# uv.lock; the service/scanner image digests in this file are updated by hand alongside Compose.
+
 jobs:
   lint-and-types:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with: {enable-cache: true}
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - run: uv run poe lint
       - run: uv run ruff format --check src tests evals scripts
       - run: uv run poe typecheck
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with: {node-version: '22'}
       - run: node --test deploy/auth0/actions.test.js
 
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with: {enable-cache: true}
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - run: uv run poe fixtures
       - name: Unit, integration, golden and MCP tests (SQLite)
-        run: uv run pytest -q -m "not postgres and not security"
+        run: uv run pytest -q -m "not postgres and not security" --junitxml=var/junit/sqlite.xml
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: junit-sqlite
+          path: var/junit/sqlite.xml
       - name: Metric reference calculators at 100% branch coverage
         run: uv run poe cov-metrics
 
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with: {enable-cache: true}
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - run: uv run poe fixtures
       - run: uv run pytest -q -m security
@@ -59,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
         env:
           POSTGRES_USER: portco
           POSTGRES_PASSWORD: portco
@@ -72,13 +87,13 @@ jobs:
       PORTCO_TEST_POSTGRES_ALLOW_CREATE: '1'
       PORTCO_POSTGRES_SOURCE_SUMMARY: var/postgres-source-summary.json
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with: {enable-cache: true}
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - run: uv run poe fixtures
       - run: uv run pytest -q -m postgres
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: postgres-source-acceptance
@@ -88,9 +103,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test]
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with: {enable-cache: true}
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - run: uv run poe fixtures
       - name: Golden evaluation (gating)
@@ -99,17 +114,17 @@ jobs:
         run: uv run python -m evals.unfamiliar_benchmark --output var/unfamiliar-benchmark.json --enforce-safety
       - name: Agent-authored v2 corpus integrity and review safety
         run: uv run python -m evals.unfamiliar_benchmark --corpus evals/agent_qualification_v2 --manifest-sha256 e21b4cf4a8b2ad802c9cdbfb884c94ab1e42c92a1753b67275d2fd8eac078647 --output var/agent-qualification-v2.json --enforce-safety
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: agent-qualification-v2
           path: var/agent-qualification-v2.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: unfamiliar-benchmark
           path: var/unfamiliar-benchmark.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: eval-report
@@ -119,9 +134,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test]
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with: {enable-cache: true}
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - run: uv run poe demo
 
@@ -131,18 +146,18 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with: {enable-cache: true}
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - run: uv run python scripts/smoke_wheel.py
 
   container-smoke:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with: {enable-cache: true}
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - name: Generate an ephemeral test bearer token
         run: |
@@ -155,9 +170,19 @@ jobs:
           echo "PORTCO_HTTP_TOKENS=$token=agent:ci:agent:portco_a;$reviewer=ci-reviewer:reviewer:portco_a" >> "$GITHUB_ENV"
       - run: docker compose --profile full up --build -d
       - run: uv run python scripts/smoke_container.py
+      - name: Default image honors a non-default PORT for both server and health check
+        run: |
+          image=$(docker compose --profile full images -q mcp)
+          docker run -d --name portco-port-smoke -e PORT=8123 -e PORTCO_HTTP_TOKENS="$PORTCO_HTTP_TOKENS"             --health-interval 2s --health-start-period 60s -p 127.0.0.1:8123:8123 "$image"
+          for _ in $(seq 1 60); do
+            [ "$(docker inspect --format '{{.State.Health.Status}}' portco-port-smoke)" = healthy ] && break
+            sleep 2
+          done
+          docker inspect --format '{{.State.Health.Status}}' portco-port-smoke | grep -qx healthy
+          curl -fsS http://127.0.0.1:8123/readyz
       - name: Record and enforce actual container runtime restrictions
         run: docker compose --profile full exec -T mcp python -m src.runtime_evidence --assert-compose > runtime-evidence.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: runtime-evidence
@@ -165,14 +190,14 @@ jobs:
       - name: Scan actual application image
         run: |
           image=$(docker compose --profile full images -q mcp)
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/scan" aquasec/trivy:0.74.0 --cache-dir /scan/var/trivy-cache image --scanners vuln --format json --output /scan/container-audit.json "$image"
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/scan" aquasec/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969 --cache-dir /scan/var/trivy-cache image --scanners vuln --format json --output /scan/container-audit.json "$image"
       - name: Reject fixable HIGH and CRITICAL image vulnerabilities
         run: |
           image=$(docker compose --profile full images -q mcp)
           # Keep the complete report above, including accepted unfixed OS findings.
           # Reuse the same vulnerability database for the narrower failing gate.
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/scan" aquasec/trivy:0.74.0 --cache-dir /scan/var/trivy-cache image --scanners vuln --skip-db-update --ignore-unfixed --severity HIGH,CRITICAL --exit-code 1 "$image"
-      - uses: actions/upload-artifact@v4
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/scan" aquasec/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969 --cache-dir /scan/var/trivy-cache image --scanners vuln --skip-db-update --ignore-unfixed --severity HIGH,CRITICAL --exit-code 1 "$image"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: container-audit
@@ -182,18 +207,90 @@ jobs:
         run: docker compose --profile full logs --no-color
       - name: Remove isolated CI stack
         if: always()
-        run: docker compose --profile full down -v
+        run: |
+          docker rm -f portco-port-smoke || true
+          docker compose --profile full down -v
+
+  production-smoke:
+    # Boots the actual production entry point (python -m src.serve) as render.yaml does: production
+    # settings, JWT against a locally generated HTTPS JWKS, a TLS PostgreSQL URL normalized by the
+    # entry point, startup migration, a non-default PORT, graceful SIGTERM and a restart.
+    # Not a hosted deployment: provider TLS/proxy, Auth0/MFA and restore rehearsal stay unverified.
+    runs-on: ubuntu-latest
+    env:
+      SMOKE_POSTGRES_IMAGE: postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with: {enable-cache: true, version: "0.12.18"}
+      - run: uv sync --all-extras --frozen
+      - name: Start a disposable PostgreSQL that requires TLS-capable connections
+        # The Debian-based image ships a self-signed snakeoil certificate; sslmode=require encrypts
+        # without verifying it, as on the managed database.
+        run: >-
+          docker run -d --name portco-production-smoke-db
+          -e POSTGRES_USER=portco -e POSTGRES_PASSWORD=portco -e POSTGRES_DB=portco
+          -p 127.0.0.1:5433:5432 "$SMOKE_POSTGRES_IMAGE"
+          -c ssl=on
+          -c ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem
+          -c ssl_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
+      - name: Production entry point smoke (startup, migration, readiness, JWT, MCP, restart)
+        run: >-
+          uv run python -m scripts.smoke_production
+          --database-url postgresql://portco:portco@127.0.0.1:5433/portco
+          --port 18080 --out var/production-smoke.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: production-smoke
+          path: |
+            var/production-smoke.json
+            var/production-smoke.log
+      - name: Database diagnostics
+        if: always()
+        run: docker logs --tail 50 portco-production-smoke-db
+      - name: Remove disposable database
+        if: always()
+        run: docker rm -f portco-production-smoke-db
 
   dependency-audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with: {enable-cache: true}
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - run: uv tool run pip-audit --path .venv/lib/python3.12/site-packages --format json --output dependency-audit.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: dependency-audit
           path: dependency-audit.json
+
+  publish-release:
+    # A release is explicit, and it uses the exact main commit whose required jobs all passed.
+    # PR runs can never publish. The message trigger is limited to this October candidate.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      ((github.event_name == 'workflow_dispatch' && inputs.publish_release) ||
+       (github.event_name == 'push' && contains(github.event.head_commit.message, '[release rc4]')))
+    needs: [lint-and-types, test, security, test-postgres, eval, demo, wheel-smoke, container-smoke, production-smoke, dependency-audit]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CI_JOB_RESULTS: ${{ toJSON(needs) }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with: {fetch-depth: 0}
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with: {enable-cache: true, version: "0.12.18"}
+      - run: uv sync --all-extras --frozen
+      - name: Correct rc.3 archive and publish verified rc.4
+        run: uv run python -m scripts.publish_audit_release --publish
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: release-verification
+          path: var/release-publication/

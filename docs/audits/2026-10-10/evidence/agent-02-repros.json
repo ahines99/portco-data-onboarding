@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "repro": "revoked_mapping_generation_cache",
+      "status": "pending",
+      "current_step": "automated_tests",
+      "direct_generation": "ApprovalRequired",
+      "same_step_id": true
+    },
+    {
+      "repro": "expired_old_approval_poison",
+      "review_status": "ok",
+      "expired_id_retained": true,
+      "fresh_id_retained": true,
+      "generation": "ApprovalRequired"
+    },
+    {
+      "repro": "engine_run_stale_worker_lease_adoption",
+      "old_owner": "old-worker#6d7dfb8b82a6",
+      "final_owner": "replacement-worker",
+      "run_status": "running",
+      "publication_state": "complete",
+      "destination_exists": true
+    },
+    {
+      "repro": "expiry_blocks_renamed_publication_recovery",
+      "recovery": "ApprovalRequired",
+      "cancel": "Conflict",
+      "publication_state": "prepared",
+      "destination_exists": true
+    }
+  ],
+  "note": "Temporary runtime path omitted; results are unchanged."
+}

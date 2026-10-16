@@ -146,8 +146,13 @@ class RunRepository:
     # read the same row, exactly one update matches, so a run is never advanced by two workers.
 
     def claim(self, run_id: UUID, owner: str, lease_seconds: float) -> tuple[RunRecord, RunRecord]:
-        """Take the lease; returns (run before the claim, run after). Raises Conflict if not claimable."""
-        before = self.get(run_id)
+        """Take the lease; returns (run before the claim, run after). Raises Conflict if not claimable.
+
+        The row is locked before the expiry check, and the update also compares the observed
+        expiry: a renewal committed between our read and our update (PostgreSQL READ COMMITTED
+        re-evaluates the predicate) leaves no matching row instead of being overwritten.
+        """
+        before = self.get(run_id, lock=True)
         now = utcnow()
         if before.lease_live(now):
             raise Conflict("run is being executed by another worker")
@@ -155,9 +160,10 @@ class RunRepository:
             raise Conflict(f"a {before.status.value} run cannot be started")
         c = db.workflow_runs.c
         same_owner = c.lease_owner.is_(None) if before.lease_owner is None else c.lease_owner == before.lease_owner
+        same_expiry = c.lease_expires_at.is_(None) if before.lease_expires_at is None else c.lease_expires_at <= now
         res = self.conn.execute(
             update(db.workflow_runs)
-            .where(c.run_id == run_id, c.status == before.status.value, same_owner)
+            .where(c.run_id == run_id, c.status == before.status.value, same_owner, same_expiry)
             .values(
                 status=RunStatus.RUNNING.value,
                 lease_owner=owner,
@@ -756,6 +762,20 @@ class Store:
             if conn.dialect.name == "sqlite":
                 conn.exec_driver_sql("BEGIN IMMEDIATE")
             yield Tx(conn, self.blobs)
+
+    @contextmanager
+    def read(self) -> Iterator[Tx]:
+        """A read-only unit of work. SQLite takes a deferred (shared) transaction, so readers keep a
+        consistent WAL snapshot without queueing behind the single writer; mutations must use `tx()`."""
+        with self.engine.begin() as conn:
+            if conn.dialect.name == "sqlite":
+                conn.exec_driver_sql("BEGIN")
+                conn.exec_driver_sql("PRAGMA query_only = ON")
+            try:
+                yield Tx(conn, self.blobs)
+            finally:
+                if conn.dialect.name == "sqlite":
+                    conn.exec_driver_sql("PRAGMA query_only = OFF")
 
     def create_schema(self) -> None:
         db.metadata.create_all(self.engine)

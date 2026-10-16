@@ -182,6 +182,10 @@ class FakeCursor(Rows):
     def __enter__(self) -> FakeCursor:
         return self
 
+    def fetchmany(self, size: int) -> list[tuple[Any, ...]]:
+        batch, self.rows = self.rows[:size], self.rows[size:]
+        return batch
+
     def __exit__(self, *args: Any) -> None:
         pass
 

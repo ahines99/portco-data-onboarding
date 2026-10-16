@@ -33,30 +33,32 @@ def publish_bundle(ctx: StepContext) -> StepResult:
     manifest = bundle.manifest_hash
     if packet.manifest_hash != manifest:
         raise PolicyViolation("certification packet does not match the bundle being published")
-    try:
-        with ctx.store.tx() as tx:
-            certs, certification, excluded, published_metrics = _certifications(ctx, tx, bundle, packet)
-    except ApprovalRequired:
-        with ctx.store.tx() as tx:
-            tx.audit.append(
-                AuditEvent(
-                    run_id=ctx.run.run_id,
-                    step=StepName.PUBLISH.value,
-                    actor="system",
-                    event_type="policy_denied",
-                    payload={"action": "publish"},
-                )
-            )
-        raise
     company = ctx.run.company_id
-    key = content_hash(
-        {
-            "manifest": manifest,
-            "excluded": sorted(excluded),
-            "certifications": [str(c) for c in packet.certification_ids],
-        }
-    )
-    receipt = _publish_new(ctx, bundle, packet, certs, certification, excluded, published_metrics, key)
+    # The certified exclusions are pinned in the packet (`_certifications` re-proves they still
+    # match the effective decisions), so the operation key never depends on approval state.
+    key = publication_key(packet)
+    recovered = _recover_finalized(ctx, bundle, packet, key)
+    audit: list[tuple[str, dict[str, object]]] = []
+    if recovered is not None:
+        receipt = recovered
+        audit.append(("publication_recovered", {"version": receipt.version, "manifest_hash": manifest}))
+    else:
+        try:
+            with ctx.store.tx() as tx:
+                certs, certification, excluded, published_metrics = _certifications(ctx, tx, bundle, packet)
+        except ApprovalRequired:
+            with ctx.store.tx() as tx:
+                tx.audit.append(
+                    AuditEvent(
+                        run_id=ctx.run.run_id,
+                        step=StepName.PUBLISH.value,
+                        actor="system",
+                        event_type="policy_denied",
+                        payload={"action": "publish"},
+                    )
+                )
+            raise
+        receipt = _publish_new(ctx, bundle, packet, certs, certification, excluded, published_metrics, key)
 
     ev = make_evidence(
         ctx,
@@ -83,6 +85,7 @@ def publish_bundle(ctx: StepContext) -> StepResult:
         evidence=[ev],
         findings=[finding],
         audit=[
+            *audit,
             (
                 "publish_completed",
                 {
@@ -91,9 +94,51 @@ def publish_bundle(ctx: StepContext) -> StepResult:
                     "reused": receipt.reused,
                     "certification_id": str(receipt.certification_id),
                 },
-            )
+            ),
         ],
     )
+
+
+def publication_key(packet: CertificationPacket) -> str:
+    return content_hash(
+        {
+            "manifest": packet.manifest_hash,
+            "excluded": sorted(packet.excluded_metrics),
+            "certifications": [str(c) for c in packet.certification_ids],
+        }
+    )
+
+
+def _recover_finalized(
+    ctx: StepContext, bundle: ArtifactBundle, packet: CertificationPacket, key: str
+) -> PublishReceipt | None:
+    """Reconcile a publication whose files were already made visible but whose completion never committed.
+
+    A final directory exists only if a worker passed the full certification check and the execution
+    fence in the same transaction that renamed it (see `_publish_new`). Acknowledging that historical
+    side effect therefore needs no *current* certification, which may since have expired: the exact
+    files (including certification.json for this packet and receipt) are verified instead. Anything
+    not yet visible is a new side effect and goes through `_publish_new`, which requires current
+    authorization. Completed publications also keep requiring current certification for reuse.
+    """
+    company = ctx.run.company_id
+    with ctx.store.tx() as tx:
+        operation = tx.publications.operation(company, key)
+    if operation is None or operation["state"] != "prepared":
+        return None
+    receipt = PublishReceipt.model_validate(operation["receipt"])
+    dest = _contained(_contained(ctx.settings.published_root, company), receipt.version)
+    if dest != Path(receipt.path) or not dest.exists():
+        return None
+    files = _contents(ctx, bundle, packet, [], receipt)
+    with ctx.store.tx() as tx:
+        ctx.check_publication_owner(tx)
+        operation = tx.publications.operation(company, key)
+        if operation is None or operation["state"] != "prepared":
+            return None  # another finalizer won; take the normal (authorized) path
+        _verify(dest, files)
+        tx.publications.complete(company, key)
+    return receipt.model_copy(update={"reused": False})
 
 
 def _certifications(

@@ -9,9 +9,10 @@
 - Gate steps pause the run in NEEDS_REVIEW; `resume` re-enters at the gate, which re-checks
   approvals, and continues without recomputing earlier steps.
 - Only the worker holding the run's execution lease advances it (`RunRepository.claim` is a
-  compare-and-set). The lease is renewed before every step attempt; a cancelled run stops at
-  the next step boundary and a step that finishes after cancellation is discarded, not
-  persisted. A worker that dies leaves an expired lease, and the next `resume` recovers it.
+  compare-and-set). The lease is renewed before every step attempt. Local cancellation interrupts
+  orchestration; persisted cancellation also fences workers in other processes at step boundaries.
+  A late step result cannot persist. Request cancellation releases the lease and leaves the run
+  resumable; a worker that dies leaves an expired lease, and the next `resume` recovers it.
 - Status changes follow the table in `src/domain/run_states.py`.
 """
 
@@ -19,6 +20,7 @@ from __future__ import annotations
 
 import random
 from collections.abc import Callable
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from time import monotonic
 from typing import Any
@@ -32,7 +34,15 @@ from src.adapters.artifact_store import ArtifactStore
 from src.adapters.external import ConnectionRegistry, SourceAdapter
 from src.adapters.faults import FaultInjector, FaultyAdapter
 from src.adapters.repositories import RunRecord, Store, Tx
-from src.domain.errors import Conflict, DomainError, ErrorCode, LeaseLost, NotImplementedStep, SourceTimeout
+from src.domain.errors import (
+    ApprovalRequired,
+    Conflict,
+    DomainError,
+    ErrorCode,
+    LeaseLost,
+    NotImplementedStep,
+    SourceTimeout,
+)
 from src.domain.hashing import content_hash
 from src.domain.models import SCHEMA_VERSION, AuditEvent, ReviewGate, RunStatus, StepName
 from src.domain.ontology import Ontology
@@ -57,6 +67,10 @@ class StepSpec:
     gate: ReviewGate | None = None
     retryable: bool = True
     timeout_seconds: float | None = None
+    # Current-authority check that must pass before a cached output may be reused (or the step run).
+    # On ApprovalRequired the engine rewinds to `rewind_to`, whose gate re-evaluates the review.
+    precondition: Callable[[StepContext], None] | None = None
+    rewind_to: StepName | None = None
 
 
 def output_hash(model: BaseModel) -> str:
@@ -74,6 +88,11 @@ class WorkflowEngine:
     services: dict[str, Any] = field(default_factory=dict)
     faults: FaultInjector = field(default_factory=FaultInjector)
     sleep: Callable[[float], Any] | None = None
+    # Connection policy resolved once per `run` call: resolution re-verifies a whole snapshot digest,
+    # and every step's input hash needs it (audit PERF-4). `open()` still verifies independently.
+    _policy: ContextVar[dict[str, dict[str, Any]] | None] = field(
+        default_factory=lambda: ContextVar("workflow_connection_policy", default=None), repr=False
+    )
 
     @property
     def blobs(self) -> ArtifactStore:
@@ -115,9 +134,17 @@ class WorkflowEngine:
                 "configuration": configuration_fingerprint(self.settings, self.services.get("judge")),
                 "upstream": upstream_hashes,
                 "connection": run.connection_id,
-                "connection_policy": self.connections.resolve(run.connection_id).model_dump(mode="json"),
+                "connection_policy": self._connection_policy(run.connection_id),
             }
         )
+
+    def _connection_policy(self, connection_id: str) -> dict[str, Any]:
+        policy = self._policy.get()
+        if policy is None:  # outside a `run` invocation: always verify afresh
+            return self.connections.resolve(connection_id).model_dump(mode="json")
+        if connection_id not in policy:
+            policy[connection_id] = self.connections.resolve(connection_id).model_dump(mode="json")
+        return policy[connection_id]
 
     @property
     def lease_seconds(self) -> float:
@@ -183,6 +210,14 @@ class WorkflowEngine:
     # ------------------------------------------------------------------ execution
 
     async def run(self, run_id: UUID, actor: str = "system", *, stop_after: str | None = None) -> RunRecord:
+        # Each concurrent invocation owns its cache, including copies of its context in step threads.
+        token = self._policy.set({})
+        try:
+            return await self._run_invocation(run_id, actor, stop_after)
+        finally:
+            self._policy.reset(token)
+
+    async def _run_invocation(self, run_id: UUID, actor: str, stop_after: str | None) -> RunRecord:
         with self.store.tx() as tx:
             run = tx.runs.get(run_id)
             if run.status in {RunStatus.COMPLETE, RunStatus.CANCELLED}:
@@ -214,6 +249,12 @@ class WorkflowEngine:
             log.info("run_claimed", from_step=step0)
             try:
                 await self._drive(run_id, start, actor, owner)
+            except anyio.get_cancelled_exc_class():
+                with self.store.tx() as tx:
+                    if self._owned(tx, run_id, owner):
+                        tx.runs.update(run_id, status=RunStatus.PENDING)
+                        self._audit(tx, run_id, "", "run_interrupted", actor, reason="caller cancelled or shutdown")
+                raise
             except LeaseLost:
                 log.warning("lease_lost")
             except Exception as exc:  # engine bug or database failure: fail the run, never leave it RUNNING
@@ -229,10 +270,18 @@ class WorkflowEngine:
             return result
 
     async def _drive(self, run_id: UUID, start: int, actor: str, owner: str) -> RunRecord:
-        for idx in range(start, len(self.steps)):
+        idx = start
+        rewound: set[int] = set()
+        while idx < len(self.steps):
             spec = self.steps[idx]
             if not self._heartbeat(run_id, owner):
                 return self._stopped(run_id, spec.name.value, actor)
+            if idx not in rewound:
+                target = self._authority_rewind(run_id, idx, actor, owner)
+                if target is not None:
+                    rewound.add(idx)  # a second lapse at the same step fails instead of looping
+                    idx = target
+                    continue
             outcome = await self._run_step(run_id, spec, actor, owner)
             if outcome == "cancelled":
                 return self._stopped(run_id, spec.name.value, actor)
@@ -240,12 +289,13 @@ class WorkflowEngine:
                 with self.store.tx() as tx:
                     return tx.runs.get(run_id)
             with self.store.tx() as tx:
-                run = tx.runs.get(run_id, lock=True)
+                run = self._require_owner(tx, run_id, owner)
                 nxt = self.steps[idx + 1].name.value if idx + 1 < len(self.steps) else None
-                if run.status is RunStatus.RUNNING and run.stop_after == spec.name.value and nxt:
+                if run.stop_after == spec.name.value and nxt:
                     tx.runs.update(run_id, status=RunStatus.PENDING, current_step=nxt, stop_after=None)
                     self._audit(tx, run_id, spec.name.value, "run_paused", actor, next_step=nxt)
                     return tx.runs.get(run_id)
+            idx += 1
         with self.store.tx() as tx:
             run = tx.runs.get(run_id, lock=True)
             if run.status is not RunStatus.RUNNING or run.lease_owner != owner:
@@ -281,10 +331,73 @@ class WorkflowEngine:
         run = tx.runs.get(run_id, lock=True)
         return run.status is RunStatus.RUNNING and run.lease_owner == owner
 
+    def _require_owner(self, tx: Tx, run_id: UUID, owner: str) -> RunRecord:
+        """Lock the run and prove this worker still holds it before any mutation."""
+        run = tx.runs.get(run_id, lock=True)
+        if run.status is not RunStatus.RUNNING or run.lease_owner != owner:
+            raise LeaseLost("execution lease lost")
+        return run
+
+    def _context(
+        self,
+        run: RunRecord,
+        owner: str,
+        upstream: dict[StepName, BaseModel],
+        approvals: list[Any],
+    ) -> StepContext:
+        return StepContext(
+            run=run,
+            settings=self.settings,
+            ontology=self.ontology,
+            blobs=self.blobs,
+            store=self.store,
+            open_adapter=self._open_adapter(run),
+            upstream=upstream,
+            approvals=approvals,
+            services=self.services,
+            execution_owner=owner,
+        )
+
+    def _authority_rewind(self, run_id: UUID, idx: int, actor: str, owner: str) -> int | None:
+        """Re-check a step's current authority before it runs or its cached output is reused.
+
+        Returns the index to rewind to when authority has lapsed (revoked or expired approval),
+        so the owning gate asks for review again; None when the step may proceed.
+        """
+        spec = self.steps[idx]
+        if spec.precondition is None:
+            return None
+        with self.store.tx() as tx:
+            run = self._require_owner(tx, run_id, owner)
+            upstream, _ = self._load_upstream(tx, run_id, spec.name)
+            approvals = tx.approvals.for_run(run_id)
+            try:
+                spec.precondition(self._context(run, owner, upstream, approvals))
+            except ApprovalRequired as exc:
+                if spec.rewind_to is None:
+                    raise
+                target = [s.name for s in self.steps].index(spec.rewind_to)
+                for following in self.steps[target:]:
+                    tx.steps.deactivate(run_id, following.name.value)
+                tx.runs.update(run_id, current_step=spec.rewind_to.value, gate=None, pending_items=[])
+                self._audit(
+                    tx,
+                    run_id,
+                    spec.name.value,
+                    "authority_lapsed",
+                    actor,
+                    rewind_to=spec.rewind_to.value,
+                    reason=exc.message,
+                )
+                return target
+        return None
+
     async def _run_step(self, run_id: UUID, spec: StepSpec, actor: str, owner: str) -> str:
         step = spec.name.value
         with self.store.tx() as tx:
-            run = tx.runs.get(run_id)
+            # Never derive authority from this snapshot: a successor may have claimed the run
+            # while this worker was paused. Ownership is proven against the original token.
+            run = self._require_owner(tx, run_id, owner)
             upstream, hashes = self._load_upstream(tx, run_id, spec.name)
             ihash = self.input_hash(spec, hashes, run)
             tx.runs.update(run_id, current_step=step)
@@ -296,25 +409,16 @@ class WorkflowEngine:
                     return "completed"
             approvals = tx.approvals.for_run(run_id)
 
-        max_attempts = self.settings.step_max_attempts if spec.retryable else 1
+        max_attempts = max(1, self.settings.step_max_attempts) if spec.retryable else 1
         with structlog.contextvars.bound_contextvars(step=step):
             for attempt in range(1, max_attempts + 1):
                 if attempt > 1 and not self._heartbeat(run_id, owner):
                     return "cancelled"
                 with self.store.tx() as tx:
+                    self._require_owner(tx, run_id, owner)
                     sr = tx.steps.start(run_id, step, ihash)
                     self._audit(tx, run_id, step, "step_started", actor, attempt=sr.attempt, input_hash=ihash)
-                ctx = StepContext(
-                    run=run,
-                    settings=self.settings,
-                    ontology=self.ontology,
-                    blobs=self.blobs,
-                    store=self.store,
-                    open_adapter=self._open_adapter(run),
-                    upstream=upstream,
-                    approvals=approvals,
-                    services=self.services,
-                )
+                ctx = self._context(run, owner, upstream, approvals)
                 try:
                     with span(
                         "workflow.step",
@@ -353,10 +457,13 @@ class WorkflowEngine:
                     ):
                         return "cancelled"
                     return "failed"
-                finally:
-                    ctx.close()
+                except anyio.get_cancelled_exc_class():
+                    with self.store.tx() as tx:
+                        tx.steps.finish(sr.step_run_id, status="cancelled")
+                    raise
                 return self._persist(run_id, spec, sr.step_run_id, result, actor, owner)
-        return "failed"
+        # Unreachable while max_attempts >= 1; never let a finished worker leave the run RUNNING.
+        raise RuntimeError(f"step {step} ended without an outcome")
 
     def _record_failure(
         self,
@@ -392,9 +499,20 @@ class WorkflowEngine:
     async def _execute(self, spec: StepSpec, ctx: StepContext) -> StepResult:
         timeout = spec.timeout_seconds or self.settings.step_timeout_seconds
         ctx.execution_deadline = monotonic() + timeout
+
+        def execute_and_close() -> StepResult:
+            # An abandoned step may still be using its adapter. Close on its owning thread,
+            # after it exits, never concurrently from the orchestration/cancellation path.
+            try:
+                if ctx.execution_cancelled.is_set():
+                    raise LeaseLost("step attempt was cancelled before execution")
+                return spec.fn(ctx)
+            finally:
+                ctx.close()
+
         try:
             with anyio.fail_after(timeout):
-                return await anyio.to_thread.run_sync(spec.fn, ctx, abandon_on_cancel=True)
+                return await anyio.to_thread.run_sync(execute_and_close, abandon_on_cancel=True)
         except TimeoutError as exc:
             ctx.execution_cancelled.set()
             raise SourceTimeout(f"step {spec.name.value} exceeded {timeout:.0f}s") from exc

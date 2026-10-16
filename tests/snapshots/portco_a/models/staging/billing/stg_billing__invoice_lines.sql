@@ -11,6 +11,6 @@ select
     cast("inv_no" as varchar) as invoice_id,
     cast("sku" as varchar) as sku,
     cast("qty" as bigint) as quantity,
-    cast(cast("amount" as decimal(18, 2)) / 100 as decimal(18, 2)) as amount,
+    cast(cast("amount" as decimal(38, 0)) * 0.01 as decimal(18, 2)) as amount,
     false as _excluded
 from source

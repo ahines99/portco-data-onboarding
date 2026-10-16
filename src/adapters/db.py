@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import traceback
+from typing import Any
+
 from sqlalchemy import (
     JSON,
     BigInteger,
@@ -21,7 +24,8 @@ from sqlalchemy import (
     event,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Connection, Engine, make_url
+from sqlalchemy.pool import NullPool
 
 metadata = MetaData(
     naming_convention={
@@ -198,3 +202,70 @@ def make_engine(url: str) -> Engine:
 
         return engine
     return create_engine(url, pool_pre_ping=True, pool_timeout=5, connect_args={"connect_timeout": 5})
+
+
+# --------------------------------------------------------------------------- migration / readiness sessions
+
+# Explicit deadlines for schema migration (audit DEL-02): a missing PostgreSQL connect_timeout, lock_timeout or
+# statement_timeout means "wait forever". They apply to the migration session only, never to application clients.
+MIGRATION_CONNECT_TIMEOUT_S = 10
+MIGRATION_LOCK_TIMEOUT_MS = 15_000
+MIGRATION_STATEMENT_TIMEOUT_MS = 300_000
+
+
+def escape_alembic_url(url: str) -> str:
+    """`url` escaped for Alembic's ConfigParser-backed `Config.set_main_option` (`%` -> `%%`).
+
+    Percent-encoded passwords (`%40`, `%25`) and paths containing `%` otherwise fail interpolation,
+    and ConfigParser's error message echoes the whole URL, credentials included.
+    """
+    return url.replace("%", "%%")
+
+
+def migration_connect_args(url: str) -> dict[str, Any]:
+    """Connection deadline for the migration engine: libpq `connect_timeout` or the SQLite busy timeout."""
+    if url.startswith("sqlite"):
+        return {"timeout": MIGRATION_LOCK_TIMEOUT_MS / 1000}
+    return {"connect_timeout": MIGRATION_CONNECT_TIMEOUT_S}
+
+
+def set_session_deadlines(conn: Connection, *, statement_ms: int, lock_ms: int, local: bool = False) -> None:
+    """Bound statement run time and lock waits on this PostgreSQL session only (no-op on SQLite).
+
+    `local=True` scopes the settings to the current transaction (`SET LOCAL`), so a pooled connection
+    goes back to the pool with the server defaults.
+    """
+    if conn.dialect.name != "postgresql":
+        return
+    scope = "LOCAL " if local else ""
+    conn.exec_driver_sql(f"SET {scope}lock_timeout = {int(lock_ms)}")
+    conn.exec_driver_sql(f"SET {scope}statement_timeout = {int(statement_ms)}")
+
+
+def make_probe_engine(url: str, *, connect_timeout_s: int) -> Engine:
+    """A separately budgeted, unpooled engine for health probes: it never queues behind application work."""
+    return create_engine(url, poolclass=NullPool, connect_args={"connect_timeout": max(2, connect_timeout_s)})
+
+
+def redact_db_error(exc: BaseException, url: str) -> str | None:
+    """A credential-free description of `exc`, or None when its rendered traceback holds no secret from `url`.
+
+    Checks the whole chain (causes and contexts), and both the encoded and decoded password forms.
+    """
+    try:
+        parsed = make_url(url)
+        password = parsed.password
+    except Exception:
+        parsed, password = None, None
+    secrets = {url}
+    if password:
+        secrets |= {str(password), url.split("://", 1)[-1].split("@", 1)[0].rsplit(":", 1)[-1]}
+    secrets.discard("")
+    rendered = "".join(traceback.format_exception(exc))
+    if not any(s in rendered for s in secrets):
+        return None
+    message = str(exc)
+    for s in sorted(secrets, key=len, reverse=True):
+        message = message.replace(s, "***")
+    target = parsed.render_as_string(hide_password=True) if parsed is not None else "the configured database"
+    return f"{type(exc).__qualname__} while migrating {target}: {message}"

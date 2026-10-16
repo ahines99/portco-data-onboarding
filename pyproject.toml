@@ -1,6 +1,6 @@
 [project]
 name = "portco-data-onboarding"
-version = "0.2.0rc3"
+version = "0.2.0rc4"
 description = "Governed agent for onboarding portfolio-company data into a canonical PE ontology."
 license = "MIT"
 license-files = ["LICENSE"]
@@ -58,6 +58,10 @@ Issues = "https://github.com/ahines99/portco-data-onboarding/issues"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build]
+# Enforce this even when building outside Git or with user-specific ignore settings.
+exclude = ["/.config/"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]

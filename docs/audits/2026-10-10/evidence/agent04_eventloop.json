@@ -1,0 +1,6 @@
+{
+  "injected_writer_lock_seconds": 0.35,
+  "sync_transaction_wait_seconds": 0.4318883999949321,
+  "heartbeat_max_gap_seconds": 0.43197749997489154,
+  "method": "Actual Store.tx()/make_engine with 350 ms writer hold; async caller invokes Store.tx synchronously as current async MCP/workflow code does; synthetic contention, not a remote network measurement."
+}

@@ -26,18 +26,19 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # Retry / timeout policy (POD-405)
-    step_max_attempts: int = 3
-    step_backoff_base_seconds: float = 0.2
-    step_timeout_seconds: float = 900.0  # must outlast the dbt build inside the test step
-    lease_margin_seconds: float = 60.0
+    step_max_attempts: int = Field(default=3, ge=1, le=20)
+    step_backoff_base_seconds: float = Field(default=0.2, ge=0, le=300, allow_inf_nan=False)
+    # Must outlast the dbt build inside the test step (see _timeouts_nest).
+    step_timeout_seconds: float = Field(default=900.0, gt=0, le=86400, allow_inf_nan=False)
+    lease_margin_seconds: float = Field(default=60.0, ge=0, le=3600, allow_inf_nan=False)
 
     # Sandbox (POD-308)
-    sandbox_keep_attempts: int = 2
-    dbt_timeout_seconds: float = 600.0
+    sandbox_keep_attempts: int = Field(default=2, ge=1, le=100)
+    dbt_timeout_seconds: float = Field(default=600.0, gt=0, le=86400, allow_inf_nan=False)
 
     # Approvals (POD-701)
     require_distinct_reviewer: bool = True
-    approval_ttl_hours: int = 72
+    approval_ttl_hours: int = Field(default=72, ge=1, le=24 * 365)
 
     # Model judgment layer (POD-607) — off by default; the deterministic core never needs it.
     llm_enabled: bool = False

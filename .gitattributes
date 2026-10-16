@@ -5,3 +5,6 @@
 evals/unfamiliar/manifest.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
 docs/evidence/unfamiliar-benchmark*.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
 docs/evidence/agent-qualification-v2*.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
+# The October audit manifest records the original evidence bytes, including CRLF.
+docs/AUDIT-2026-10-10.md -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/audits/2026-10-10/** -text whitespace=trailing-space,space-before-tab,cr-at-eol

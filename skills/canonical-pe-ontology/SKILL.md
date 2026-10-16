@@ -40,6 +40,63 @@ stale copy.
 | `JOIN_INFERRED` | Mapped only because it joins to another table's key | The join's containment in `run://{run_id}/joins` |
 | `TRANSFORM_REQUIRED` | Dates stored as text in several formats | The parse transform is correct for this source |
 | `ROW_FILTER` | Proposed exclusion (soft deletes, TEST records) | That excluded rows really should not count |
+| `UNIT_UNCERTAIN` | Name says "minor" but not "cents"; the scale is unknown, so no transform is suggested | The source's documented unit; override with `cents_to_major` only if it really is hundredths |
+| `ENTITY_UNCERTAIN` | The table's entity classification is not HIGH confidence, so even an exact column-name match is unsettled | Whether the whole table is the proposed entity (see below) |
+| `STRUCTURAL_INFERENCE` | The entity or key was inferred from column structure, not the table name | The anchor columns and key evidence (see below) |
+| `JUDGE_REORDERED` | The optional model judge chose an alternative over the deterministic top choice; confidence is capped at MEDIUM | Both candidates on their evidence. The judge's preference is not evidence |
+| `DUPLICATE_TARGET_AFTER_REVIEW` | After the decisions, two columns resolve to one canonical field | Keep one (the system of record) and reject or re-target the other |
+| `CATEGORY_NORMALIZATION` | A closed-domain field (for example an account type) has only case or whitespace variants of canonical values; `normalize_category` is suggested | The variants really are the canonical values. Approving accepts the transform |
+| `NONCANONICAL_VALUES` | The column has NULL or unknown classifications for a closed-domain field. Dependent metrics stay `NEEDS_EVIDENCE` | How many rows are affected (row counts are in the proposal rationale; values are never shown). Mapping arbitrary codes needs a reviewed crosswalk or a source fix, not an approval |
+| `PRECISION_EXCEEDS_CENTS` | Money values carry more decimal places than the supported precision. They are rejected, not rounded | Whether the column is really major-unit money; fix the source extract instead of approving rounding |
+
+Join review items (`join:` keys) use their own codes. `STRUCTURAL_JOIN`: the join rests mainly on
+value containment because the names are weak, so check that the two columns mean the same key.
+`ORPHANS`: containment is below the review threshold, so check the orphan rate in
+`run://{run_id}/joins` and whether the orphans matter. `ENTITY_OVERLAP`: both tables describe the same
+entity, so decide which is the system of record before approving. `GENERIC_KEY`: both sides use a
+generic surrogate name such as `id`, and two independent 1..n sequences overlap completely, so
+containment alone proves nothing. Approve only with a documented relationship. `ENTITY_UNCERTAIN`
+on a join means that the entity of either endpoint is uncertain. `LOW_CONFIDENCE` has its usual
+meaning.
+
+## Entity-level uncertainty: `ENTITY_UNCERTAIN` and `STRUCTURAL_INFERENCE`
+
+These codes concern the **table**, not the column. A column named exactly like a canonical field
+(`status`, `amount`) means something different in a subscription than in an invoice. These codes
+cause most of the added review burden in the current qualification corpora, so explain them first
+and group the items by table.
+
+Evidence to read: the table's entry in `run://{run_id}/entities` (proposed entity, score,
+confidence, `feature_breakdown`, `primary_key_columns`, alternatives); the table's columns and key
+uniqueness in `run://{run_id}/profile`; its relationships in `run://{run_id}/joins`; and
+`ENTITY_OVERLAP` / `NO_ENTITY_MATCH` in `run://{run_id}/findings`.
+
+- `ENTITY_UNCERTAIN`: the table name and columns did not classify the table at HIGH confidence. Every
+  proposal in that table inherits the uncertainty: a column's confidence is lowered to the entity's.
+- `STRUCTURAL_INFERENCE`, LOW confidence: the table name matched no entity. At least two
+  type-compatible anchor columns, one of them unique to the entity, selected it
+  (`feature_breakdown.structural_anchors`). This fallback is designed to route the table to review.
+- `STRUCTURAL_INFERENCE`, MEDIUM confidence: the table's single-column primary key has a name that
+  matches no ontology field, and it was mapped to the entity's id field because it is the table's key.
+
+Guidance for the reviewer (the agent recommends; only the reviewer decides):
+
+- **Approve** when the table as a whole is the proposed entity: the anchor columns, key uniqueness and
+  joins agree, and no alternative explains the table equally well. Example: a table named with a system
+  code that has a unique key, a customer name and a country, and whose key invoices reference, is a
+  customer master. Approve its id and name rows.
+- **Reject or override** when the evidence points to another entity, for example a line-item table
+  whose `amount` should not become an invoice header amount. Override with a field from the item's
+  `allowed_fields` only when the right target is in the same entity. Otherwise reject the item.
+- **Abstain** (recommend that the reviewer hold the packet and record no approval) when only the
+  company can say what the table is, for example two plausible entities with similar evidence. The
+  run stays paused at the gate and nothing is generated. Write the question in "open questions".
+  Never guess to clear the queue.
+
+Scores and confidence bands are deterministic heuristics with thresholds from `ontology/scoring.yaml`.
+They are **not calibrated probabilities**: a score of 0.8 does not mean an 80% chance of being right,
+and MEDIUM on one table is not comparable with MEDIUM on another. Use them to order review, not to
+replace it.
 
 ## PE pitfalls (decision table)
 

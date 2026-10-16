@@ -14,7 +14,7 @@ from src.domain.project_models import (
     ResolvedMapping,
     ReviewItem,
 )
-from src.services.approvals import _validate_override, effective_decisions
+from src.services.approvals import _validate_override, decision_sources, effective_decisions
 from src.workflows.contracts import StepContext, StepResult, make_evidence
 
 
@@ -212,13 +212,10 @@ def mapping_review(ctx: StepContext) -> StepResult:
             subject_hash=h,
             audit=[("review_conflict", {"items": duplicated})],
         )
+    # Provenance is the set of currently valid approvals whose decisions actually won. A historical
+    # approval that expired or was superseded must not become a dependency of generation.
     approval_ids = sorted(
-        {
-            a.approval_id
-            for a in ctx.approvals
-            if a.gate == ReviewGate.MAPPING_REVIEW and a.subject_hash == h and a.revoked_at is None
-        },
-        key=str,
+        {source for _, source in decision_sources(ctx.approvals, ReviewGate.MAPPING_REVIEW, h).values()}, key=str
     )
     resolved = resolved.model_copy(update={"approval_ids": approval_ids})
     payload = {

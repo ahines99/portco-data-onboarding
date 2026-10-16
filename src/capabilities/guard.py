@@ -7,7 +7,8 @@ Each tool call runs inside an `mcp.tool` span with the tool name and principal b
 context. Calls that concern a run (a `run_id` argument, or a run created by the call) are
 recorded in that run's audit log as `mcp_tool_called`; agent reads of `evidence://` resources as
 `evidence_read`; and a response blocked by the guard as `pii_guard_blocked`, so run metrics
-count what the agent actually did.
+count what the agent actually did. A blocked resource read is accounted against the run its URI
+names or owns (`run://`, `evidence://`, `finding://`), and only when the caller may access that run.
 """
 
 from typing import Any
@@ -76,8 +77,9 @@ class PiiGuardMiddleware:
         self.blocked += 1
         kinds = sorted({v.kind for v in violations})
         log.warning("pii_guard_blocked", method=ctx.method, kinds=kinds, paths=[v.path for v in violations][:5])
-        args = dict(ctx.params or {}).get("arguments") or {}
-        self._audit(_uuid(args.get("run_id")), "pii_guard_blocked", {"method": ctx.method, "kinds": kinds})
+        run_id = self._request_run(ctx.method, dict(ctx.params or {}), payload)
+        # `_audit` re-checks the caller's tenant scope: a foreign run's audit log is never written.
+        self._audit(run_id, "pii_guard_blocked", {"method": ctx.method, "kinds": kinds})
         message = "response blocked by the PII guard: it contained data classified as personal information"
         if ctx.method == "tools/call":
             return error_result({"code": "POLICY_VIOLATION", "message": message, "retryable": False})
@@ -101,16 +103,37 @@ class PiiGuardMiddleware:
             payload["code"] = structured["code"]
         self._audit(run_id, "mcp_tool_called", payload, principal)
 
-    def _account_read(self, uri: str, principal: Principal | None) -> None:
-        if not uri.startswith("evidence://") or self.state is None:
-            return
-        evidence_id = _uuid(uri.removeprefix("evidence://"))
-        if evidence_id is None:
-            return
+    def _request_run(self, method: str, params: dict[str, Any], payload: Any) -> UUID | None:
+        """The run a guarded request concerns: tool `run_id` argument or result, or the resource URI."""
+        if method == "tools/call":
+            args = params.get("arguments") or {}
+            structured = _outcome(payload)[1] if isinstance(payload, dict) else {}
+            return _uuid(args.get("run_id")) or _uuid(structured.get("run_id"))
+        if method == "resources/read":
+            return self._resource_run(str(params.get("uri", "")))
+        return None
+
+    def _resource_run(self, uri: str) -> UUID | None:
+        """Run of `run://<id>/...`, `evidence://<id>` or `finding://<id>/lineage`; None when unknown."""
+        scheme, sep, rest = uri.partition("://")
+        ident = _uuid(rest.split("/", 1)[0]) if sep else None
+        if ident is None:
+            return None
+        if scheme == "run":
+            return ident
+        if scheme not in ("evidence", "finding") or self.state is None:
+            return None
         try:
             with self.state.svc().store.tx() as tx:
-                _, run_id, _ = tx.evidence.get(evidence_id)
-        except Exception:
+                run_id: UUID = tx.evidence.get(ident)[1] if scheme == "evidence" else tx.findings.get(ident)[1]
+                return run_id
+        except Exception:  # unknown id: nothing to account against
+            return None
+
+    def _account_read(self, uri: str, principal: Principal | None) -> None:
+        evidence_id = _uuid(uri.removeprefix("evidence://")) if uri.startswith("evidence://") else None
+        run_id = self._resource_run(uri) if evidence_id is not None else None
+        if run_id is None:
             return
         self._audit(run_id, "evidence_read", {"evidence_id": str(evidence_id)}, principal)
 

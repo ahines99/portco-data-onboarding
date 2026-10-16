@@ -1,6 +1,6 @@
 """Exercise external CSV ingestion through publication using synthetic extracts only.
 
-Run: python -m scripts.smoke_csv_source --workdir var/csv-smoke
+Run: uv run --frozen python -m scripts.smoke_csv_source --workdir var/csv-smoke
 Review decisions here are automated test decisions, not independent human approval.
 """
 

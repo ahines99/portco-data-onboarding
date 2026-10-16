@@ -44,6 +44,34 @@ the same review command. Resume again to publish. Use `portco report RUN_ID --ou
 `portco audit RUN_ID --verify` to inspect the result. Never auto-approve a real review for convenience.
 The local CLI trusts the OS operator; separate principal names are not protection against an operator
 who controls the process or database. HTTP tokens must represent separate roles and explicit tenants.
+`--as` and `--reviewer` take `id` or `id:role` (roles `agent`, `reviewer`, `admin`); a bare id gets the
+command's default role.
+
+To change an earlier review decision, a reviewer reruns from the reviewed step and reopens its gates:
+
+```text
+uv run portco rerun RUN_ID --from canonical_mapping --reopen-reviews --as alex:reviewer
+```
+
+`--reopen-reviews` revokes the current approvals recorded at review gates from `--from` onward, prints each
+revoked approval ID with its gate and reviewer, and records `approval_invalidated` audit events; the run then
+stops at those gates for fresh decisions. Only reviewer or admin principals may use it. Without the option,
+`rerun` keeps existing approvals and the gates re-check them against the recomputed subject, as before.
+
+### CLI exit codes
+
+| Exit | Meaning |
+|---|---|
+| 0 | Command succeeded. For `run`, `resume` and `rerun`: the run completed, paused at a review gate (`needs_review`) or stopped as requested by `--stop-after` (`pending`) |
+| 1 | `run`, `resume` or `rerun` drove the workflow to `failed`; the run line and error code are still printed |
+| 2 | The command was rejected (for example `NOT_FOUND`, `FORBIDDEN`, `CONFLICT`, invalid review file) or had invalid usage |
+| 3 | `audit --verify` found a broken hash chain |
+| 4 | `run`, `resume` or `rerun` returned a `cancelled` run (for example resuming a cancelled run) |
+
+`cancel` exits 0 when it cancels the run: cancellation is that command's requested outcome. Inspection
+commands (`status`, `findings`, `audit` without `--verify`, `report`) exit 0 whenever they inspect a run
+successfully, including a failed or cancelled run, so scripts should check `run`/`resume`/`rerun` exit codes
+for workflow outcome and use `status` only to display it.
 
 ## Compose
 

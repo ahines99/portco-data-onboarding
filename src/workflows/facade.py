@@ -8,15 +8,18 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from functools import partial
 from pathlib import Path
+from threading import Event, Lock
 from typing import Any
 from uuid import UUID
 
+import anyio
 from alembic import command
 from alembic.config import Config
 
 from src.adapters.artifact_store import ArtifactStore
-from src.adapters.db import make_engine
+from src.adapters.db import escape_alembic_url, make_engine
 from src.adapters.external import ConnectionRegistry
 from src.adapters.faults import FaultInjector
 from src.adapters.repositories import RunRecord, Store
@@ -50,7 +53,7 @@ def migrate(url: str) -> None:
     logging.getLogger("alembic").setLevel(logging.WARNING)
     cfg = Config(str(PROJECT_ROOT / "alembic.ini"))
     cfg.set_main_option("script_location", str(PROJECT_ROOT / "migrations"))
-    cfg.set_main_option("sqlalchemy.url", url.replace("%", "%%"))  # configparser interpolation
+    cfg.set_main_option("sqlalchemy.url", escape_alembic_url(url))  # configparser interpolation
     command.upgrade(cfg, "head")
 
 
@@ -61,6 +64,8 @@ class OnboardingService:
     engine: WorkflowEngine
     connections: ConnectionRegistry
     services: dict[str, Any] = field(default_factory=dict)
+    _executions: dict[UUID, set[Event]] = field(default_factory=dict, init=False, repr=False)
+    _executions_lock: Lock = field(default_factory=Lock, init=False, repr=False)
 
     @classmethod
     def build(
@@ -126,7 +131,7 @@ class OnboardingService:
             raise Forbidden(reason)
 
     def get_run(self, principal: Principal, run_id: UUID) -> RunRecord:
-        with self.store.tx() as tx:
+        with self.store.read() as tx:
             run = tx.runs.get(run_id)
         if not principal.can_access(run.company_id):
             raise NotFound(f"run {run_id} not found")  # do not reveal other tenants' runs
@@ -141,12 +146,17 @@ class OnboardingService:
         company_id: str | None = None,
         stop_after: StepName | None = None,
     ) -> RunRecord:
-        spec = self.connections.resolve(connection_id)
-        company = company_id or spec.company_id
-        if company != spec.company_id:
+        # Authorize on cheap, server-owned metadata first: resolving can generate fixtures or hash a
+        # whole snapshot, which a caller from another tenant must never be able to trigger.
+        owner = self.connections.owner(connection_id)
+        company = company_id or owner
+        if company != owner:
             raise ValidationFailed("connection does not belong to that company")
         assert_safe_company(company)
         self._authorize(principal, "start_run", company_id=company)
+        spec = await anyio.to_thread.run_sync(self.connections.resolve, connection_id, abandon_on_cancel=True)
+        if spec.company_id != company:
+            raise ValidationFailed("connection does not belong to that company")
         with self.store.tx() as tx:
             run = tx.runs.create(
                 company_id=company,
@@ -176,12 +186,56 @@ class OnboardingService:
         return await self._run(run_id, principal.principal_id, stop_after=stop_after.value if stop_after else None)
 
     async def _run(self, run_id: UUID, actor: str, stop_after: str | None = None) -> RunRecord:
-        with self.store.tx() as tx:
+        # The engine's orchestration performs synchronous database transactions and file hashing.
+        # Drive it on a worker thread with its own event loop so MCP status, health and cancel
+        # requests on the server loop never wait behind a database lock (audit PERF-2).
+        interrupted = Event()
+        with self._executions_lock:
+            self._executions.setdefault(run_id, set()).add(interrupted)
+        try:
+            return await anyio.to_thread.run_sync(
+                self._run_blocking, run_id, actor, stop_after, interrupted, abandon_on_cancel=True
+            )
+        finally:
+            # A request cancellation must reach the worker's independent event loop. Simply
+            # abandoning the outer thread would let it continue to generate or publish.
+            interrupted.set()
+            with self._executions_lock:
+                active = self._executions[run_id]
+                active.discard(interrupted)
+                if not active:
+                    del self._executions[run_id]
+
+    def _run_blocking(self, run_id: UUID, actor: str, stop_after: str | None, interrupted: Event) -> RunRecord:
+        with self.store.read() as tx:
             before = tx.runs.get(run_id).status
-        run = await self.engine.run(run_id, actor, stop_after=stop_after)
+        run = anyio.run(partial(self._run_cancellable, run_id, actor, stop_after, interrupted))
         if before not in {RunStatus.COMPLETE, RunStatus.CANCELLED}:  # the engine did work
             self._snapshot_metrics(run)
         return run
+
+    async def _run_cancellable(self, run_id: UUID, actor: str, stop_after: str | None, interrupted: Event) -> RunRecord:
+        error: Exception | None = None
+        async with anyio.create_task_group() as tasks:
+
+            async def watch_interruption() -> None:
+                while not interrupted.is_set():
+                    await anyio.sleep(0.05)
+                tasks.cancel_scope.cancel()
+
+            tasks.start_soon(watch_interruption)
+            try:
+                # Covers cancellation while this worker was still waiting in the thread queue.
+                if not interrupted.is_set():
+                    await self.engine.run(run_id, actor, stop_after=stop_after)
+            except Exception as exc:
+                error = exc  # preserve the public exception type across the internal task group
+            finally:
+                tasks.cancel_scope.cancel()
+        if error is not None:
+            raise error
+        with self.store.read() as tx:
+            return tx.runs.get(run_id)
 
     def _snapshot_metrics(self, run: RunRecord) -> None:
         """Persist the run's metrics at every stop (content-addressed blob + audit event)."""
@@ -214,8 +268,7 @@ class OnboardingService:
         run = self.get_run(principal, run_id)
         self._authorize(principal, "cancel_run", run)
         with self.store.tx() as tx:
-            # A running run is cancelled too: its worker sees the status at the next step boundary,
-            # discards any in-flight step result and releases the lease.
+            # The persisted status fences every worker, including workers in other processes.
             run = tx.runs.get(run_id, lock=True)
             if not can_transition(run.status, RunStatus.CANCELLED):
                 raise Conflict(f"a {run.status.value} run cannot be cancelled")
@@ -238,10 +291,16 @@ class OnboardingService:
                     payload={"reason": reason[:200]},
                 )
             )
-            return tx.runs.get(run_id)
+            cancelled = tx.runs.get(run_id)
+        # Signal only after the cancellation transaction commits, so local work cannot resume
+        # from PENDING between interruption and the authoritative CANCELLED status change.
+        with self._executions_lock:
+            for interrupted in self._executions.get(run_id, ()):
+                interrupted.set()
+        return cancelled
 
     def list_runs(self, principal: Principal, limit: int = 20) -> list[RunRecord]:
-        with self.store.tx() as tx:
+        with self.store.read() as tx:
             return tx.runs.list(list(principal.company_ids), limit)
 
     # ------------------------------------------------------------------ reviews

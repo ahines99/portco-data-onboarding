@@ -31,9 +31,13 @@ Create a UTF-8 JSON manifest describing the extract, its company and reference d
 ```
 
 ```powershell
-uv run portco sources import-csv C:/extracts/manifest.json --root C:/extracts
-uv run portco run --connection csv:acme-export-20251231
+uv run --frozen portco sources import-csv C:/extracts/manifest.json --root C:/extracts
+uv run --frozen portco run --connection csv:acme-export-20251231
 ```
+
+Run commands through `uv run --frozen` so they use the project's locked `.venv`; a bare
+`python` may be a different interpreter. If uv is installed as a Python module but not on
+PATH, replace `uv` with `python -m uv`.
 
 The table example documents the input format; a complete financial publication requires
 the supported entities and columns needed by the selected metrics. Arbitrary exports may
@@ -42,13 +46,31 @@ produce incomplete mappings or stop for review. Import success is not mapping su
 CSV headers must exactly match the declared column order. Types are explicit rather than
 inferred: `VARCHAR`, `INTEGER`, `BIGINT`, `BOOLEAN`, `DATE`, `TIMESTAMP`, and
 `DECIMAL(p,s)` with precision up to 38. Use `VARCHAR` for identifiers with leading zeros.
-Use `DECIMAL`, not binary floating point, for money. Decimal values that would round or
-overflow are rejected. Dates use ISO format, timestamps have no timezone (normalize them
-before import), booleans are `true` or `false`, and the literal `\N` means SQL NULL.
-Empty strings remain empty strings; `\N` cannot represent literal text in this format.
+`INTEGER` is 32-bit and `BIGINT` 64-bit signed; out-of-range values are rejected. Use
+`DECIMAL`, not binary floating point, for money. Decimal values that would round or
+overflow are rejected. Dates use ISO format, booleans are `true` or `false` (any letter
+case), and the literal `\N` means SQL NULL. Empty strings remain empty strings; `\N` cannot
+represent literal text in this format.
 
-Optional `category_domains` maps `schema.table.column` to operator-approved labels. The
-existing adapter still applies its PII and injection checks before disclosing category values.
+Timestamps use ISO 8601 as accepted by Python's `datetime.fromisoformat` (for example
+`2025-01-01T12:34:56.123456`, `2025-01-01 12:34`, compact `20250101T123456`, or a comma
+before the fraction) and must not carry a timezone or UTC offset: normalize them before
+import. Precision is microseconds. Extra fractional digits are accepted only when they
+are zeros (`.1234560` is stored as `.123456`); any nonzero digit beyond the sixth
+(`.1234567`) rejects the import instead of being silently truncated.
+
+Schema, table and column names are plain identifiers. DuckDB matches names regardless of
+letter case, so names that differ only by case (`Billing` and `billing`) are rejected
+rather than merged; use one spelling throughout, including in `category_domains` keys.
+The schema names `main`, `information_schema`, `pg_catalog`, `source` (the snapshot's own
+catalog name), `system`, `temp` and `memory` are reserved by DuckDB or the snapshot and are
+rejected before any work.
+
+Optional `category_domains` maps `schema.table.column` to operator-approved labels. Keys
+must exactly match a declared column. Duplicate labels are removed; each column allows at
+most 1,000 distinct labels of at most 256 characters, and the resulting registration must
+fit the 1 MiB registration limit, which is checked before any data is read. The existing
+adapter still applies its PII and injection checks before disclosing category values.
 Do not put personal or secret data in identifiers, manifest metadata, or approved labels.
 
 ## Safety and durability
@@ -58,9 +80,14 @@ Do not put personal or secret data in identifiers, manifest metadata, or approve
   claims separately; ingestion does not grant access.
 - Paths must be relative `.csv` files beneath the extract root. Absolute paths, Windows
   drive/UNC paths, traversal, symbolic links, and junctions are rejected. Identifiers and
-  SQL types are validated; source values use parameterized inserts.
+  SQL types are validated. Every value is validated in Python first, then rewritten in a
+  canonical, fully quoted form to a private staging file inside the import's staging
+  directory and bulk-loaded with the declared column types (no type inference). The
+  loading DuckDB connection can read only those staged files: external access is disabled
+  and its configuration locked. Staged files are deleted before registration.
 - Limits are 32 tables, 128 columns per table, 64 MiB of CSV input in total, 250,000 rows
-  in total, and a 1 MiB manifest. The CSV parser also imposes its default field-size limit.
+  in total, a 1 MiB manifest and a 1 MiB registration. The CSV parser also imposes its
+  default field-size limit.
 - Import uses a private staging directory and a database transaction. The snapshot and
   registration become visible together via a directory rename. Invalid input leaves no
   registered source. Existing source IDs cannot be overwritten; changed input needs a new ID.
@@ -84,7 +111,7 @@ necessary. Imports are synchronous and intentionally absent from remote agent ca
 ## Reproducible acceptance exercise
 
 ```powershell
-uv run python -m scripts.smoke_csv_source --workdir var/csv-smoke-unique
+uv run --frozen python -m scripts.smoke_csv_source --workdir var/csv-smoke-unique
 ```
 
 Use a fresh directory for each exercise. It exports existing synthetic SaaS rows to CSV,

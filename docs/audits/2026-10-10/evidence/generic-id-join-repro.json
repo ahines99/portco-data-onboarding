@@ -1,0 +1,361 @@
+{
+  "status": "pending",
+  "source_unchanged": true,
+  "label_guard_installed": true,
+  "llm_enabled": false,
+  "publication_attempted": false,
+  "observed_steps": [
+    "connection_validation",
+    "schema_profiling",
+    "entity_inference",
+    "join_inference",
+    "canonical_mapping"
+  ],
+  "entities": {
+    "candidates": [
+      {
+        "table": "raw.customers",
+        "canonical_entity": "customer",
+        "score": 0.5125,
+        "confidence": "low",
+        "feature_breakdown": {
+          "columns": 0.25,
+          "name": 1.0,
+          "primary_key": 0.0
+        },
+        "primary_key_columns": [
+          "id"
+        ],
+        "alternatives": [
+          {
+            "entity": "invoice",
+            "score": 0.075
+          },
+          {
+            "entity": "subscription",
+            "score": 0.0692
+          }
+        ],
+        "excluded_reason": null
+      },
+      {
+        "table": "raw.vendors",
+        "canonical_entity": "vendor",
+        "score": 0.55,
+        "confidence": "medium",
+        "feature_breakdown": {
+          "columns": 0.3333,
+          "name": 1.0,
+          "primary_key": 0.0
+        },
+        "primary_key_columns": [
+          "id"
+        ],
+        "alternatives": [],
+        "excluded_reason": null
+      }
+    ],
+    "overlaps": [],
+    "schema_version": "1"
+  },
+  "joins": {
+    "joins": [
+      {
+        "join_id": "raw.customers.id->raw.vendors.id",
+        "left_table": "raw.customers",
+        "left_columns": [
+          "id"
+        ],
+        "right_table": "raw.vendors",
+        "right_columns": [
+          "id"
+        ],
+        "containment_ratio": 1.0,
+        "orphan_rate": 0.0,
+        "cardinality": "1:1",
+        "name_score": 1.0,
+        "score": 1.0,
+        "confidence": "high",
+        "requires_review": false,
+        "reason_codes": [],
+        "evidence_id": "3d0e07f5-4d73-5762-a48e-dfa95a4eadf4"
+      },
+      {
+        "join_id": "raw.vendors.id->raw.customers.id",
+        "left_table": "raw.vendors",
+        "left_columns": [
+          "id"
+        ],
+        "right_table": "raw.customers",
+        "right_columns": [
+          "id"
+        ],
+        "containment_ratio": 1.0,
+        "orphan_rate": 0.0,
+        "cardinality": "1:1",
+        "name_score": 1.0,
+        "score": 1.0,
+        "confidence": "high",
+        "requires_review": false,
+        "reason_codes": [],
+        "evidence_id": "d928c908-c671-52d4-a73f-1334041e36de"
+      }
+    ],
+    "schema_version": "1"
+  },
+  "mapping": {
+    "mapping_id": "26270d23-e009-4de2-b30a-038a6474e0d0",
+    "proposals": [
+      {
+        "mapping_key": "raw.customers.id",
+        "source_table": "raw.customers",
+        "source_column": "id",
+        "source_field": "raw.customers.id",
+        "canonical_entity": "customer",
+        "canonical_field": "customer_id",
+        "confidence": "low",
+        "score": 0.8275,
+        "rationale": "name/type/context score 0.83",
+        "requires_review": true,
+        "reason_codes": [
+          "STRUCTURAL_INFERENCE",
+          "ENTITY_UNCERTAIN",
+          "LOW_CONFIDENCE"
+        ],
+        "alternatives": [
+          {
+            "entity": "customer",
+            "field": "crm_account_id",
+            "score": 0.6
+          },
+          {
+            "entity": "customer",
+            "field": "industry",
+            "score": 0.457
+          },
+          {
+            "entity": "customer",
+            "field": "owner_email",
+            "score": 0.345
+          }
+        ],
+        "suggested_transform": null,
+        "pii_handling": null,
+        "evidence_ids": [
+          "0fe0268f-9209-596e-bde0-39adfe8198eb"
+        ],
+        "judge": null
+      },
+      {
+        "mapping_key": "raw.customers.customer_name",
+        "source_table": "raw.customers",
+        "source_column": "customer_name",
+        "source_field": "raw.customers.customer_name",
+        "canonical_entity": "customer",
+        "canonical_field": "customer_name",
+        "confidence": "low",
+        "score": 0.95,
+        "rationale": "name/type/context score 0.95; synonym of customer_name",
+        "requires_review": true,
+        "reason_codes": [
+          "ENTITY_UNCERTAIN",
+          "LOW_CONFIDENCE"
+        ],
+        "alternatives": [
+          {
+            "entity": "customer",
+            "field": "customer_id",
+            "score": 0.6467
+          },
+          {
+            "entity": "customer",
+            "field": "owner_email",
+            "score": 0.4896
+          },
+          {
+            "entity": "customer",
+            "field": "country",
+            "score": 0.482
+          }
+        ],
+        "suggested_transform": null,
+        "pii_handling": null,
+        "evidence_ids": [
+          "0fe0268f-9209-596e-bde0-39adfe8198eb"
+        ],
+        "judge": null
+      },
+      {
+        "mapping_key": "raw.customers.currency",
+        "source_table": "raw.customers",
+        "source_column": "currency",
+        "source_field": "raw.customers.currency",
+        "canonical_entity": "customer",
+        "canonical_field": "currency",
+        "confidence": "low",
+        "score": 0.95,
+        "rationale": "name/type/context score 0.95; synonym of currency",
+        "requires_review": true,
+        "reason_codes": [
+          "ENTITY_UNCERTAIN",
+          "LOW_CONFIDENCE"
+        ],
+        "alternatives": [
+          {
+            "entity": "customer",
+            "field": "country",
+            "score": 0.5427
+          },
+          {
+            "entity": "customer",
+            "field": "customer_name",
+            "score": 0.4733
+          },
+          {
+            "entity": "customer",
+            "field": "customer_id",
+            "score": 0.4706
+          }
+        ],
+        "suggested_transform": null,
+        "pii_handling": null,
+        "evidence_ids": [
+          "0fe0268f-9209-596e-bde0-39adfe8198eb"
+        ],
+        "judge": null
+      },
+      {
+        "mapping_key": "raw.vendors.id",
+        "source_table": "raw.vendors",
+        "source_column": "id",
+        "source_field": "raw.vendors.id",
+        "canonical_entity": "vendor",
+        "canonical_field": "vendor_id",
+        "confidence": "medium",
+        "score": 0.8275,
+        "rationale": "name/type/context score 0.83",
+        "requires_review": true,
+        "reason_codes": [
+          "STRUCTURAL_INFERENCE",
+          "ENTITY_UNCERTAIN",
+          "LOW_CONFIDENCE"
+        ],
+        "alternatives": [
+          {
+            "entity": "vendor",
+            "field": "vendor_name",
+            "score": 0.345
+          }
+        ],
+        "suggested_transform": null,
+        "pii_handling": null,
+        "evidence_ids": [
+          "c6204870-96ca-5e7c-a12b-5f578593712e"
+        ],
+        "judge": null
+      },
+      {
+        "mapping_key": "raw.vendors.vendor_name",
+        "source_table": "raw.vendors",
+        "source_column": "vendor_name",
+        "source_field": "raw.vendors.vendor_name",
+        "canonical_entity": "vendor",
+        "canonical_field": "vendor_name",
+        "confidence": "medium",
+        "score": 0.95,
+        "rationale": "name/type/context score 0.95; synonym of vendor_name",
+        "requires_review": true,
+        "reason_codes": [
+          "ENTITY_UNCERTAIN",
+          "LOW_CONFIDENCE"
+        ],
+        "alternatives": [
+          {
+            "entity": "vendor",
+            "field": "vendor_id",
+            "score": 0.6212
+          }
+        ],
+        "suggested_transform": null,
+        "pii_handling": null,
+        "evidence_ids": [
+          "c6204870-96ca-5e7c-a12b-5f578593712e"
+        ],
+        "judge": null
+      }
+    ],
+    "row_filters": [],
+    "joins": [
+      {
+        "join_id": "raw.customers.id->raw.vendors.id",
+        "left_table": "raw.customers",
+        "left_columns": [
+          "id"
+        ],
+        "right_table": "raw.vendors",
+        "right_columns": [
+          "id"
+        ],
+        "containment_ratio": 1.0,
+        "orphan_rate": 0.0,
+        "cardinality": "1:1",
+        "name_score": 1.0,
+        "score": 1.0,
+        "confidence": "high",
+        "requires_review": false,
+        "reason_codes": [],
+        "evidence_id": "3d0e07f5-4d73-5762-a48e-dfa95a4eadf4"
+      },
+      {
+        "join_id": "raw.vendors.id->raw.customers.id",
+        "left_table": "raw.vendors",
+        "left_columns": [
+          "id"
+        ],
+        "right_table": "raw.customers",
+        "right_columns": [
+          "id"
+        ],
+        "containment_ratio": 1.0,
+        "orphan_rate": 0.0,
+        "cardinality": "1:1",
+        "name_score": 1.0,
+        "score": 1.0,
+        "confidence": "high",
+        "requires_review": false,
+        "reason_codes": [],
+        "evidence_id": "d928c908-c671-52d4-a73f-1334041e36de"
+      }
+    ],
+    "entity_tables": {
+      "raw.customers": "customer",
+      "raw.vendors": "vendor"
+    },
+    "primary_tables": {
+      "customer": "raw.customers",
+      "vendor": "raw.vendors"
+    },
+    "unmapped_required": [],
+    "metrics_needing_evidence": [
+      "active_customers",
+      "arpa",
+      "arr",
+      "billings",
+      "churned_arr",
+      "cogs",
+      "contraction_arr",
+      "dso",
+      "ebitda",
+      "expansion_arr",
+      "gross_margin_pct",
+      "grr",
+      "headcount",
+      "mrr",
+      "new_arr",
+      "nrr",
+      "opex",
+      "revenue_recognized"
+    ],
+    "schema_version": "1"
+  }
+}

@@ -27,11 +27,14 @@ from src.adapters.csv_source import (
     CsvTable,
     _no_links,
     _read,
+    check_registration_budget,
     import_csv,
 )
 from src.domain.errors import Conflict, DomainError, ValidationFailed
 
 MAX_ROW_BYTES = 1024 * 1024
+# Rows per server-cursor FETCH: one round trip per batch, at most ~32 MiB of field content.
+FETCH_BATCH_ROWS = 32
 SOURCE_ENV = "PORTCO_SOURCE_POSTGRES_URL"
 
 
@@ -167,6 +170,22 @@ def _csv_row(values: tuple[Any, ...]) -> bytes:
     return output.getvalue().encode("utf-8")
 
 
+def _provenance(manifest: PostgresManifest, metadata: list[dict[str, Any]], server_major: int) -> dict[str, Any]:
+    return {
+        "kind": "postgresql-snapshot",
+        "format_version": 1,
+        "manifest_sha256": hashlib.sha256(manifest.model_dump_json().encode()).hexdigest(),
+        "schema_sha256": hashlib.sha256(json.dumps(metadata, sort_keys=True).encode()).hexdigest(),
+        "tables": metadata,
+        "isolation": "repeatable read",
+        "read_only": True,
+        "server_major": server_major,
+        "limits": {
+            k: getattr(manifest, k) for k in ("max_rows", "max_bytes", "statement_timeout_ms", "total_timeout_seconds")
+        },
+    }
+
+
 def import_postgres(manifest_path: Path, sources_root: Path) -> dict[str, Any]:
     """Capture one consistent read-only snapshot and atomically register it.
 
@@ -187,11 +206,31 @@ def import_postgres(manifest_path: Path, sources_root: Path) -> dict[str, Any]:
         store = _no_links(sources_root)
         if (store / manifest.source_id).exists():
             raise Conflict("source id already exists; use a new id for a new snapshot")
+        tables = [
+            CsvTable(**table.model_dump(exclude={"primary_key"}), file=f"table-{number:02d}.csv")
+            for number, table in enumerate(manifest.tables)
+        ]
+        csv_manifest = CsvManifest(
+            source_id=manifest.source_id,
+            company_id=manifest.company_id,
+            as_of=manifest.as_of,
+            tables=tables,
+            category_domains=manifest.category_domains,
+        )
+        # Verified metadata must equal the declaration, so the registration size is known now.
+        expected = [
+            {
+                "table": f"{t.schema_name}.{t.table_name}",
+                "columns": [list(column) for column in t.columns.items()],
+                "primary_key": t.primary_key,
+            }
+            for t in manifest.tables
+        ]
+        check_registration_budget(csv_manifest, _provenance(manifest, expected, server_major=9999))
         deadline = time.monotonic() + manifest.total_timeout_seconds
         with tempfile.TemporaryDirectory(prefix="portco-pg-extract-") as temporary:
             extract = Path(temporary)
-            tables = []
-            metadata = []
+            metadata: list[dict[str, Any]] = []
             total_rows = total_bytes = 0
             with psycopg.connect(make_conninfo(**options)) as conn:
                 conn.isolation_level = psycopg.IsolationLevel.REPEATABLE_READ
@@ -228,8 +267,7 @@ def import_postgres(manifest_path: Path, sources_root: Path) -> dict[str, Any]:
                     if time.monotonic() > deadline:
                         raise ValidationFailed("PostgreSQL extraction exceeded its total time limit")
                     metadata.append(_check_table(conn, table))
-                    filename = f"table-{number:02d}.csv"
-                    tables.append(CsvTable(**table.model_dump(exclude={"primary_key"}), file=filename))
+                    filename = tables[number].file
                     columns = [sql.Identifier(c) for c in table.columns]
                     # Guard individual row materialization at the server, before transfer.
                     size = sql.SQL(" + ").join(
@@ -256,41 +294,22 @@ def import_postgres(manifest_path: Path, sources_root: Path) -> dict[str, Any]:
                             raise ValidationFailed("PostgreSQL extract exceeds its byte limit")
                         stream.write(header)
                         cursor.execute(query)
-                        # One row at a time bounds client memory even for wide tables.
-                        while (row := cursor.fetchone()) is not None:
-                            if time.monotonic() > deadline:
-                                raise ValidationFailed("PostgreSQL extraction exceeded its total time limit")
-                            total_rows += 1
-                            if total_rows > manifest.max_rows:
-                                raise ValidationFailed("PostgreSQL extract exceeds its row limit")
-                            if row[-1]:
-                                raise ValidationFailed("PostgreSQL row exceeds its byte limit")
-                            encoded = _csv_row(row[:-1])
-                            total_bytes += len(encoded)
-                            if total_bytes > manifest.max_bytes:
-                                raise ValidationFailed("PostgreSQL extract exceeds its byte limit")
-                            stream.write(encoded)
-                provenance = {
-                    "kind": "postgresql-snapshot",
-                    "format_version": 1,
-                    "manifest_sha256": hashlib.sha256(manifest.model_dump_json().encode()).hexdigest(),
-                    "schema_sha256": hashlib.sha256(json.dumps(metadata, sort_keys=True).encode()).hexdigest(),
-                    "tables": metadata,
-                    "isolation": "repeatable read",
-                    "read_only": True,
-                    "server_major": conn.info.server_version // 10000,
-                    "limits": {
-                        k: getattr(manifest, k)
-                        for k in ("max_rows", "max_bytes", "statement_timeout_ms", "total_timeout_seconds")
-                    },
-                }
-            csv_manifest = CsvManifest(
-                source_id=manifest.source_id,
-                company_id=manifest.company_id,
-                as_of=manifest.as_of,
-                tables=tables,
-                category_domains=manifest.category_domains,
-            )
+                        # Bounded batches: one FETCH round trip per batch, never the whole table.
+                        while batch := cursor.fetchmany(FETCH_BATCH_ROWS):
+                            for row in batch:
+                                if time.monotonic() > deadline:
+                                    raise ValidationFailed("PostgreSQL extraction exceeded its total time limit")
+                                total_rows += 1
+                                if total_rows > manifest.max_rows:
+                                    raise ValidationFailed("PostgreSQL extract exceeds its row limit")
+                                if row[-1]:
+                                    raise ValidationFailed("PostgreSQL row exceeds its byte limit")
+                                encoded = _csv_row(row[:-1])
+                                total_bytes += len(encoded)
+                                if total_bytes > manifest.max_bytes:
+                                    raise ValidationFailed("PostgreSQL extract exceeds its byte limit")
+                                stream.write(encoded)
+                provenance = _provenance(manifest, metadata, conn.info.server_version // 10000)
             path = extract / "manifest.json"
             path.write_text(csv_manifest.model_dump_json(), encoding="utf-8")
             return import_csv(path, extract, store, provenance=provenance)

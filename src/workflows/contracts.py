@@ -44,6 +44,9 @@ class StepContext:
     _adapter: SourceAdapter | None = None
     execution_deadline: float | None = None
     execution_cancelled: Event = field(default_factory=Event)
+    # The claim token of the worker executing this attempt. It is fixed when the engine claims
+    # the run and never re-read from the database: a fresh snapshot could carry a successor's token.
+    execution_owner: str | None = None
 
     def check_publication_owner(self, tx: Tx) -> None:
         """Called while holding the run lock at publication's commit boundary."""
@@ -52,8 +55,8 @@ class StepContext:
             self.execution_cancelled.is_set()
             or (self.execution_deadline is not None and monotonic() >= self.execution_deadline)
             or run.status is not RunStatus.RUNNING
-            or self.run.lease_owner is None
-            or run.lease_owner != self.run.lease_owner
+            or self.execution_owner is None
+            or run.lease_owner != self.execution_owner
             or not run.lease_live()
         ):
             raise LeaseLost("publication worker no longer owns a live execution attempt")

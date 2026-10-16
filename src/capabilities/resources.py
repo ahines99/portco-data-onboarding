@@ -3,7 +3,9 @@
 import json
 from collections.abc import Callable
 from typing import Any
+from uuid import uuid4
 
+import structlog
 from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ResourceError, ResourceNotFoundError
 
@@ -12,6 +14,8 @@ from src.domain.errors import DomainError, NotFound
 from src.domain.models import StepName
 from src.domain.ontology import load_ontology
 from src.domain.policies import render_policies
+
+log = structlog.get_logger(__name__)
 
 
 def _dump(value: Any) -> str:
@@ -27,6 +31,13 @@ def _guarded(fn: Callable[[], str]) -> str:
         raise ResourceNotFoundError(exc.message) from exc
     except DomainError as exc:
         raise ResourceError(f"{exc.code.value}: {exc.message}") from exc
+    except ResourceError:
+        raise
+    except Exception as exc:  # storage/driver failure: its text may carry data, so callers get a correlation id
+        correlation_id = uuid4().hex[:12]
+        # The structlog redactor masks the rendered traceback; the client sees only the correlation id.
+        log.exception("resource_read_failed", correlation_id=correlation_id, error_type=type(exc).__qualname__)
+        raise ResourceError(f"INTERNAL: resource read failed (correlation id {correlation_id})") from None
 
 
 def register(mcp: MCPServer, state: ServerState) -> None:

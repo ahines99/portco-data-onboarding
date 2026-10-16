@@ -1,0 +1,61 @@
+{
+  "before": {
+    "mapping_key": "raw.customers.contact",
+    "source_table": "raw.customers",
+    "source_column": "contact",
+    "source_field": "raw.customers.contact",
+    "canonical_entity": "customer",
+    "canonical_field": "customer_name",
+    "confidence": "low",
+    "score": 0.54,
+    "rationale": "name/type/context score .54",
+    "requires_review": true,
+    "reason_codes": [
+      "LOW_CONFIDENCE"
+    ],
+    "alternatives": [
+      {
+        "entity": "customer",
+        "field": "billing_email",
+        "score": 0.42
+      }
+    ],
+    "suggested_transform": null,
+    "pii_handling": null,
+    "evidence_ids": [],
+    "judge": null
+  },
+  "after": {
+    "mapping_key": "raw.customers.contact",
+    "source_table": "raw.customers",
+    "source_column": "contact",
+    "source_field": "raw.customers.contact",
+    "canonical_entity": "customer",
+    "canonical_field": "billing_email",
+    "confidence": "medium",
+    "score": 0.54,
+    "rationale": "name/type/context score .54; judge preferred billing_email over customer_name (deterministic 0.42)",
+    "requires_review": true,
+    "reason_codes": [
+      "JUDGE_REORDERED",
+      "LOW_CONFIDENCE"
+    ],
+    "alternatives": [
+      {
+        "entity": "customer",
+        "field": "customer_name",
+        "score": 0.54
+      }
+    ],
+    "suggested_transform": null,
+    "pii_handling": null,
+    "evidence_ids": [],
+    "judge": {
+      "judge": "offline-stub",
+      "rationale": "stub supplied allowed choice",
+      "choice": "billing_email",
+      "applied": true
+    }
+  },
+  "target_pii_class": "email"
+}

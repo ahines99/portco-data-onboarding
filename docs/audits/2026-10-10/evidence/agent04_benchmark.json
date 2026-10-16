@@ -1,0 +1,84 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.10",
+  "duckdb": "1.5.5",
+  "caveat": "Shared host concurrent repo test/eval work; small synthetic in-cache mechanisms, not production or remote DB performance.",
+  "pattern_scan": {
+    "rows": 50000,
+    "string_columns": 8,
+    "patterns_each": 11,
+    "separate": {
+      "seconds": [
+        0.23659039998892695,
+        0.24487120000412688,
+        0.23262939997948706
+      ],
+      "queries": 24
+    },
+    "combined": {
+      "seconds": [
+        0.23599560000002384,
+        0.23597159999189898,
+        0.23298289999365807
+      ],
+      "queries": 3
+    }
+  },
+  "python_reconciliation_rows": {
+    "rows": 50000,
+    "columns": 8,
+    "seconds_with_tracemalloc": 0.5646482000011019,
+    "current_python_bytes": 34564455,
+    "peak_python_bytes": 40001288,
+    "note": "Tracemalloc excludes native DuckDB memory and adds timing overhead."
+  },
+  "file_hash": {
+    "bytes": 33554432,
+    "seconds": [
+      0.024463799956720322,
+      0.018371499958448112,
+      0.018655400024726987
+    ]
+  },
+  "insert_kernels": [
+    {
+      "rows": 5000,
+      "kind": "executemany",
+      "seconds": [
+        9.877781600051094,
+        10.84676769998623
+      ]
+    },
+    {
+      "rows": 5000,
+      "kind": "column_unnest",
+      "seconds": [
+        9.789748199982569,
+        9.742674999986775
+      ]
+    },
+    {
+      "rows": 20000,
+      "kind": "executemany",
+      "seconds": [
+        45.76344309997512,
+        42.89854749996448
+      ]
+    },
+    {
+      "rows": 20000,
+      "kind": "column_unnest",
+      "seconds": [
+        36.36276420002105,
+        34.45104239997454
+      ]
+    }
+  ],
+  "real_csv_import": {
+    "rows": 20000,
+    "csv_bytes": 677801,
+    "seconds": 42.128875499998685,
+    "snapshot_bytes": 536576
+  },
+  "driver_note": "Original driver omitted params in experimental combined query after completing insert/import measurements. Fixed driver and reran only remaining scan/memory/hash phases; insert/import raw observations preserved from tool output."
+}

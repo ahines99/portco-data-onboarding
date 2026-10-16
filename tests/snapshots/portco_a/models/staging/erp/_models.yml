@@ -14,12 +14,13 @@ models:
     - accepted_values:
         arguments:
           values:
-          - asset
-          - cogs
-          - da
-          - liability
-          - opex
           - revenue
+          - cogs
+          - opex
+          - da
+          - asset
+          - liability
+          - equity
 - name: stg_erp__journal_lines
   description: Staging for erp.journal_lines (gl_entry).
   columns:

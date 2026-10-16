@@ -212,7 +212,7 @@ class JoinGraph(Contract):
 
 # --------------------------------------------------------------------------- mapping
 
-Transform = Literal["cents_to_major", "parse_mixed_date"]
+Transform = Literal["cents_to_major", "parse_mixed_date", "normalize_category"]
 PiiHandling = Literal["hash", "exclude"]
 
 

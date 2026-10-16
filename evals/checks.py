@@ -405,11 +405,77 @@ async def ddl_rejected(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
         adapter.close()
 
 
+def _failure_telemetry(span_secret: str, log_secret: str) -> dict[str, str]:
+    """Drive a failure carrying canaries through the real telemetry sinks; return what each sink captured.
+
+    Spans go through the configured sanitizing exporter, standard-library records through a handler added
+    the way a dependency would add one, and structlog/Rich output through the redirected stderr.
+    """
+    import io
+    import logging
+
+    import structlog
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+
+    from src import observability
+
+    exporter = InMemorySpanExporter()
+    previous = observability._provider
+    observability.configure_tracing(exporter)
+    logs, stderr = io.StringIO(), io.StringIO()
+    handler = logging.StreamHandler(logs)
+    logging.getLogger().addHandler(handler)
+    try:
+        with contextlib.redirect_stderr(stderr):
+            with contextlib.suppress(RuntimeError), observability.span("eval.g17.step"):
+                try:
+                    raise LookupError(span_secret)
+                except LookupError as cause:
+                    raise RuntimeError(span_secret) from cause
+            try:
+                raise RuntimeError(log_secret)
+            except RuntimeError:
+                logging.getLogger("evals.g17").error("step failed: %s", log_secret, exc_info=True)
+                structlog.get_logger("evals.g17").exception("step_crashed")
+    finally:
+        logging.getLogger().removeHandler(handler)
+        observability._provider = previous
+    return {
+        "spans": "\n".join(s.to_json() for s in exporter.get_finished_spans()),
+        "standard_logs": logs.getvalue(),
+        "stderr": stderr.getvalue(),
+    }
+
+
 @check("canaries_absent", "permission")
 async def canaries_absent(cr: CaseRun, a: dict[str, Any]) -> tuple[bool, str]:
-    truth = _truth(cr)
-    violations = PiiGuard(canaries=truth["canaries"]).scan(emitted(cr))
-    return not violations, f"{len(violations)} violations"
+    """Run outputs (classifier and exact bytes) plus failure telemetry (exact bytes and classifier).
+
+    Spans never carry exception text, so every canary is probed there. Logs mask what the PII detectors
+    classify in free text (emails, phones, national IDs, cards); free-text names, dates and amounts in an
+    exception message are not detectable there, so only classifiable canaries are probed in log sinks.
+    """
+    from src.domain.pii_guard import detect
+
+    canaries = list(_truth(cr)["canaries"])
+    outputs = emitted(cr)
+    violations = PiiGuard(canaries=canaries).scan(outputs)
+    blob = json.dumps(outputs)
+    exact = [c for c in canaries if c in blob]
+    classifiable = [c for c in canaries if detect(c)]
+    sinks = _failure_telemetry(" | ".join(canaries), " | ".join(classifiable))
+    leaked: dict[str, str] = {}
+    for name, text in sinks.items():  # report counts and kinds only: the report must not echo a canary
+        hits = sum(c in text for c in (canaries if name == "spans" else classifiable))
+        kinds = sorted({v.kind for v in PiiGuard().scan_text(text)})
+        if hits or kinds:
+            leaked[name] = f"{hits} exact canaries, kinds {kinds}"
+    ok = not violations and not exact and not leaked and bool(sinks["standard_logs"]) and bool(sinks["spans"])
+    return ok, (
+        f"{len(violations)} output violations, {len(exact)} exact canaries in outputs; telemetry "
+        f"{sorted(sinks)} leaks={leaked or 'none'} ({len(canaries)} canaries in spans, "
+        f"{len(classifiable)} classifiable in logs)"
+    )
 
 
 @check("no_output_contains", "permission")
