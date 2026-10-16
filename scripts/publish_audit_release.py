@@ -248,6 +248,10 @@ def prepare_rc4(repo: Path, output: Path, source_sha: str, ci_url: str, correcti
         raise ValueError("rc.4 publication requires package version 0.2.0rc4")
     output.mkdir(parents=True, exist_ok=True)
     command("uv", "build", "--out-dir", str(output), cwd=repo)
+    # uv marks its output directory as ignored. This is build bookkeeping, not a release asset.
+    ignore_marker = output / ".gitignore"
+    if ignore_marker.is_file() and ignore_marker.read_bytes().strip() == b"*":
+        ignore_marker.unlink()
     verify_distribution_hygiene(output)
     packages = sorted(path for path in output.iterdir() if path.is_file())
     if {path.name for path in packages} != {
