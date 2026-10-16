@@ -6,7 +6,7 @@ separate reviewer authority and recovery across database/filesystem failures. Co
 workflows, a bounded real-data ingestion exercise and a deployment candidate have different scopes.
 See [current release status](RELEASE-STATUS.md) before quoting version-specific test counts.
 
-The current [automated qualification release](AUTOMATED-QUALIFICATION.md) follows the owner's
+The current [automated qualification release](archive/AUTOMATED-QUALIFICATION.md) follows the owner's
 instruction to make execution agentic or automated. Separate operator/reviewer agents completed a
 synthetic workflow on pinned baseline `03c4fb3`; actual PostgreSQL acceptance subsequently passed
 on `25c6937` in [hosted CI](https://github.com/ahines99/portco-data-onboarding/actions/runs/36443092813).
@@ -37,8 +37,8 @@ This is verified synthetic integration, not a production deployment or customer-
 
 "Directed" matches the recorded project role. Use "personally implemented" for a component only if
 that is accurate and you can explain your contribution. Owner approval of a result does not mean the
-owner manually authored or reviewed every line. The [accepted personal statement](ASSISTED-ACCEPTANCE.md)
-and [final acceptance](FINAL-ACCEPTANCE.md) retain the distinction between AI assistance and delegation.
+owner manually authored or reviewed every line. The [accepted personal statement](archive/ASSISTED-ACCEPTANCE.md)
+and [final acceptance](archive/FINAL-ACCEPTANCE.md) retain the distinction between AI assistance and delegation.
 
 For backend roles, emphasize prepared/complete publication states, hash binding, retries and
 concurrency. For data roles, emphasize declared units, joins, row retention, dbt and reconciliation.

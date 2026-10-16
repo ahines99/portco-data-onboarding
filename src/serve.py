@@ -9,6 +9,7 @@ import uvicorn
 from sqlalchemy.engine import make_url
 
 from src.fixtures.generate import ensure_fixture
+from src.observability import configure_logging
 from src.settings import Settings
 from src.workflows.facade import migrate
 
@@ -31,8 +32,10 @@ def prepare_environment() -> Settings:
 
 def main() -> None:
     settings = prepare_environment()
+    # Before migration and uvicorn: every log record (Alembic, uvicorn, MCP SDK) is redacted from the start.
+    configure_logging(settings.log_level)
     settings.var_root.mkdir(parents=True, exist_ok=True)
-    migrate(settings.db_url)
+    migrate(settings.db_url)  # migrations/env.py applies the migration-session deadlines and URL escaping
     if os.environ.get("PORTCO_SEED_SYNTHETIC") == "true":
         for fixture in ("portco_a", "portco_b"):
             ensure_fixture(fixture, settings.fixtures_dir)

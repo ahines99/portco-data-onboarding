@@ -18,7 +18,7 @@ property breaks.
 | 10 | Every material recommendation includes evidence or says evidence is insufficient | ✅ | `Finding` validator rejects SUPPORTED findings without evidence; eval `evidence_fidelity` (every finding resolves to stored evidence or is `NEEDS_EVIDENCE`); lineage resource |
 | 11 | All irreversible actions are disabled or human-approved | ✅ | Publish is the only side effect; it needs a hash-bound certification (ADR-0004); G22, G23, G24 |
 | 12 | MCP tools have typed schemas and integration tests | ✅ | `tests/test_mcp.py` (in-process, stdio and authenticated HTTP); G31 tool trace |
-| 13 | At least one Skill is dynamically useful and not just duplicate prompt text | Static checks passed; live collection complete; general efficacy unproven | `tests/test_skills.py` validates references and rejects near-duplicates. [Six real sessions](evidence/live-study/README.md) recorded one Skill invocation and three owner-approved annotation findings per condition. This demonstrates live integration, not improved performance; that limitation is accepted in [final acceptance](FINAL-ACCEPTANCE.md). |
+| 13 | At least one Skill is dynamically useful and not just duplicate prompt text | Static checks passed; live collection complete; general efficacy unproven | `tests/test_skills.py` validates references and rejects near-duplicates. [Six real sessions](../evidence/live-study/README.md) recorded one Skill invocation and three owner-approved annotation findings per condition. This demonstrates live integration, not improved performance; that limitation is accepted in [final acceptance](FINAL-ACCEPTANCE.md). |
 | 14 | All arithmetic/financial/statistical calculations have deterministic tests | ✅ | `tests/test_metrics_reference.py` (hand-computed micro-fixtures, including edge cases); reference equals independent ground truth; G08/G09 |
 | 15 | The demo can survive one injected tool failure | ✅ | `poe demo` failure path (injected timeout retried); G18, G19 |
 
@@ -57,13 +57,13 @@ property breaks.
 | Fail-open auth, gates and overrides | Tokens need explicit tenants; the test gate fails closed; PII handling can only tighten | `tests/security/test_p1_hardening.py` |
 | Audit tampering and truncation | Canonical payload check, chain head and count on the run | `test_audit_chain_detects_tampering`, `test_audit_chain_detects_deleted_tail` |
 
-The [September remediation record](REMEDIATION-2026-09-27.md) tracks all 19 findings from the
+The [September remediation record](../REMEDIATION-2026-09-27.md) tracks all 19 findings from the
 five-agent audit, their fixes, and final verification. Publication recovery and cancellation
-semantics are documented in [ADR-0012](adr/0012-recoverable-publication.md).
+semantics are documented in [ADR-0012](../adr/0012-recoverable-publication.md).
 
 ## Accepted scope and optional further validation
 
-- The [live Skill comparison](skill_comparison.md) is complete: six actual sessions, with three
+- The [live Skill comparison](../skill_comparison.md) is complete: six actual sessions, with three
   approved assistant annotation findings per condition. Its non-exhaustive, owner-approved review
   does not establish general efficacy. The scorer preserves this declared annotation provenance.
 - The optional LLM mapping judge has no live benefit evidence and remains disabled; its separate
@@ -75,10 +75,10 @@ semantics are documented in [ADR-0012](adr/0012-recoverable-publication.md).
   wheel/sdist demos and stdio MCP passed on both Linux and Windows hosted runners.
 - POD-609's live collection and owner-approved annotation report are delivered. Independent human
   usability and broader controlled model studies remain optional validation, not completed claims.
-- The mapper supports recognized synthetic fixture vocabulary. The [unfamiliar-schema probe](evidence/heldout-probe.json)
+- The mapper supports recognized synthetic fixture vocabulary. The [unfamiliar-schema probe](../evidence/heldout-probe.json)
   produced zero proposals and matched 0/10 targets; it was never approved or published.
 - Isolated MetricFlow 0.15.0 validation was attempted and failed with a bytes/string parsing error.
-  See [compatibility investigation](metricflow-investigation.md). The local executor still validates
+  See [compatibility investigation](../metricflow-investigation.md). The local executor still validates
   all nine generated monthly metrics, including zero denominators; full MetricFlow is not supported.
 - The optional `telemetry` extra installs the HTTP OTLP exporter. Local HTTP collector export is
   covered by `tests/test_otlp_export.py`; deployment to an external collector remains environment-specific.

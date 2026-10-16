@@ -55,7 +55,7 @@ publish_run               agent     ok
 
 [Six real Claude Code sessions](evidence/live-study/README.md) completed the three-prompt comparison
 on 2026-09-27. All six stopped for mapping review during collection. One run was subsequently
-certified and published under [explicit owner delegation](FINAL-ACCEPTANCE.md); that continuation is
+certified and published under [explicit owner delegation](archive/FINAL-ACCEPTANCE.md); that continuation is
 separate from the experiment and does not rewrite its transcripts.
 
 The owner-approved assistant annotations count three findings without Skills and three with Skills.

@@ -1,8 +1,11 @@
 # Roadmap: Portco Data Onboarding Agent v0.1
 
-> **Current remaining-work plan:** [Portfolio finalization roadmap](PORTFOLIO-ROADMAP.md), including
-> Codex/Alex ownership, release gaps, dependencies and acceptance criteria. This document remains
-> the historical implementation plan.
+> **Historical document (banner updated 2026-10-11).** For the current state and next work, use
+> [release status](../RELEASE-STATUS.md), the single current index: stable release, latest candidate,
+> known defects and the next remediation batch. This file is the original v0.1 implementation plan.
+> Its unchecked bullets are not a list of missing work. The later roadmaps
+> ([portfolio finalization](PORTFOLIO-ROADMAP.md), [external validation](EXTERNAL-VALIDATION-ROADMAP.md))
+> are historical too.
 
 > **Status update (2026-09-27): implementation and acceptance evidence are tracked separately.**
 > The earlier claim that all 74 tickets were complete overstated deployment and live-model proof.
@@ -10,7 +13,7 @@
 > schema parity, append-only audit, full certified publication and concurrent crash recovery.
 > CI uses PostgreSQL 16 and includes wheel and Compose smoke jobs; hosted CI and the actual Docker
 > run remain unverified here. POD-609's live recording and paired Skill comparison remain open.
-> The three-prompt transcript/scoring harness is implemented ([protocol](skill_comparison.md));
+> The three-prompt transcript/scoring harness is implemented ([protocol](../skill_comparison.md));
 > no live improvement is claimed. See [acceptance.md](acceptance.md) for evidence and limitations.
 > Deviations from this plan, each recorded where noted:
 > - The MCP capability package is `src/capabilities/`, not `src/mcp/`, so it cannot shadow the `mcp` SDK import.
@@ -34,7 +37,7 @@
 >   with-vs-without-Skill comparison. Their tooling exists; the four backend-specific PostgreSQL tests
 >   were executed locally against PostgreSQL 14.24 without Docker.
 
-This document breaks [IMPLEMENTATION_HANDOFF.md](../IMPLEMENTATION_HANDOFF.md) into tickets that can each be built, reviewed, and closed on their own. The handoff doc defines **what** the system is and **why**. This roadmap defines **the order to build it in** and **when each piece counts as done**.
+This document breaks [IMPLEMENTATION_HANDOFF.md](IMPLEMENTATION_HANDOFF.md) into tickets that can each be built, reviewed, and closed on their own. The handoff doc defines **what** the system is and **why**. This roadmap defines **the order to build it in** and **when each piece counts as done**.
 
 Starting point (2026-09-23): the repo has a one-tool MCP server (`healthcheck`), three of the four core Pydantic models, five placeholder Skills with identical text, and one passing test. There is no git repo, persistence, workflow engine, fixture data, or domain service yet.
 

@@ -1,0 +1,591 @@
+[
+  {
+    "case": "bad_domain",
+    "account_type": "Revenue",
+    "rejected_keys": [],
+    "accepted_join_count": 1,
+    "generated_gl_sql": "-- Generated mart fct_gl_entry for entity gl_entry (system of record: erp.journal_lines).\nselect\n    p.journal_id,\n    p.line_number,\n    p.account_code,\n    p.posting_date,\n    p.debit_amount,\n    p.credit_amount,\n    l1.account_type,\n    cast(p.journal_id as varchar) || '|' || cast(p.line_number as varchar) as gl_entry_key,\n    true as _in_scope\nfrom {{ ref('int_erp__journal_lines') }} as p\nleft join {{ ref('int_erp__gl_accounts') }} as l1\n    on l1.account_code = p.account_code\nwhere not p._excluded_effective\n",
+    "report": {
+      "manifest_hash": "e91b55a2e9e355123fa71145593d854473f8ab29fdb6caf390012913eedc8567",
+      "source_fingerprint": "synthetic",
+      "passed": true,
+      "dbt_exit_code": 0,
+      "dbt_results": [
+        {
+          "unique_id": "model.probe.dim_gl_account",
+          "resource_type": "model",
+          "status": "success",
+          "failures": null,
+          "message": "OK"
+        },
+        {
+          "unique_id": "model.probe.fct_gl_entry",
+          "resource_type": "model",
+          "status": "success",
+          "failures": null,
+          "message": "OK"
+        },
+        {
+          "unique_id": "model.probe.int_erp__gl_accounts",
+          "resource_type": "model",
+          "status": "success",
+          "failures": null,
+          "message": "OK"
+        },
+        {
+          "unique_id": "model.probe.int_erp__journal_lines",
+          "resource_type": "model",
+          "status": "success",
+          "failures": null,
+          "message": "OK"
+        },
+        {
+          "unique_id": "model.probe.metricflow_time_spine",
+          "resource_type": "model",
+          "status": "success",
+          "failures": null,
+          "message": "OK"
+        },
+        {
+          "unique_id": "model.probe.stg_erp__gl_accounts",
+          "resource_type": "model",
+          "status": "success",
+          "failures": null,
+          "message": "OK"
+        },
+        {
+          "unique_id": "model.probe.stg_erp__journal_lines",
+          "resource_type": "model",
+          "status": "success",
+          "failures": null,
+          "message": "OK"
+        },
+        {
+          "unique_id": "test.probe.accepted_values_stg_erp__gl_accounts_account_type__Revenue.62aaf0f292",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.non_negative_stg_erp__journal_lines_credit_amount.bdbd9c4053",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.non_negative_stg_erp__journal_lines_debit_amount.fc366d76e4",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_dim_gl_account_account_code.c002f3b2ea",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_fct_gl_entry_gl_entry_key.2b54eee8dd",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_stg_erp__gl_accounts_account_code.de133088d5",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_stg_erp__gl_accounts_account_type.f635c066ed",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_stg_erp__journal_lines_account_code.b3a80fc398",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_stg_erp__journal_lines_credit_amount.15d12a4880",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_stg_erp__journal_lines_debit_amount.fdcb90e116",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_stg_erp__journal_lines_journal_id.c3fa572327",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_stg_erp__journal_lines_line_number.016ab94118",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_stg_erp__journal_lines_posting_date.0d4e0273cd",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.portco_unique_combination_stg_erp__journal_lines_journal_id__line_number.6613e5dd23",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.relationships_stg_erp__journal_lines_account_code__account_code__ref_stg_erp__gl_accounts_.bfd85a42a2",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.unique_dim_gl_account_account_code.67f7532815",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.unique_fct_gl_entry_gl_entry_key.3801c154f3",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.unique_stg_erp__gl_accounts_account_code.e6345f3373",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        }
+      ],
+      "reconciliation": [
+        {
+          "name": "rowcount:erp.gl_accounts",
+          "passed": true,
+          "detail": "source 1 rows, staging 1; filtered 0 (ref 0)",
+          "expected": {
+            "rows": 1,
+            "excluded": 0
+          },
+          "actual": {
+            "rows": 1,
+            "excluded": 0
+          },
+          "blocking": true
+        },
+        {
+          "name": "rowcount:erp.journal_lines",
+          "passed": true,
+          "detail": "source 1 rows, staging 1; filtered 0 (ref 0)",
+          "expected": {
+            "rows": 1,
+            "excluded": 0
+          },
+          "actual": {
+            "rows": 1,
+            "excluded": 0
+          },
+          "blocking": true
+        },
+        {
+          "name": "mart:revenue_recognized",
+          "passed": true,
+          "detail": "recognized revenue by month: 0 periods compared exactly",
+          "expected": {
+            "periods": 0
+          },
+          "actual": {
+            "periods": 0
+          },
+          "blocking": true
+        },
+        {
+          "name": "metric:cogs",
+          "passed": true,
+          "detail": "generated semantic expression: 1 expected monthly groups, 1 actual",
+          "expected": {
+            "2026-01": "0.00"
+          },
+          "actual": {
+            "2026-01": "0.00"
+          },
+          "blocking": true
+        },
+        {
+          "name": "metric:ebitda",
+          "passed": true,
+          "detail": "generated semantic expression: 1 expected monthly groups, 1 actual",
+          "expected": {
+            "2026-01": "0.00"
+          },
+          "actual": {
+            "2026-01": "0.00"
+          },
+          "blocking": true
+        },
+        {
+          "name": "metric:gross_margin_pct",
+          "passed": true,
+          "detail": "generated semantic expression: 1 expected monthly groups, 1 actual",
+          "expected": {
+            "2026-01": null
+          },
+          "actual": {
+            "2026-01": null
+          },
+          "blocking": true
+        },
+        {
+          "name": "metric:opex",
+          "passed": true,
+          "detail": "generated semantic expression: 1 expected monthly groups, 1 actual",
+          "expected": {
+            "2026-01": "0.00"
+          },
+          "actual": {
+            "2026-01": "0.00"
+          },
+          "blocking": true
+        },
+        {
+          "name": "metric:revenue_recognized",
+          "passed": true,
+          "detail": "generated semantic expression: 1 expected monthly groups, 1 actual",
+          "expected": {
+            "2026-01": "0.00"
+          },
+          "actual": {
+            "2026-01": "0.00"
+          },
+          "blocking": true
+        }
+      ],
+      "failing_checks": [],
+      "waived_checks": [],
+      "cached": false,
+      "duration_seconds": 4.22,
+      "schema_version": "1"
+    }
+  },
+  {
+    "case": "rejected_join",
+    "account_type": "revenue",
+    "rejected_keys": [
+      "join:erp.journal_lines.account_code->erp.gl_accounts.account_code"
+    ],
+    "accepted_join_count": 0,
+    "generated_gl_sql": "-- Generated mart fct_gl_entry for entity gl_entry (system of record: erp.journal_lines).\nselect\n    p.journal_id,\n    p.line_number,\n    p.account_code,\n    p.posting_date,\n    p.debit_amount,\n    p.credit_amount,\n    l1.account_type,\n    cast(p.journal_id as varchar) || '|' || cast(p.line_number as varchar) as gl_entry_key,\n    true as _in_scope\nfrom {{ ref('int_erp__journal_lines') }} as p\nleft join {{ ref('int_erp__gl_accounts') }} as l1\n    on l1.account_code = p.account_code\nwhere not p._excluded_effective\n",
+    "report": {
+      "manifest_hash": "eee184a525bb96a3c7b72f36858b366caf7cea67576b9546c06d78e596fd5177",
+      "source_fingerprint": "synthetic",
+      "passed": true,
+      "dbt_exit_code": 0,
+      "dbt_results": [
+        {
+          "unique_id": "model.probe.dim_gl_account",
+          "resource_type": "model",
+          "status": "success",
+          "failures": null,
+          "message": "OK"
+        },
+        {
+          "unique_id": "model.probe.fct_gl_entry",
+          "resource_type": "model",
+          "status": "success",
+          "failures": null,
+          "message": "OK"
+        },
+        {
+          "unique_id": "model.probe.int_erp__gl_accounts",
+          "resource_type": "model",
+          "status": "success",
+          "failures": null,
+          "message": "OK"
+        },
+        {
+          "unique_id": "model.probe.int_erp__journal_lines",
+          "resource_type": "model",
+          "status": "success",
+          "failures": null,
+          "message": "OK"
+        },
+        {
+          "unique_id": "model.probe.metricflow_time_spine",
+          "resource_type": "model",
+          "status": "success",
+          "failures": null,
+          "message": "OK"
+        },
+        {
+          "unique_id": "model.probe.stg_erp__gl_accounts",
+          "resource_type": "model",
+          "status": "success",
+          "failures": null,
+          "message": "OK"
+        },
+        {
+          "unique_id": "model.probe.stg_erp__journal_lines",
+          "resource_type": "model",
+          "status": "success",
+          "failures": null,
+          "message": "OK"
+        },
+        {
+          "unique_id": "test.probe.accepted_values_stg_erp__gl_accounts_account_type__revenue.0712d595ca",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.non_negative_stg_erp__journal_lines_credit_amount.bdbd9c4053",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.non_negative_stg_erp__journal_lines_debit_amount.fc366d76e4",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_dim_gl_account_account_code.c002f3b2ea",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_fct_gl_entry_gl_entry_key.2b54eee8dd",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_stg_erp__gl_accounts_account_code.de133088d5",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_stg_erp__gl_accounts_account_type.f635c066ed",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_stg_erp__journal_lines_account_code.b3a80fc398",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_stg_erp__journal_lines_credit_amount.15d12a4880",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_stg_erp__journal_lines_debit_amount.fdcb90e116",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_stg_erp__journal_lines_journal_id.c3fa572327",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_stg_erp__journal_lines_line_number.016ab94118",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.not_null_stg_erp__journal_lines_posting_date.0d4e0273cd",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.portco_unique_combination_stg_erp__journal_lines_journal_id__line_number.6613e5dd23",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.unique_dim_gl_account_account_code.67f7532815",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.unique_fct_gl_entry_gl_entry_key.3801c154f3",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        },
+        {
+          "unique_id": "test.probe.unique_stg_erp__gl_accounts_account_code.e6345f3373",
+          "resource_type": "test",
+          "status": "pass",
+          "failures": 0,
+          "message": null
+        }
+      ],
+      "reconciliation": [
+        {
+          "name": "rowcount:erp.gl_accounts",
+          "passed": true,
+          "detail": "source 1 rows, staging 1; filtered 0 (ref 0)",
+          "expected": {
+            "rows": 1,
+            "excluded": 0
+          },
+          "actual": {
+            "rows": 1,
+            "excluded": 0
+          },
+          "blocking": true
+        },
+        {
+          "name": "rowcount:erp.journal_lines",
+          "passed": true,
+          "detail": "source 1 rows, staging 1; filtered 0 (ref 0)",
+          "expected": {
+            "rows": 1,
+            "excluded": 0
+          },
+          "actual": {
+            "rows": 1,
+            "excluded": 0
+          },
+          "blocking": true
+        },
+        {
+          "name": "mart:revenue_recognized",
+          "passed": true,
+          "detail": "recognized revenue by month: 1 periods compared exactly",
+          "expected": {
+            "periods": 1
+          },
+          "actual": {
+            "periods": 1
+          },
+          "blocking": true
+        },
+        {
+          "name": "metric:cogs",
+          "passed": true,
+          "detail": "generated semantic expression: 1 expected monthly groups, 1 actual",
+          "expected": {
+            "2026-01": "0.00"
+          },
+          "actual": {
+            "2026-01": "0.00"
+          },
+          "blocking": true
+        },
+        {
+          "name": "metric:ebitda",
+          "passed": true,
+          "detail": "generated semantic expression: 1 expected monthly groups, 1 actual",
+          "expected": {
+            "2026-01": "100.00"
+          },
+          "actual": {
+            "2026-01": "100.00"
+          },
+          "blocking": true
+        },
+        {
+          "name": "metric:gross_margin_pct",
+          "passed": true,
+          "detail": "generated semantic expression: 1 expected monthly groups, 1 actual",
+          "expected": {
+            "2026-01": "1.0000"
+          },
+          "actual": {
+            "2026-01": "1.0000"
+          },
+          "blocking": true
+        },
+        {
+          "name": "metric:opex",
+          "passed": true,
+          "detail": "generated semantic expression: 1 expected monthly groups, 1 actual",
+          "expected": {
+            "2026-01": "0.00"
+          },
+          "actual": {
+            "2026-01": "0.00"
+          },
+          "blocking": true
+        },
+        {
+          "name": "metric:revenue_recognized",
+          "passed": true,
+          "detail": "generated semantic expression: 1 expected monthly groups, 1 actual",
+          "expected": {
+            "2026-01": "100.00"
+          },
+          "actual": {
+            "2026-01": "100.00"
+          },
+          "blocking": true
+        }
+      ],
+      "failing_checks": [],
+      "waived_checks": [],
+      "cached": false,
+      "duration_seconds": 4.19,
+      "schema_version": "1"
+    }
+  }
+]

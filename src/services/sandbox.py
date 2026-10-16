@@ -15,9 +15,11 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import time
+from contextlib import suppress
 from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -27,9 +29,10 @@ from uuid import UUID, uuid4
 import duckdb
 
 from src.domain import metrics_reference as ref
-from src.domain.errors import DependencyFailed, PolicyViolation, ValidationFailed
+from src.domain.errors import DependencyFailed, LeaseLost, PolicyViolation, ValidationFailed
 from src.domain.hashing import content_hash
 from src.domain.models import Confidence, Finding, FindingType, ReviewDecision, ReviewGate, StepName
+from src.domain.ontology import load_ontology
 from src.domain.pii_guard import PiiGuard
 from src.domain.project_models import (
     AcceptedMapping,
@@ -106,6 +109,54 @@ def materialize(ctx: StepContext, bundle: ArtifactBundle, dest: Path) -> None:
         write_bytes(target, ctx.blobs.get_bytes(f.sha256))
 
 
+def _stop_process(proc: subprocess.Popen[str]) -> None:
+    """Reap dbt and its children; the disposable sandbox has no graceful commit to preserve."""
+    if proc.poll() is not None:
+        return
+    if sys.platform == "win32":
+        # A Windows console-script launcher can have a Python child. Killing only the
+        # launcher leaves that child holding the warehouse open for the rest of the build.
+        with suppress(OSError, subprocess.TimeoutExpired):
+            subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"], capture_output=True, timeout=5, check=False)
+        if proc.poll() is None:
+            proc.kill()
+    else:
+        with suppress(ProcessLookupError):
+            os.killpg(proc.pid, signal.SIGKILL)
+    proc.wait(timeout=5)
+
+
+def _run_dbt_process(ctx: StepContext, cmd: list[str], env: dict[str, str]) -> subprocess.CompletedProcess[str]:
+    """Poll cancellation while collecting output so shutdown never waits for dbt's full budget."""
+    deadline = time.monotonic() + ctx.settings.dbt_timeout_seconds
+    if ctx.execution_deadline is not None:
+        deadline = min(deadline, ctx.execution_deadline)
+    with subprocess.Popen(
+        cmd,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        start_new_session=os.name != "nt",
+    ) as proc:
+        try:
+            while True:
+                if ctx.execution_cancelled.is_set():
+                    raise LeaseLost("dbt execution was cancelled")
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise DependencyFailed("dbt build exceeded its time budget")
+                try:
+                    stdout, stderr = proc.communicate(timeout=min(0.1, remaining))
+                    return subprocess.CompletedProcess(cmd, proc.returncode, stdout, stderr)
+                except subprocess.TimeoutExpired:
+                    continue
+        finally:
+            _stop_process(proc)
+
+
 def run_dbt(ctx: StepContext, workdir: Path, source_copy: Path) -> tuple[int, list[DbtResult]]:
     faults = ctx.services.get("faults")
     if faults is not None and faults.active:
@@ -140,21 +191,9 @@ def run_dbt(ctx: StepContext, workdir: Path, source_copy: Path) -> tuple[int, li
         "--no-partial-parse",
         "--no-use-colors",
     ]
-    try:
-        with span("dbt.build", manifest_dir=workdir.name) as sp:
-            proc = subprocess.run(
-                cmd,
-                env=env,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                timeout=ctx.settings.dbt_timeout_seconds,
-                check=False,
-            )
-            sp.set_attribute("exit_code", proc.returncode)
-    except subprocess.TimeoutExpired as exc:
-        raise DependencyFailed("dbt build exceeded its time budget") from exc
+    with span("dbt.build", manifest_dir=workdir.name) as sp:
+        proc = _run_dbt_process(ctx, cmd, env)
+        sp.set_attribute("exit_code", proc.returncode)
     (workdir / "dbt_stdout.log").write_text(proc.stdout + "\n" + proc.stderr, encoding="utf-8", newline="\n")
     results_path = workdir / "target" / "run_results.json"
     if not results_path.exists():
@@ -256,6 +295,8 @@ def _value(m: AcceptedMapping, raw: Any) -> Any:
         return None
     if m.transform == "cents_to_major":
         return (Decimal(raw) / 100).quantize(Decimal("0.01"))
+    if m.transform == "normalize_category":
+        return str(raw).strip(" ").lower()
     if m.transform == "parse_mixed_date":
         for fmt in ("%Y-%m-%d", "%m/%d/%Y"):
             try:
@@ -266,6 +307,38 @@ def _value(m: AcceptedMapping, raw: Any) -> Any:
     if isinstance(raw, datetime):
         return raw.date()
     return raw
+
+
+GL_METRICS = frozenset({"revenue_recognized", "cogs", "opex", "ebitda", "gross_margin_pct"})
+
+
+def _account_types() -> set[str]:
+    return set(load_ontology().field("gl_account", "account_type").allowed_values or [])
+
+
+def _gl_types(src: SourceRows, r: ResolvedMapping) -> dict[str, str] | None:
+    """Account classification for the reference, available only through an accepted relationship.
+
+    The reference keeps its own arithmetic but honours the same approval contract as generation:
+    a rejected or uninferred gl_entry -> gl_account relationship means no classification at all.
+    """
+    entry, account = r.primary_tables.get("gl_entry"), r.primary_tables.get("gl_account")
+    code_e, code_a = _field(r, "gl_entry", "account_code"), _field(r, "gl_account", "account_code")
+    if not entry or not account or code_e is None or code_a is None:
+        return None
+    if not any(
+        j.left_table == entry
+        and j.right_table == account
+        and j.left_columns == [code_e.source_column]
+        and j.right_columns == [code_a.source_column]
+        and j.cardinality in {"N:1", "1:1"}
+        for j in r.joins
+    ):
+        return None
+    accts = _records(src, r, "gl_account", ["account_code", "account_type"])
+    if accts is None:
+        return None
+    return {str(a["account_code"]): str(a["account_type"]) for a in accts if a["account_type"] is not None}
 
 
 def _records(src: SourceRows, r: ResolvedMapping, entity: str, fields: list[str]) -> list[dict[str, Any]] | None:
@@ -297,6 +370,31 @@ def _compare(name: str, expected: dict[str, Any], actual: dict[str, Any], detail
         ),
         expected={k: str(expected.get(k, "0")) for k in diffs[:5]} if diffs else {"periods": len(keys)},
         actual={k: str(actual.get(k, "0")) for k in diffs[:5]} if diffs else {"periods": len(keys)},
+    )
+
+
+# Subscription references are O(months x subscriptions). A parseable but wrong start date (year 0001)
+# must fail visibly instead of expanding into tens of thousands of monthly snapshots (audit PERF-5).
+MAX_RECONCILIATION_MONTHS = 600
+
+
+def _reconciliation_months(subs: list[ref.SubscriptionRec], as_of: date | None) -> list[str] | None:
+    first = ref.month_key(min(s.start_date for s in subs))
+    last = ref.month_key(as_of or date.today())
+    span = (int(last[:4]) - int(first[:4])) * 12 + int(last[5:7]) - int(first[5:7]) + 1
+    return ref.month_range(first, last) if span <= MAX_RECONCILIATION_MONTHS else None
+
+
+def _horizon_check(subs: list[ref.SubscriptionRec], as_of: date | None) -> ReconciliationCheck:
+    return ReconciliationCheck(
+        name="horizon:subscriptions",
+        passed=False,
+        detail=(
+            f"subscription history spans more than {MAX_RECONCILIATION_MONTHS} months before the as-of date; "
+            "check start dates before reconciling"
+        ),
+        expected={"max_months": MAX_RECONCILIATION_MONTHS},
+        actual={"earliest_month": ref.month_key(min(s.start_date for s in subs))},
     )
 
 
@@ -357,29 +455,55 @@ def reconcile(
                 )
                 for x in recs
             ]
-            first = min(s.start_date for s in subs)
-            last = as_of or date.today()
-            months = ref.month_range(ref.month_key(first), ref.month_key(last))
-            exp = {f"{m}|{c}": v for (m, c), v in ref.arr(subs, months).items()}
-            act = _mart_dict(
-                wh,
-                "SELECT strftime(month_end, '%Y-%m') || '|' || currency, "
-                "cast(sum(mrr) * 12 AS DECIMAL(18,2)) FROM fct_mrr_monthly GROUP BY 1",
+            months = _reconciliation_months(subs, as_of)
+            if months is None:
+                checks.append(_horizon_check(subs, as_of))
+            else:
+                exp = {f"{m}|{c}": v for (m, c), v in ref.arr(subs, months).items()}
+                act = _mart_dict(
+                    wh,
+                    "SELECT strftime(month_end, '%Y-%m') || '|' || currency, "
+                    "cast(sum(mrr) * 12 AS DECIMAL(18,2)) FROM fct_mrr_monthly GROUP BY 1",
+                )
+                checks.append(_compare("mart:arr", exp, act, "ARR by month and currency"))
+                exp_ac = {m: v for m, v in ref.active_customers(subs, months).items() if v}
+                act_ac = _mart_dict(
+                    wh,
+                    "SELECT strftime(month_end, '%Y-%m'), count(DISTINCT customer_id) "
+                    "FILTER (WHERE mrr > 0) FROM fct_mrr_monthly GROUP BY 1",
+                )
+                checks.append(_compare("mart:active_customers", exp_ac, act_ac, "active customers by month"))
+
+    # Classification contract, independent of whether dbt built the marts: generated GL metrics
+    # need every in-scope journal line classified through an approved relationship (A01/A02).
+    if GL_METRICS & set(bundle.generated_metrics):
+        lines = _records(src, r, "gl_entry", ["account_code", "posting_date", "debit_amount", "credit_amount"])
+        types = _gl_types(src, r)
+        if lines is not None and types is None:
+            checks.append(
+                ReconciliationCheck(
+                    name="lineage:gl_entry->gl_account",
+                    passed=False,
+                    detail="GL metrics were generated without an accepted gl_entry -> gl_account relationship",
+                )
             )
-            checks.append(_compare("mart:arr", exp, act, "ARR by month and currency"))
-            exp_ac = {m: v for m, v in ref.active_customers(subs, months).items() if v}
-            act_ac = _mart_dict(
-                wh,
-                "SELECT strftime(month_end, '%Y-%m'), count(DISTINCT customer_id) "
-                "FILTER (WHERE mrr > 0) FROM fct_mrr_monthly GROUP BY 1",
+        if lines is not None and types is not None:
+            domain = _account_types()
+            unknown = sum(1 for x in lines if types.get(str(x["account_code"])) not in domain)
+            checks.append(
+                ReconciliationCheck(
+                    name="domain:gl_account.account_type",
+                    passed=unknown == 0,
+                    detail=f"{unknown} in-scope journal lines lack a canonical account classification",
+                    expected={"unclassified_lines": 0},
+                    actual={"unclassified_lines": unknown},
+                )
             )
-            checks.append(_compare("mart:active_customers", exp_ac, act_ac, "active customers by month"))
 
     if "fct_gl_entry" in models and "revenue_recognized" in bundle.generated_metrics:
         lines = _records(src, r, "gl_entry", ["account_code", "posting_date", "debit_amount", "credit_amount"])
-        accts = _records(src, r, "gl_account", ["account_code", "account_type"])
-        if lines is not None and accts is not None:
-            types = {str(a["account_code"]): str(a["account_type"]) for a in accts}
+        types = _gl_types(src, r)
+        if lines is not None and types is not None:
             gl = [
                 ref.GlLineRec(
                     x["posting_date"],
@@ -463,6 +587,7 @@ def reconcile_semantic(
 ) -> list[ReconciliationCheck]:
     """Every generated metric must execute and have an independent source reference."""
     expected: dict[str, dict[str, Any]] = {}
+    horizon: list[ReconciliationCheck] = []
     invoices = _records(
         src, resolved, "invoice", ["invoice_id", "customer_id", "invoice_date", "total_amount", "currency"]
     )
@@ -488,18 +613,16 @@ def reconcile_semantic(
             )
             for x in subscriptions
         ]
-        months = (
-            ref.month_range(ref.month_key(min(s.start_date for s in subs)), ref.month_key(as_of or date.today()))
-            if subs
-            else []
-        )
-        expected["mrr"] = {f"{m}|{c}": v for (m, c), v in ref.mrr(subs, months).items()}
-        expected["arr"] = {f"{m}|{c}": v for (m, c), v in ref.arr(subs, months).items()}
-        expected["active_customers"] = {m: n for m, n in ref.active_customers(subs, months).items() if n}
+        months = _reconciliation_months(subs, as_of) if subs else []
+        if months is None:
+            horizon = [_horizon_check(subs, as_of)]
+        else:
+            expected["mrr"] = {f"{m}|{c}": v for (m, c), v in ref.mrr(subs, months).items()}
+            expected["arr"] = {f"{m}|{c}": v for (m, c), v in ref.arr(subs, months).items()}
+            expected["active_customers"] = {m: n for m, n in ref.active_customers(subs, months).items() if n}
     lines = _records(src, resolved, "gl_entry", ["account_code", "posting_date", "debit_amount", "credit_amount"])
-    accounts = _records(src, resolved, "gl_account", ["account_code", "account_type"])
-    if lines is not None and accounts is not None:
-        types = {str(a["account_code"]): str(a["account_type"]) for a in accounts}
+    types = _gl_types(src, resolved)
+    if lines is not None and types is not None:
         gl = [
             ref.GlLineRec(
                 x["posting_date"],
@@ -533,7 +656,7 @@ def reconcile_semantic(
             )
             for name in bundle.generated_metrics
         ]
-    checks = []
+    checks = list(horizon)
     for name in bundle.generated_metrics:
         if name not in expected or name not in actual:
             checks.append(

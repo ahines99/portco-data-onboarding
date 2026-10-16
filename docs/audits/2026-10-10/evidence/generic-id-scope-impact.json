@@ -1,0 +1,129 @@
+{
+  "input_sql": "CREATE SCHEMA raw; CREATE TABLE raw.customers(id INTEGER,customer_name VARCHAR,currency VARCHAR); INSERT INTO raw.customers VALUES (1,'Acme','USD'),(2,'Beta','USD'),(3,'Gamma','USD'); CREATE TABLE raw.vendors(id INTEGER,vendor_name VARCHAR,is_deleted BOOLEAN); INSERT INTO raw.vendors VALUES (1,'Widgets',true),(2,'Cogs',false),(3,'Parts',false);",
+  "entities": {
+    "candidates": [
+      {
+        "table": "raw.customers",
+        "canonical_entity": "customer",
+        "score": 0.5125,
+        "confidence": "low",
+        "feature_breakdown": {
+          "columns": 0.25,
+          "name": 1.0,
+          "primary_key": 0.0
+        },
+        "primary_key_columns": [
+          "id"
+        ],
+        "alternatives": [
+          {
+            "entity": "invoice",
+            "score": 0.075
+          },
+          {
+            "entity": "subscription",
+            "score": 0.0692
+          }
+        ],
+        "excluded_reason": null
+      },
+      {
+        "table": "raw.vendors",
+        "canonical_entity": "vendor",
+        "score": 0.55,
+        "confidence": "medium",
+        "feature_breakdown": {
+          "columns": 0.3333,
+          "name": 1.0,
+          "primary_key": 0.0
+        },
+        "primary_key_columns": [
+          "id"
+        ],
+        "alternatives": [
+          {
+            "entity": "customer",
+            "score": 0.0375
+          }
+        ],
+        "excluded_reason": null
+      }
+    ],
+    "overlaps": [],
+    "schema_version": "1"
+  },
+  "decision_keys": [
+    "mapping:raw.customers.id",
+    "mapping:raw.customers.customer_name",
+    "mapping:raw.customers.currency",
+    "mapping:raw.vendors.id",
+    "mapping:raw.vendors.vendor_name",
+    "filter:raw.vendors.is_deleted:exclude_true"
+  ],
+  "resolved_joins": [
+    {
+      "join_id": "raw.customers.id->raw.vendors.id",
+      "left_table": "raw.customers",
+      "left_columns": [
+        "id"
+      ],
+      "right_table": "raw.vendors",
+      "right_columns": [
+        "id"
+      ],
+      "containment_ratio": 1.0,
+      "orphan_rate": 0.0,
+      "cardinality": "1:1",
+      "name_score": 1.0,
+      "score": 1.0,
+      "confidence": "high",
+      "requires_review": false,
+      "reason_codes": [],
+      "evidence_id": "3c4f0a97-33c2-5273-969c-e195b84e3b8c"
+    },
+    {
+      "join_id": "raw.vendors.id->raw.customers.id",
+      "left_table": "raw.vendors",
+      "left_columns": [
+        "id"
+      ],
+      "right_table": "raw.customers",
+      "right_columns": [
+        "id"
+      ],
+      "containment_ratio": 1.0,
+      "orphan_rate": 0.0,
+      "cardinality": "1:1",
+      "name_score": 1.0,
+      "score": 1.0,
+      "confidence": "high",
+      "requires_review": false,
+      "reason_codes": [],
+      "evidence_id": "3e50cf35-a4af-57aa-b6bb-d92ddb17921e"
+    }
+  ],
+  "duplicates": [],
+  "generated_sql": {
+    "models/staging/raw/stg_raw__customers.sql": "-- Generated staging model for source raw.customers (entity: customer).\n-- Renames to canonical fields, casts types, applies reviewed transforms, hashes or drops PII,\n-- and flags (never deletes) rows excluded by reviewed row filters.\nwith source as (\n    select * from {{ source('raw', 'customers') }}\n)\n\nselect\n    cast(\"id\" as varchar) as customer_id,\n    cast(\"customer_name\" as varchar) as customer_name,\n    cast(\"currency\" as varchar) as currency,\n    false as _excluded\nfrom source\n",
+    "models/staging/raw/stg_raw__vendors.sql": "-- Generated staging model for source raw.vendors (entity: vendor).\n-- Renames to canonical fields, casts types, applies reviewed transforms, hashes or drops PII,\n-- and flags (never deletes) rows excluded by reviewed row filters.\nwith source as (\n    select * from {{ source('raw', 'vendors') }}\n)\n\nselect\n    cast(\"id\" as varchar) as vendor_id,\n    cast(\"vendor_name\" as varchar) as vendor_name,\n    (coalesce(cast(\"is_deleted\" as boolean), false)) as _excluded\nfrom source\n",
+    "models/intermediate/int_raw__vendors.sql": "-- Scoping model for raw.vendors: a row is out of scope when it is excluded itself, or when the\n-- parent row it references (in a different entity) is out of scope.\nselect\n    s.*,\n    (s._excluded) as _excluded_effective\nfrom {{ ref('stg_raw__vendors') }} as s\n",
+    "models/intermediate/int_raw__customers.sql": "-- Scoping model for raw.customers: a row is out of scope when it is excluded itself, or when the\n-- parent row it references (in a different entity) is out of scope.\nselect\n    s.*,\n    (s._excluded or coalesce(p1._excluded_effective, false)) as _excluded_effective\nfrom {{ ref('stg_raw__customers') }} as s\nleft join (\n    select vendor_id, bool_or(_excluded_effective) as _excluded_effective\n    from {{ ref('int_raw__vendors') }}\n    group by 1\n) as p1 on p1.vendor_id = s.customer_id\n",
+    "models/marts/dim_customer.sql": "-- Generated mart dim_customer for entity customer (system of record: raw.customers).\nselect\n    p.customer_id,\n    p.customer_name,\n    p.currency,\n    true as _in_scope\nfrom {{ ref('int_raw__customers') }} as p\nwhere not p._excluded_effective\n",
+    "models/marts/dim_vendor.sql": "-- Generated mart dim_vendor for entity vendor (system of record: raw.vendors).\nselect\n    p.vendor_id,\n    p.vendor_name,\n    true as _in_scope\nfrom {{ ref('int_raw__vendors') }} as p\nwhere not p._excluded_effective\n",
+    "models/marts/metricflow_time_spine.sql": "-- Daily time spine required by the semantic layer.\nselect cast(d as date) as date_day\nfrom (\n    select unnest(generate_series(timestamp '2015-01-01', timestamp '2035-12-31', interval 1 day)) as d\n)\n"
+  },
+  "dim_customer_rows": [
+    [
+      "2",
+      "Beta",
+      "USD",
+      true
+    ],
+    [
+      "3",
+      "Gamma",
+      "USD",
+      true
+    ]
+  ]
+}

@@ -14,7 +14,7 @@ For the actual human beat, use a separate live run following [operations](operat
 | 0:25–0:50 | Profile and mapping review | “These are synthetic records. Profiling exposes aggregates and approved category domains; it doesn't send source rows to the model.” |
 | 0:50–1:15 | Cents trap and `rev` finding | “Invoice lines use cents; CRM `rev` describes bookings. The proposed mapping and transform need review.” |
 | 1:15–1:45 | Agent denied; Alex's separate review terminal | “The agent principal cannot approve. Here I inspect the items and make the reviewer decisions.” Use a real session for this beat; label any scripted substitute. |
-| 1:45–2:10 | Test report | “All nine generated monthly metrics are executed. This fixture passes 26 reconciliation checks, including structural and mart checks; monetary comparisons are exact to the cent.” |
+| 1:45–2:10 | Test report | “All nine generated monthly metrics are executed. Show the check count from this recording, including structural and mart checks; monetary comparisons are exact to the cent.” |
 | 2:10–2:35 | Certification and publication | “Certification binds this content and the metric decisions. Publication reserves a version and verifies its files, including on retry.” |
 | 2:35–3:00 | Failure/injection replay | “A transient timeout retries. Malformed lines stop publication. A planted instruction does not authorize an action.” |
 | 3:00–3:25 | Audit and recovery result | “The audit chain and artifact hashes are checked. Hosted tests recreate the stack; the local rehearsal upgrades and restores populated state.” |

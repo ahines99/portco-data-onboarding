@@ -8,6 +8,7 @@ MEDIUM (ADR-0007).
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Callable
 from typing import Any, Protocol
 from uuid import UUID
 
@@ -21,16 +22,19 @@ from src.domain.project_models import (
     MappingProposal,
     MappingSet,
     PiiClass,
+    PiiHandling,
     RowFilter,
     SchemaProfile,
     ScoredTarget,
     SemanticType,
     TableProfile,
+    Transform,
     UnmappedField,
 )
 from src.services.entities import confidence_for, field_owner
 from src.services.pii import TEST_RECORD_PATTERN
 from src.services.text import char_ratio, jaccard, raw_tokens, tokens
+from src.services.value_contracts import contract_issues, describe
 from src.workflows.contracts import StepContext, StepResult, make_evidence
 
 EXCLUDE_PII = {PiiClass.NATIONAL_ID, PiiClass.PAYMENT_CARD, PiiClass.DOB, PiiClass.FREE_TEXT}
@@ -163,9 +167,10 @@ def propose_mapping(ctx: StepContext) -> StepResult:
     evidence = []
     parents: dict[UUID, list[UUID]] = {}  # lineage: conflict evidence -> the table's profile evidence
     for table in profile.tables:
-        entity = entity_of.get(table.qualified)
-        if not entity:
+        maybe_entity = entity_of.get(table.qualified)
+        if not maybe_entity:
             continue
+        entity: str = maybe_entity
         ref = EvidenceRef(source_id=str(table.evidence_id), uri=f"profile://{table.qualified}", retrieved_at=utcnow())
         ranked: dict[str, list[ScoredTarget]] = {}
         for col in table.columns:
@@ -205,13 +210,21 @@ def propose_mapping(ctx: StepContext) -> StepResult:
         for fieldname, cols in conflicts.items():
             conflicts[fieldname] = sorted(set(cols))
 
-        for colname, fieldname in sorted(assigned.items(), key=lambda kv: table.column(kv[0]).ordinal):
+        def finalize(
+            colname: str,
+            fieldname: str,
+            score: float,
+            table: TableProfile = table,
+            ranked: dict[str, list[ScoredTarget]] = ranked,
+            entity: str = entity,
+            conflicts: dict[str, list[str]] = conflicts,
+        ) -> MappingProposal:
+            """Every target-dependent attribute, recomputed for whichever target is finally selected."""
             col = table.column(colname)
             cands = ranked[colname]
-            top = next(c for c in cands if c.field == fieldname)
             fdef = ontology.field(entity, fieldname)
             reasons: list[str] = []
-            conf = confidence_for(top.score)
+            conf = confidence_for(score)
             if table.qualified in structural_tables or (table.qualified, colname) in pk_hints:
                 reasons.append("STRUCTURAL_INFERENCE")
                 conf = Confidence.LOW if table.qualified in structural_tables else Confidence.MEDIUM
@@ -231,7 +244,7 @@ def propose_mapping(ctx: StepContext) -> StepResult:
                 reasons.append("PII_FIELD")
             if fieldname in conflicts:
                 reasons.append("CONFLICT")
-            transform = None
+            transform: Transform | None = None
             unit_tokens = set(raw_tokens(colname))
             explicit_cents = bool(unit_tokens & {"cent", "cents"})
             ambiguous_minor = "minor" in unit_tokens and not explicit_cents
@@ -250,16 +263,29 @@ def propose_mapping(ctx: StepContext) -> StepResult:
                 reasons.append("SEMANTIC_TRAP")
             if (table.qualified, colname) in fk_hints and field_owner(colname, ontology) != fieldname:
                 reasons.append("JOIN_INFERRED")
-            pii_handling = None
+            # Value contracts (A01/A15): counts only. Case variants of a closed domain may be
+            # normalized by a reviewer; unknown codes or NULL classifications cannot.
+            issues = contract_issues(
+                adapter, ontology, table.qualified, colname, col.dtype, entity, fieldname, transform
+            )
+            if "case_variants" in issues and not {"noncanonical", "null_classification"} & set(issues):
+                reasons.append("CATEGORY_NORMALIZATION")
+                transform = "normalize_category"
+            elif {"noncanonical", "null_classification", "case_variants"} & set(issues):
+                reasons.append("NONCANONICAL_VALUES")
+            if "excess_precision" in issues:
+                reasons.append("PRECISION_EXCEEDS_CENTS")
+            pii_handling: PiiHandling | None = None
             if pii_class:
                 pii_handling = "exclude" if PiiClass(pii_class) in EXCLUDE_PII else "hash"
             rationale = (
-                f"name/type/context score {top.score:.2f}"
+                f"name/type/context score {score:.2f}"
                 + (f"; synonym of {fieldname}" if field_owner(colname, ontology) == fieldname else "")
                 + (f"; transform {transform}" if transform else "")
                 + (f"; PII ({pii_class}) will be {pii_handling}ed in staging" if pii_class else "")
+                + (f"; value contract: {describe(issues)}" if issues else "")
             )
-            proposal = MappingProposal(
+            return MappingProposal(
                 mapping_key=f"{table.qualified}.{colname}",
                 source_table=table.qualified,
                 source_column=colname,
@@ -267,7 +293,7 @@ def propose_mapping(ctx: StepContext) -> StepResult:
                 canonical_entity=entity,
                 canonical_field=fieldname,
                 confidence=conf,
-                score=top.score,
+                score=score,
                 rationale=rationale,
                 requires_review=bool(reasons),
                 reason_codes=reasons,
@@ -276,8 +302,13 @@ def propose_mapping(ctx: StepContext) -> StepResult:
                 pii_handling=pii_handling,
                 evidence_ids=[table.evidence_id] if table.evidence_id else [],
             )
-            if judge is not None and conf is not Confidence.HIGH and len(cands) > 1:
-                proposal = _apply_judge(judge, proposal, col, table, ontology)
+
+        for colname, fieldname in sorted(assigned.items(), key=lambda kv: table.column(kv[0]).ordinal):
+            cands = ranked[colname]
+            top = next(c for c in cands if c.field == fieldname)
+            proposal = finalize(colname, fieldname, top.score)
+            if judge is not None and proposal.confidence is not Confidence.HIGH and len(cands) > 1:
+                proposal = _apply_judge(judge, proposal, table.column(colname), table, ontology, finalize)
             proposals.append(proposal)
 
         for fieldname, cols in conflicts.items():
@@ -472,7 +503,12 @@ def _primary_tables(
 
 
 def _apply_judge(
-    judge: MappingJudge, proposal: MappingProposal, col: ColumnProfile, table: TableProfile, ontology: Ontology
+    judge: MappingJudge,
+    proposal: MappingProposal,
+    col: ColumnProfile,
+    table: TableProfile,
+    ontology: Ontology,
+    finalize: Callable[[str, str, float], MappingProposal] | None = None,
 ) -> MappingProposal:
     verdict = judge.judge(proposal, col, table, ontology)
     if not verdict:
@@ -485,18 +521,59 @@ def _apply_judge(
     if choice == proposal.canonical_field:
         return proposal.model_copy(update={"judge": {**meta, "applied": True}})
     alt = next(a for a in proposal.alternatives if a.field == choice)
+    # Recompute every target-dependent attribute (score, PII handling, transform, value contract,
+    # reasons) for the selected target; nothing computed for the previous target may survive.
+    rerank = (
+        finalize(proposal.source_column, choice, alt.score)
+        if finalize is not None
+        else _retarget(proposal, choice, alt.score, col, ontology)
+    )
     alts = [a for a in proposal.alternatives if a.field != choice] + [
         ScoredTarget(entity=proposal.canonical_entity, field=proposal.canonical_field, score=proposal.score)
     ]
+    confidence = Confidence.LOW if rerank.confidence is Confidence.LOW else Confidence.MEDIUM
+    return rerank.model_copy(
+        update={
+            "alternatives": alts,
+            "confidence": confidence,
+            "requires_review": True,
+            "reason_codes": sorted(set(rerank.reason_codes) | {"JUDGE_REORDERED"}),
+            "rationale": rerank.rationale + f"; judge preferred {choice} over {proposal.canonical_field} "
+            f"(deterministic {alt.score:.2f} vs {proposal.score:.2f})",
+            "judge": {**meta, "applied": True},
+        }
+    )
+
+
+def _retarget(
+    proposal: MappingProposal, field: str, score: float, col: ColumnProfile, ontology: Ontology
+) -> MappingProposal:
+    """Target-dependent metadata for a standalone rerank (no adapter): PII handling, transform, reasons."""
+    fdef = ontology.field(proposal.canonical_entity, field)
+    pii_class = col.pii_class or fdef.pii
+    keep = {"ENTITY_UNCERTAIN", "STRUCTURAL_INFERENCE", "LOW_CONFIDENCE", "CONFLICT", "SEMANTIC_TRAP"}
+    reasons = [r for r in proposal.reason_codes if r in keep]
+    transform = proposal.suggested_transform
+    if transform == "cents_to_major" and fdef.unit != "currency_major":
+        transform = None
+    if transform == "parse_mixed_date" and fdef.type != "date":
+        transform = None
+    if transform == "normalize_category" and not fdef.allowed_values:
+        transform = None
+    if pii_class:
+        reasons.append("PII_FIELD")
+    if f"{proposal.canonical_entity}.{field}" in ontology.metric_bearing_fields():
+        reasons.append("METRIC_BEARING")
+    pii_handling: PiiHandling | None = None
+    if pii_class:
+        pii_handling = "exclude" if PiiClass(pii_class) in EXCLUDE_PII else "hash"
     return proposal.model_copy(
         update={
-            "canonical_field": choice,
-            "alternatives": alts,
+            "canonical_field": field,
+            "score": score,
             "confidence": Confidence.MEDIUM,
-            "requires_review": True,
-            "reason_codes": sorted(set(proposal.reason_codes) | {"JUDGE_REORDERED"}),
-            "rationale": proposal.rationale + f"; judge preferred {choice} over {proposal.canonical_field} "
-            f"(deterministic {alt.score:.2f})",
-            "judge": {**meta, "applied": True},
+            "reason_codes": reasons,
+            "suggested_transform": transform,
+            "pii_handling": pii_handling,
         }
     )

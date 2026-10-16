@@ -43,7 +43,13 @@ PROJECT_STEPS: list[StepSpec] = [
         gate=ReviewGate.MAPPING_REVIEW,
         retryable=False,
     ),
-    StepSpec(StepName.ARTIFACT_GENERATION, generation.generate_artifacts, ArtifactBundle),
+    StepSpec(
+        StepName.ARTIFACT_GENERATION,
+        generation.generate_artifacts,
+        ArtifactBundle,
+        precondition=generation.check_generation_authority,
+        rewind_to=StepName.MAPPING_REVIEW,
+    ),
     StepSpec(
         StepName.AUTOMATED_TESTS,
         sandbox.run_automated_tests,

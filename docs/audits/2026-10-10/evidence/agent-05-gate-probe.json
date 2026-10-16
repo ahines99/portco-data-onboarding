@@ -1,0 +1,92 @@
+{
+  "missing_required_dimensions_full_run": {
+    "gate_failures": [],
+    "report": {
+      "cases_total": 37,
+      "cases_passed": 37,
+      "total_seconds": 1,
+      "dimensions": {
+        "tool_correctness": {
+          "passed": 1,
+          "total": 1,
+          "rate": 1.0
+        },
+        "evidence": {
+          "passed": 0,
+          "total": 0,
+          "rate": null
+        },
+        "calculation": {
+          "passed": 1,
+          "total": 1,
+          "rate": 1.0
+        },
+        "permission": {
+          "passed": 0,
+          "total": 0,
+          "rate": null
+        },
+        "uncertainty": {
+          "passed": 1,
+          "total": 1,
+          "rate": 1.0
+        },
+        "recovery": {
+          "passed": 1,
+          "total": 1,
+          "rate": 1.0
+        },
+        "cost": {
+          "passed": 1,
+          "total": 1,
+          "rate": 1.0
+        }
+      }
+    }
+  },
+  "reduced_from_37_to_25_full_run": {
+    "gate_failures": [],
+    "report": {
+      "cases_total": 25,
+      "cases_passed": 25,
+      "total_seconds": 1,
+      "dimensions": {
+        "tool_correctness": {
+          "passed": 1,
+          "total": 1,
+          "rate": 1.0
+        },
+        "evidence": {
+          "passed": 1,
+          "total": 1,
+          "rate": 1.0
+        },
+        "calculation": {
+          "passed": 1,
+          "total": 1,
+          "rate": 1.0
+        },
+        "permission": {
+          "passed": 1,
+          "total": 1,
+          "rate": 1.0
+        },
+        "uncertainty": {
+          "passed": 1,
+          "total": 1,
+          "rate": 1.0
+        },
+        "recovery": {
+          "passed": 1,
+          "total": 1,
+          "rate": 1.0
+        },
+        "cost": {
+          "passed": 1,
+          "total": 1,
+          "rate": 1.0
+        }
+      }
+    }
+  }
+}

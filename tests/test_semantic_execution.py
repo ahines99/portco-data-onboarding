@@ -41,6 +41,8 @@ def semantic_files() -> tuple[dict[str, str], list[str]]:
             "columns": {"posting_date", "account_type", "debit_amount", "credit_amount", "gl_entry_key"},
         },
     }
+    # GL classification reaches fct_gl_entry only through an approved gl_entry -> gl_account lookup.
+    gen.lookups_built = {("gl_entry", "gl_account", "account_type")}
     gen.build_semantic()
     return gen.files, gen.generated_metrics
 

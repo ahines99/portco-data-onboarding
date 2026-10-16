@@ -155,6 +155,21 @@ class ConnectionProbe(BaseModel):
     schemas: list[str]
 
 
+class DomainConformance(BaseModel):
+    rows: int
+    nulls: int
+    exact: int  # value is literally one of the canonical labels
+    normalized: int  # lower(trim(value)) is a canonical label (includes `exact`)
+
+    @property
+    def unknown(self) -> int:
+        return self.rows - self.nulls - self.normalized
+
+    @property
+    def case_variants(self) -> int:
+        return self.normalized - self.exact
+
+
 class SourceAdapter(Protocol):
     spec: ConnectionSpec
     query_count: int
@@ -174,6 +189,8 @@ class SourceAdapter(Protocol):
     def distinct_count_multi(self, schema: str, table: str, columns: Sequence[str]) -> int: ...
     def containment(self, left: tuple[str, str, str], right: tuple[str, str, str]) -> Containment: ...
     def pair_difference(self, schema: str, table: str, a: str, b: str) -> PairDifference: ...
+    def domain_conformance(self, schema: str, table: str, column: str, allowed: Sequence[str]) -> DomainConformance: ...
+    def excess_scale_count(self, schema: str, table: str, column: str, scale: int) -> int: ...
     def low_cardinality_values(self, schema: str, table: str, column: str, max_values: int) -> CategoryValues: ...
     def fingerprint(self) -> str: ...
     def close(self) -> None: ...
@@ -246,12 +263,11 @@ class DuckDBAdapter:
         return self._execute(sql, params)
 
     def _table(self, schema: str, table: str) -> TableMeta:
-        key = (schema, table)
-        if key not in self._tables:
-            if schema not in self.allowed_schemas():
-                raise PolicyViolation(f"schema {schema!r} is not allowlisted")
-            self._tables[key] = self.describe_table(schema, table)
-        return self._tables[key]
+        # The allowlist is checked on every access, not only on a cache miss: describe_table can
+        # populate the cache for profiling, and caching must never widen what may be queried.
+        if schema not in self.allowed_schemas():
+            raise PolicyViolation(f"schema {schema!r} is not allowlisted")
+        return self.describe_table(schema, table)
 
     def _qt(self, schema: str, table: str) -> str:
         self._table(schema, table)
@@ -305,6 +321,13 @@ class DuckDBAdapter:
         return [r[0] for r in rows]
 
     def describe_table(self, schema: str, table: str) -> TableMeta:
+        key = (schema, table)
+        if key in self._tables:  # catalog metadata is immutable for a read-only snapshot
+            return self._tables[key]
+        self._tables[key] = self._describe(schema, table)
+        return self._tables[key]
+
+    def _describe(self, schema: str, table: str) -> TableMeta:
         trow = self._raw_catalog(
             "SELECT comment FROM duckdb_tables() WHERE database_name = current_database() "
             "AND schema_name = ? AND table_name = ?",
@@ -444,6 +467,30 @@ class DuckDBAdapter:
             mean_relative_difference=float(rel) if rel is not None else None,
         )
 
+    def domain_conformance(self, schema: str, table: str, column: str, allowed: Sequence[str]) -> DomainConformance:
+        """Counts only: how many values are in a closed canonical domain exactly, or after lower(trim())."""
+        if not allowed:
+            raise ValidationFailed("a canonical domain must not be empty")
+        qt, c = self._qt(schema, table), self._qc(schema, table, column)
+        marks = ", ".join("?" for _ in allowed)
+        text = f"CAST({c} AS VARCHAR)"
+        sql = (
+            f"SELECT count(*), count(*) FILTER (WHERE {c} IS NULL), "
+            f"count(*) FILTER (WHERE {text} IN ({marks})), "
+            f"count(*) FILTER (WHERE lower(trim({text})) IN ({marks})) FROM {qt}"
+        )
+        rows, nulls, exact, normalized = self._query(sql, [*allowed, *allowed])[0]
+        return DomainConformance(rows=int(rows), nulls=int(nulls), exact=int(exact), normalized=int(normalized))
+
+    def excess_scale_count(self, schema: str, table: str, column: str, scale: int) -> int:
+        """Rows whose numeric value has nonzero digits beyond `scale` decimal places (exact decimal arithmetic)."""
+        if not 0 <= int(scale) <= 10:
+            raise ValidationFailed("unsupported scale")
+        qt, c = self._qt(schema, table), self._qc(schema, table, column)
+        exact = f"CAST({c} AS DECIMAL(38, 10))"
+        sql = f"SELECT count(*) FILTER (WHERE {c} IS NOT NULL AND {exact} <> round({exact}, {int(scale)})) FROM {qt}"
+        return int(self._query(sql)[0][0])
+
     def low_cardinality_values(self, schema: str, table: str, column: str, max_values: int) -> CategoryValues:
         qt, c = self._qt(schema, table), self._qc(schema, table, column)
         if _column_tokens(column) & PERSON_COLUMN_TOKENS:
@@ -540,6 +587,27 @@ class ConnectionRegistry:
             as_of=as_of,
             category_domains=fixture_category_domains(name),
         )
+
+    def owner(self, connection_id: str) -> str:
+        """The server-owned company of a connection, without materializing or hashing any source.
+
+        Authorization runs on this value *before* `resolve`, which may generate fixtures or verify
+        a whole snapshot digest (audit A08): a denied caller must cause no source work at all.
+        """
+        base = connection_id.partition("?")[0]
+        if base in self._extra:
+            return self._extra[base].company_id
+        if base.startswith("csv:") and self.sources_dir is not None:
+            from src.adapters.csv_source import resolve_csv_owner
+
+            return resolve_csv_owner(base, self.sources_dir)
+        if base.startswith("fixture:"):
+            from src.fixtures.generate import fixture_names
+
+            name = base.removeprefix("fixture:")
+            if name in fixture_names():
+                return name
+        raise NotFound(f"unknown connection {connection_id!r}")
 
     def open(self, connection_id: str) -> DuckDBAdapter:
         spec = self.resolve(connection_id)

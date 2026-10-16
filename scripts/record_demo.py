@@ -18,6 +18,7 @@ from src.settings import PROJECT_ROOT
 
 
 def main() -> None:
+    initial_dirty = bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=PROJECT_ROOT, text=True).strip())
     root = Path(tempfile.mkdtemp(prefix="pr-")).resolve()
     env = {k: v for k, v in os.environ.items() if not k.startswith("PORTCO_")}
     env.update(PORTCO_VAR_ROOT=str(root), PORTCO_ENV="test", PORTCO_LOG_LEVEL="WARNING", PYTHONUNBUFFERED="1")
@@ -45,11 +46,14 @@ def main() -> None:
         "label": "Actual scripted fixture demo; reviewer approvals are automated, not Alex's live decisions",
         "recorded_at": datetime.now(UTC).isoformat(),
         "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+        "dirty": initial_dirty,
         "duration": round(time.monotonic() - start, 3),
         "frames": frames,
     }
-    (out / "demo-replay.json").write_text(json.dumps(recording, indent=2) + "\n", encoding="utf-8")
-    (out / "demo-transcript.txt").write_text("\n".join(f["text"] for f in frames) + "\n", encoding="utf-8")
+    (out / "demo-replay.json").write_text(json.dumps(recording, indent=2) + "\n", encoding="utf-8", newline="\n")
+    (out / "demo-transcript.txt").write_text(
+        "\n".join(f["text"] for f in frames) + "\n", encoding="utf-8", newline="\n"
+    )
     print(f"Recorded {len(frames)} stdout lines in {recording['duration']} seconds; no model calls")
 
 

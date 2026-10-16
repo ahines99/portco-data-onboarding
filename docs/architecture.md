@@ -1,6 +1,10 @@
 # Architecture
 
-The system follows the handoff's four-layer design. Deterministic services own every number, join
+[Project page](https://ahines99.github.io/portco-data-onboarding/) →
+[Case study](portfolio_case_study.md) → **Architecture** →
+[Evaluation and limitations](EVALUATION.md) → [Release status](RELEASE-STATUS.md)
+
+Deterministic services own every number, join
 and side effect. MCP is the capability contract. Skills carry procedure. A persistent workflow
 engine owns state and recovery, so the conversation is never the source of truth.
 
@@ -26,7 +30,7 @@ flowchart TB
     ONT[(Ontology v1<br/>ontology/*.yaml)] -.-> S3 & S5 & S6
   end
   subgraph Data["Data and state"]
-    SRC[(Source: DuckDB fixtures<br/>read-only, aggregate-only adapter + SQL guard)]
+    SRC[(Source: DuckDB fixtures or CSV/PostgreSQL snapshots<br/>read-only, aggregate-only adapter + SQL guard)]
     DB[(Workflow DB: Postgres / SQLite<br/>runs, step_runs, evidence, findings,<br/>approvals, append-only hash-chained audit)]
     BL[(Content-addressed artifact store)]
     SB[(Disposable dbt sandbox)]
@@ -54,7 +58,7 @@ sequenceDiagram
   Engine->>Source: probe, verify read-only, fingerprint
   Engine->>Source: aggregate-only profiling (counts, patterns, Luhn, containment)
   Engine->>Engine: entities, joins, mapping (deterministic, evidence-linked)
-  Engine-->>MCP: NEEDS_REVIEW at mapping_review (22 items)
+  Engine-->>MCP: NEEDS_REVIEW at mapping_review
   Agent->>MCP: submit_mapping_review (agent)
   MCP-->>Agent: FORBIDDEN (separation of duties)
   Reviewer->>MCP: submit_mapping_review (gate, subject_hash, item decisions)

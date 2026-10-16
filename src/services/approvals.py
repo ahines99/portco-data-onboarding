@@ -36,11 +36,18 @@ def is_valid(approval: Approval, subject_hash: str | None = None, now: datetime 
 
 def effective_decisions(approvals: list[Approval], gate: ReviewGate, subject_hash: str) -> dict[str, ItemDecision]:
     """Latest valid decision per item for this gate and subject."""
-    out: dict[str, ItemDecision] = {}
+    return {key: decision for key, (decision, _) in decision_sources(approvals, gate, subject_hash).items()}
+
+
+def decision_sources(
+    approvals: list[Approval], gate: ReviewGate, subject_hash: str
+) -> dict[str, tuple[ItemDecision, UUID]]:
+    """Latest valid decision per item, with the approval that supplied it (the winning approval)."""
+    out: dict[str, tuple[ItemDecision, UUID]] = {}
     for a in sorted(approvals, key=lambda a: a.created_at):
         if a.gate == gate and is_valid(a, subject_hash):
             for d in a.decisions:
-                out[d.item_key] = d
+                out[d.item_key] = (d, a.approval_id)
     return out
 
 
@@ -65,7 +72,7 @@ def _validate_override(item: ReviewItem, decision: ItemDecision) -> None:
         not isinstance(override["canonical_field"], str) or override["canonical_field"] not in allowed
     ):
         raise ValidationFailed(f"{override['canonical_field']!r} is not a field of this entity")
-    if override.get("transform") not in (None, "cents_to_major", "parse_mixed_date"):
+    if override.get("transform") not in (None, "cents_to_major", "parse_mixed_date", "normalize_category"):
         raise ValidationFailed("unsupported transform")
     if override.get("pii_handling") not in (None, "hash", "exclude"):
         raise ValidationFailed("unsupported pii_handling")

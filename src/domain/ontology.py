@@ -25,6 +25,9 @@ class FieldDef(_Strict):
     required: bool = False
     pii: PiiClass | None = None
     unit: Literal["currency_major", "currency_minor", "count", "ratio"] | None = None
+    # Closed canonical domain (e.g. account types). Metrics that filter on these literals are only
+    # generated when every source value is in the domain; anything else is unknown, never zero.
+    allowed_values: list[str] | None = None
     description: str = ""
 
 

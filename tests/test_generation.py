@@ -72,7 +72,7 @@ def test_review_override_reflected_in_staging_sql(completed_a: CompletedRun) -> 
     lines = completed_a.service.bundle_file(
         AGENT, completed_a.run_id, "models/staging/billing/stg_billing__invoice_lines.sql"
     )
-    assert "/ 100 as decimal(18, 2)) as amount" in lines  # reviewed cents_to_major transform
+    assert "* 0.01 as decimal(18, 2)) as amount" in lines  # reviewed cents_to_major transform
 
 
 def test_profiles_only_target_the_sandbox(completed_a: CompletedRun) -> None:

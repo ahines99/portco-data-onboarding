@@ -31,6 +31,7 @@ from src.domain.project_models import (
 )
 from src.services.approvals import is_valid
 from src.services.pii import is_sensitive_name
+from src.services.value_contracts import contract_issues, describe
 from src.settings import PROJECT_ROOT
 from src.workflows.contracts import StepContext, StepResult, make_evidence
 
@@ -104,8 +105,13 @@ class Generator:
         company_id: str,
         as_of: date | None,
         primary_keys: dict[str, list[str]] | None = None,
+        value_issues: dict[tuple[str, str], dict[str, int]] | None = None,
     ) -> None:
         self.r = resolved
+        # (entity, field) -> blocking value-contract issues of its accepted source column
+        self.value_issues = value_issues or {}
+        # (consumer entity, from_entity, field) lookups actually built from an accepted relationship
+        self.lookups_built: set[tuple[str, str, str]] = set()
         self.primary_keys = primary_keys or {}  # table -> source key columns inferred from the data
         self.profile = profile
         self.ont = ontology
@@ -126,7 +132,11 @@ class Generator:
         if m.pii_handling == "hash":
             return f"sha256(cast({col} as varchar))", f"{m.canonical_field}_hash"
         if m.transform == "cents_to_major":
-            return f"cast(cast({col} as decimal(18, 2)) / 100 as decimal(18, 2))", m.canonical_field
+            # Exact: decimal division would go through floating point. Fractional minor units are
+            # rejected by the value contract, so the multiplication never needs rounding.
+            return f"cast(cast({col} as decimal(38, 0)) * 0.01 as decimal(18, 2))", m.canonical_field
+        if m.transform == "normalize_category":
+            return f"lower(trim(cast({col} as varchar)))", m.canonical_field
         if m.transform == "parse_mixed_date":
             return (
                 f"cast(coalesce(try_strptime(cast({col} as varchar), '%Y-%m-%d'), "
@@ -261,7 +271,14 @@ class Generator:
                 and (prof.inferred_semantic_type in {SemanticType.MONEY, SemanticType.QUANTITY})
             ):
                 tests.append("non_negative")
-            if prof is not None and prof.category_values and c.ftype == "string" and not c.name.endswith("_hash"):
+            domain = self.ont.field(tm.entity, c.field).allowed_values if c.field else None
+            if domain and not c.name.endswith("_hash"):
+                # The canonical domain, not the observed labels: an approved disclosure list is
+                # a privacy allowlist and says nothing about accounting meaning.
+                tests.append({"accepted_values": {"arguments": {"values": list(domain)}}})
+                if "not_null" not in tests:
+                    tests.append("not_null")
+            elif prof is not None and prof.category_values and c.ftype == "string" and not c.name.endswith("_hash"):
                 tests.append({"accepted_values": {"arguments": {"values": list(prof.category_values)}}})
             for j in self.r.joins:
                 if j.left_table == tm.table and prof is not None and j.left_columns[0] == prof.column:
@@ -286,6 +303,19 @@ class Generator:
         if len(cand_pk) > 1:
             model["data_tests"] = [{"portco_unique_combination": {"arguments": {"combination_of_columns": cand_pk}}}]
         return model
+
+    def _accepted_relationship(self, child_table: str, parent_table: str, field: str) -> bool:
+        """An accepted (auto-accepted or reviewer-approved) N:1/1:1 join links exactly these key columns."""
+        child_col = next((m.source_column for m in self.r.for_table(child_table) if m.canonical_field == field), None)
+        parent_col = next((m.source_column for m in self.r.for_table(parent_table) if m.canonical_field == field), None)
+        return child_col is not None and any(
+            j.left_table == child_table
+            and j.right_table == parent_table
+            and j.left_columns == [child_col]
+            and j.right_columns == [parent_col]
+            and j.cardinality in {"N:1", "1:1"}
+            for j in self.r.joins
+        )
 
     def _pk_fields(self, tm: TableModel) -> list[str]:
         """Canonical names of the table's key. The key inferred from the data wins over the ontology's
@@ -389,6 +419,8 @@ class Generator:
                     continue
                 if self._pk_fields(qtm) != [qtm.field_names.get(lk.join_on)]:
                     continue
+                if not self._accepted_relationship(primary, qtm.table, lk.join_on):
+                    continue  # rejected or never inferred: the classification has no approved lineage
                 alias = str(len(lookup_joins) + 1)
                 lookup_joins.append(
                     {
@@ -400,6 +432,7 @@ class Generator:
                 )
                 lookups.append({"alias": alias, "field": qtm.field_names[lk.field]})
                 present.add(qtm.field_names[lk.field])
+                self.lookups_built.add((entity, lk.from_entity, lk.field))
             sql = self.env.get_template("mart.sql.j2").render(
                 mart=edef.mart,
                 entity=entity,
@@ -486,6 +519,19 @@ class Generator:
         },
     }
 
+    def _unlinked_lookups(self, model: str | None, requires: list[str]) -> list[str]:
+        """Required lookup fields of the metric's model that were not joined through an accepted relationship."""
+        spec = self.SEMANTIC_MODELS.get(model or "")
+        if spec is None or spec["entity"] not in self.ont.entities:
+            return []
+        consumer = spec["entity"]
+        return sorted(
+            f"{lk.from_entity}.{lk.field}"
+            for lk in self.ont.entities[consumer].lookups
+            if f"{lk.from_entity}.{lk.field}" in requires
+            and (consumer, lk.from_entity, lk.field) not in self.lookups_built
+        )
+
     def build_semantic(self) -> None:
         mart_cols = {m["name"]: m["columns"] for m in self.marts.values()}
         accepted = {(m.canonical_entity, m.canonical_field) for m in self.r.accepted if m.pii_handling != "exclude"}
@@ -498,6 +544,20 @@ class Generator:
                 self.not_generated[name] = "NEEDS_EVIDENCE: no approved mapping for " + ", ".join(
                     missing or ["required fields"]
                 )
+                continue
+            blocked = {
+                ref: self.value_issues[(entity, fname)]
+                for ref in mdef.requires
+                for entity, _, fname in [ref.partition(".")]
+                if (entity, fname) in self.value_issues
+            }
+            if blocked:
+                ref, issues = sorted(blocked.items())[0]
+                self.not_generated[name] = f"NEEDS_EVIDENCE: {ref} fails its value contract ({describe(issues)})"
+                continue
+            unlinked = self._unlinked_lookups(sem.model, mdef.requires)
+            if unlinked:
+                self.not_generated[name] = "NEEDS_EVIDENCE: no approved relationship supplies " + ", ".join(unlinked)
                 continue
             if sem.kind == "reference_only":
                 self.not_generated[name] = "reference_only: computed by the reference service, not the semantic layer"
@@ -633,20 +693,47 @@ def _kind(path: str) -> str:
     return "project"
 
 
-def generate_artifacts(ctx: StepContext) -> StepResult:
+def check_generation_authority(ctx: StepContext) -> None:
+    """Fail closed: every approval the reviewed mapping relies on must still be valid (ADR-0004).
+
+    The engine also runs this before reusing a cached bundle: approval validity (revocation,
+    expiry) is not part of any content hash, so a cache hit alone proves nothing about authority.
+    """
     resolved = ctx.get(StepName.MAPPING_REVIEW, ResolvedMapping)
-    profile = ctx.get(StepName.SCHEMA_PROFILING, SchemaProfile)
-    # Fail closed: every approval the reviewed mapping relies on must still be valid (ADR-0004).
     by_id = {a.approval_id: a for a in ctx.approvals}
     for approval_id in resolved.approval_ids:
         a = by_id.get(approval_id)
         if a is None or a.gate != ReviewGate.MAPPING_REVIEW or not is_valid(a, resolved.mapping_hash):
             raise ApprovalRequired("the mapping approval this bundle depends on is missing, revoked or stale")
+
+
+def generate_artifacts(ctx: StepContext) -> StepResult:
+    resolved = ctx.get(StepName.MAPPING_REVIEW, ResolvedMapping)
+    profile = ctx.get(StepName.SCHEMA_PROFILING, SchemaProfile)
+    check_generation_authority(ctx)
     entities = ctx.upstream.get(StepName.ENTITY_INFERENCE)
     keys = (
         {c.table: c.primary_key_columns for c in entities.candidates} if isinstance(entities, EntityInference) else {}
     )
-    gen = Generator(resolved, profile, ctx.ontology, ctx.run.company_id, ctx.adapter().spec.as_of, keys)
+    adapter = ctx.adapter()
+    value_issues: dict[tuple[str, str], dict[str, int]] = {}
+    for m in resolved.accepted:
+        if m.pii_handling == "exclude":
+            continue
+        dtype = profile.table(m.source_table).column(m.source_column).dtype
+        issues = contract_issues(
+            adapter,
+            ctx.ontology,
+            m.source_table,
+            m.source_column,
+            dtype,
+            m.canonical_entity,
+            m.canonical_field,
+            m.transform,
+        )
+        if issues:
+            value_issues[(m.canonical_entity, m.canonical_field)] = issues
+    gen = Generator(resolved, profile, ctx.ontology, ctx.run.company_id, adapter.spec.as_of, keys, value_issues)
     files = gen.build()
     entries = []
     for path, text in files.items():

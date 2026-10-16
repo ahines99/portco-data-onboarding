@@ -9,11 +9,11 @@ recommended personal wording. Alex subsequently approved this packet and finaliz
   No credentials were copied, published or requested from Alex.
 - Collected six real Claude Code sessions against the agent-only MCP server: three fixed prompts,
   each with and without the five repository Skills. Full tool calls, results and responses are
-  retained. See [collection and review notes](evidence/live-study/README.md).
+  retained. See [collection and review notes](../evidence/live-study/README.md).
 - At collection time, verified all six persisted runs stopped at `mapping_review`: 22 items for each profile/failure
   session and nine for each SAP-style mapping session. None was approved or published during the experiment.
   The profile-without run was subsequently completed under delegated owner approval.
-- Prepared [all 22 decisions](evidence/live-study/reviewer-brief.md) for the first real model run.
+- Prepared [all 22 decisions](../evidence/live-study/reviewer-brief.md) for the first real model run.
   They were subsequently approved and executed under explicit delegation; the execution is recorded separately.
 - Produced a 3 minute 51 second narrated evidence tour with a local synthetic voice, selectable
   English captions and a text transcript. The [release downloads](https://github.com/ahines99/portco-data-onboarding/releases/tag/v0.1.0)

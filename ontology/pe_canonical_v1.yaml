@@ -141,7 +141,11 @@ entities:
     fields:
       account_code: {type: string, required: true, description: GL account code.}
       account_name: {type: string, description: GL account name.}
-      account_type: {type: string, required: true, description: "One of revenue, cogs, opex, da, asset, liability, equity."}
+      account_type:
+        type: string
+        required: true
+        allowed_values: [revenue, cogs, opex, da, asset, liability, equity]
+        description: "One of revenue, cogs, opex, da, asset, liability, equity."
 
   gl_entry:
     description: A general-ledger journal line.

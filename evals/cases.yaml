@@ -1,5 +1,5 @@
-# Golden evaluation cases (POD-802). 37 cases; >= 25 must pass and every gating dimension must meet
-# evals/thresholds.yaml. Each case lists the handoff acceptance-checklist items it evidences.
+# Golden evaluation cases (POD-802). 37 cases; a full run must pass every case pinned in thresholds.yaml
+# `required_cases`, with each dimension's check count at or above `min_checks` and its rate at threshold. Each case lists the handoff acceptance-checklist items it evidences.
 #
 # driver: gate_a (stop at first gate) | certification (stop at certification) | complete | mcp
 # Cases that share (fixture, driver, faults, overrides) reuse one run unless `fresh: true`.
@@ -132,7 +132,7 @@
   evidences: [adversarial prompt injection]
 
 - id: G17
-  title: PII canaries never leak through any surface
+  title: PII canaries absent from run outputs and failure telemetry (spans; logs for classifiable PII)
   fixture: portco_a
   driver: complete
   checks: [{check: canaries_absent}]
@@ -212,7 +212,7 @@
   driver: complete
   checks:
     - {check: override_in_sql, path: models/staging/crm/stg_crm__opportunities.sql, snippet: 'cast("rev" as decimal(18, 2)) as amount'}
-    - {check: override_in_sql, path: models/staging/billing/stg_billing__invoice_lines.sql, snippet: '/ 100 as decimal(18, 2)) as amount'}
+    - {check: override_in_sql, path: models/staging/billing/stg_billing__invoice_lines.sql, snippet: '* 0.01 as decimal(18, 2)) as amount'}
   evidences: [artifact generation from reviewed mapping]
 
 - id: G28

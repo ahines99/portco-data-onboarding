@@ -1,0 +1,246 @@
+{
+  "zero_attempts": {
+    "status": "running",
+    "error": null,
+    "lease_owner": null,
+    "steps": [
+      {
+        "step": "connection_validation",
+        "attempts": 0,
+        "status": "pending",
+        "reused": false
+      },
+      {
+        "step": "schema_profiling",
+        "attempts": 0,
+        "status": "pending",
+        "reused": false
+      },
+      {
+        "step": "entity_inference",
+        "attempts": 0,
+        "status": "pending",
+        "reused": false
+      },
+      {
+        "step": "join_inference",
+        "attempts": 0,
+        "status": "pending",
+        "reused": false
+      },
+      {
+        "step": "canonical_mapping",
+        "attempts": 0,
+        "status": "pending",
+        "reused": false
+      },
+      {
+        "step": "mapping_review",
+        "attempts": 0,
+        "status": "pending",
+        "reused": false
+      },
+      {
+        "step": "artifact_generation",
+        "attempts": 0,
+        "status": "pending",
+        "reused": false
+      },
+      {
+        "step": "automated_tests",
+        "attempts": 0,
+        "status": "pending",
+        "reused": false
+      },
+      {
+        "step": "human_certification",
+        "attempts": 0,
+        "status": "pending",
+        "reused": false
+      },
+      {
+        "step": "publish",
+        "attempts": 0,
+        "status": "pending",
+        "reused": false
+      }
+    ]
+  },
+  "accepted_bad_settings": {
+    "step_max_attempts": 0,
+    "step_timeout_seconds": -20.0,
+    "lease_margin_seconds": -200.0,
+    "sandbox_keep_attempts": -1,
+    "dbt_timeout_seconds": -100.0,
+    "approval_ttl_hours": -1
+  },
+  "before_certification": {
+    "status": "needs_review",
+    "gate": "certification"
+  },
+  "invalid_decision": {
+    "is_error": true,
+    "body": {
+      "code": "INTERNAL",
+      "retryable": false,
+      "message": "internal error (correlation id 93c60dd7279a)"
+    }
+  },
+  "test_tool_after_certification": {
+    "is_error": false,
+    "body": {
+      "run_id": "7bc217d7-3e49-4d72-9309-bf6487b951a9",
+      "status": "complete",
+      "passed": true,
+      "dbt_exit_code": 0,
+      "data_tests": 97,
+      "failing_checks": [],
+      "waived_checks": [],
+      "reconciliation": [
+        {
+          "name": "rowcount:billing.customers",
+          "passed": true,
+          "detail": "source 127 rows, staging 127; filtered 3 (ref 3)"
+        },
+        {
+          "name": "rowcount:billing.invoice_lines",
+          "passed": true,
+          "detail": "source 2107 rows, staging 2107; filtered 0 (ref 0)"
+        },
+        {
+          "name": "rowcount:billing.invoices",
+          "passed": true,
+          "detail": "source 1962 rows, staging 1962; filtered 0 (ref 0)"
+        },
+        {
+          "name": "rowcount:billing.payments",
+          "passed": true,
+          "detail": "source 1801 rows, staging 1801; filtered 0 (ref 0)"
+        },
+        {
+          "name": "rowcount:billing.subscriptions",
+          "passed": true,
+          "detail": "source 165 rows, staging 165; filtered 0 (ref 0)"
+        },
+        {
+          "name": "rowcount:crm.accounts",
+          "passed": true,
+          "detail": "source 122 rows, staging 122; filtered 7 (ref 7)"
+        },
+        {
+          "name": "rowcount:crm.contacts",
+          "passed": true,
+          "detail": "source 244 rows, staging 244; filtered 0 (ref 0)"
+        },
+        {
+          "name": "rowcount:crm.opportunities",
+          "passed": true,
+          "detail": "source 300 rows, staging 300; filtered 0 (ref 0)"
+        },
+        {
+          "name": "rowcount:erp.gl_accounts",
+          "passed": true,
+          "detail": "source 12 rows, staging 12; filtered 0 (ref 0)"
+        },
+        {
+          "name": "rowcount:erp.journal_lines",
+          "passed": true,
+          "detail": "source 7739 rows, staging 7739; filtered 0 (ref 0)"
+        },
+        {
+          "name": "rowcount:hr.employees",
+          "passed": true,
+          "detail": "source 60 rows, staging 60; filtered 0 (ref 0)"
+        },
+        {
+          "name": "mart:billings",
+          "passed": true,
+          "detail": "billings by month and currency: 72 periods compared exactly"
+        },
+        {
+          "name": "mart:arr",
+          "passed": true,
+          "detail": "ARR by month and currency: 95 periods compared exactly"
+        },
+        {
+          "name": "mart:active_customers",
+          "passed": true,
+          "detail": "active customers by month: 32 periods compared exactly"
+        },
+        {
+          "name": "mart:revenue_recognized",
+          "passed": true,
+          "detail": "recognized revenue by month: 24 periods compared exactly"
+        },
+        {
+          "name": "consistency:invoice_lines_sum_to_header",
+          "passed": true,
+          "detail": "1923 of 1923 invoices have line amounts summing exactly to the header total; 0 mismatches, maximum absolute difference 0.00 in invoice currency units, 0 unknown differences"
+        },
+        {
+          "name": "orphans:billing.customers.crm_account_ref->crm.accounts.acct_id",
+          "passed": true,
+          "detail": "orphan rate 7.87% (reviewed at 7.87%)"
+        },
+        {
+          "name": "metric:active_customers",
+          "passed": true,
+          "detail": "generated semantic expression: 32 expected monthly groups, 32 actual"
+        },
+        {
+          "name": "metric:arr",
+          "passed": true,
+          "detail": "generated semantic expression: 95 expected monthly groups, 95 actual"
+        },
+        {
+          "name": "metric:billings",
+          "passed": true,
+          "detail": "generated semantic expression: 72 expected monthly groups, 72 actual"
+        },
+        {
+          "name": "metric:cogs",
+          "passed": true,
+          "detail": "generated semantic expression: 24 expected monthly groups, 24 actual"
+        },
+        {
+          "name": "metric:ebitda",
+          "passed": true,
+          "detail": "generated semantic expression: 24 expected monthly groups, 24 actual"
+        },
+        {
+          "name": "metric:gross_margin_pct",
+          "passed": true,
+          "detail": "generated semantic expression: 24 expected monthly groups, 24 actual"
+        },
+        {
+          "name": "metric:mrr",
+          "passed": true,
+          "detail": "generated semantic expression: 95 expected monthly groups, 95 actual"
+        },
+        {
+          "name": "metric:opex",
+          "passed": true,
+          "detail": "generated semantic expression: 24 expected monthly groups, 24 actual"
+        },
+        {
+          "name": "metric:revenue_recognized",
+          "passed": true,
+          "detail": "generated semantic expression: 24 expected monthly groups, 24 actual"
+        }
+      ],
+      "cached": false,
+      "resource_uri": "run://7bc217d7-3e49-4d72-9309-bf6487b951a9/test-report"
+    },
+    "publications": 1,
+    "publication_states": [
+      "complete"
+    ],
+    "published_files_exist": [
+      true
+    ]
+  },
+  "cli_failed_run": {
+    "exit_code": 0,
+    "output": "{\"attempt\": 1, \"code\": \"SOURCE_UNAVAILABLE\", \"will_retry\": false, \"event\": \"step_failed\", \"principal\": \"agent:cli\", \"step\": \"connection_validation\", \"run_id\": \"22f1180a-d545-46e6-a87d-a1244c56c3de\", \"level\": \"warning\", \"timestamp\": \"2026-10-10T22:59:27.923086Z\"}\nrun 22f1180a-d545-46e6-a87d-a1244c56c3de  status=failed  step=connection_validation  gate=-  pending=0\n  error: SOURCE_UNAVAILABLE: injected fault: adapter.probe:unavailable\n"
+  }
+}

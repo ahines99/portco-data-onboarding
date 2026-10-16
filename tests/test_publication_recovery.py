@@ -86,6 +86,7 @@ def publication_context(service):
         open_adapter=lambda: service.connections.open("fixture:portco_a"),
         upstream={StepName.ARTIFACT_GENERATION: bundle, StepName.HUMAN_CERTIFICATION: packet},
         approvals=approvals,
+        execution_owner=run.lease_owner,
     )
 
 

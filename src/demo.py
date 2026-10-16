@@ -15,6 +15,7 @@ No Docker, no API keys. Reports are written to var/demo/.
 from __future__ import annotations
 
 import time
+from contextlib import nullcontext, redirect_stderr
 from pathlib import Path
 from typing import Any
 
@@ -210,12 +211,24 @@ async def _baseline_mappings(root: Path) -> dict[str, str]:
     return _mapping_targets(svc, run.run_id)
 
 
-def run_demo(out: Path) -> int:
-    started = time.monotonic()
+def run_demo(out: Path, *, verbose: bool = False) -> int:
+    """Keep the narrated demo readable; retain diagnostic logs beside its reports."""
     root = out.resolve()
     if not remove_tree(root):  # e.g. a file still open from an earlier session: use a fresh directory
         root = root.with_name(f"{root.name}-{int(time.time())}")
     root.mkdir(parents=True, exist_ok=True)
+    with (
+        (root / "diagnostics.log").open("w", encoding="utf-8") as diagnostics,
+        nullcontext() if verbose else redirect_stderr(diagnostics),
+    ):
+        result = _run_demo(root)
+    if result:
+        _say(f"   diagnostics: {root / 'diagnostics.log'}")
+    return result
+
+
+def _run_demo(root: Path) -> int:
+    started = time.monotonic()
     for name in ("portco_a", "portco_a__malformed", "portco_a__inj_comment"):
         ensure_fixture(name, get_settings().fixtures_dir)
     script = yaml.safe_load((PROJECT_ROOT / "demo" / "reviews_gate_a.yaml").read_text(encoding="utf-8"))

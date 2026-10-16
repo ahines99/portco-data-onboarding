@@ -26,6 +26,8 @@ AGGREGATE_METHODS = frozenset(
         "containment",
         "pair_difference",
         "low_cardinality_values",
+        "domain_conformance",
+        "excess_scale_count",
     }
 )
 

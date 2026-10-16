@@ -2,7 +2,8 @@
 # `docker compose --profile full up --build` -> Postgres + migrations + authenticated MCP server on :8000
 services:
   postgres:
-    image: postgres:16
+    # postgres:16 pinned to its multi-arch index digest; Dependabot proposes reviewed updates.
+    image: postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
     volumes: ["portco-postgres:/var/lib/postgresql/data"]
     environment:
       POSTGRES_USER: portco

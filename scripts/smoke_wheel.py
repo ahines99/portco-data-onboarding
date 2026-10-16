@@ -11,8 +11,24 @@ import os
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
+import zipfile
 from pathlib import Path
+
+
+def verify_distribution_hygiene(dist: Path) -> None:
+    """Inspect both published formats, including builds made without a Git checkout."""
+    source = next(dist.glob("*.tar.gz"))
+    wheel = next(dist.glob("*.whl"))
+    with tarfile.open(source) as archive:
+        source_names = archive.getnames()
+    with zipfile.ZipFile(wheel) as archive:
+        wheel_names = archive.namelist()
+    for artifact, names in ((source, source_names), (wheel, wheel_names)):
+        leaked = [name for name in names if ".config" in Path(name).parts]
+        if leaked:
+            raise RuntimeError(f"Machine-local configuration included in {artifact.name}: {leaked}")
 
 
 def main() -> None:
@@ -36,6 +52,7 @@ def main() -> None:
 
     run([*uv, "build", "--out-dir", str(root / "dist"), *offline])
     # uv build without --wheel builds the wheel from the sdist, checking both distributions.
+    verify_distribution_hygiene(root / "dist")
     run([*uv, "sync", "--frozen", "--no-dev", "--no-install-project", *offline])
     python = venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     wheel = next((root / "dist").glob("*.whl"))

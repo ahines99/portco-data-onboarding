@@ -110,7 +110,7 @@ the baseline and first failed report remain unchanged. The post-benchmark remedi
 32/33 correct proposals, 32/32 positive targets, 6/6 units and a passing safety gate, with review
 burden increasing from 6/33 to 7/33 proposals. Entity decisions are 10/10 including two intentional
 abstentions; joins are 3/3. This is not untouched held-out evidence or broad operating accuracy.
-See the [three-stage benchmark record](../evals/unfamiliar/README.md).
+See the [three-stage benchmark record](../../evals/unfamiliar/README.md).
 
 The integrated first implementation passed 606 local non-PostgreSQL tests (one Windows symlink
 permission skip; five PostgreSQL tests deselected), all 37 golden evaluation cases, six Auth0 Action

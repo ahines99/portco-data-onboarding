@@ -1,6 +1,10 @@
 # Portfolio finalization roadmap
 
-Date: 2026-09-27. Execution authorized. See [release status](RELEASE-STATUS.md) for completed work,
+> **Historical document (banner updated 2026-10-11).** This plan is closed. For the current state
+> and next work, use [release status](../RELEASE-STATUS.md), the single current index. The text below
+> is the original 2026-09-27 plan, retained unchanged for traceability.
+
+Date: 2026-09-27. Execution authorized. See [release status](../RELEASE-STATUS.md) for completed work,
 verification and remaining human handoffs. The observations below describe the planning baseline.
 Owner names: **Codex** means implementation, investigation, testing and preparation I can perform;
 **Alex** means your decisions, account access, independent human reviews and publication choices.
@@ -33,7 +37,7 @@ Release criteria:
 
 ## 2. Established baseline and evidence limits
 
-The [remediation record](REMEDIATION-2026-09-27.md) records 451 non-Postgres tests, four PostgreSQL
+The [remediation record](../REMEDIATION-2026-09-27.md) records 451 non-Postgres tests, four PostgreSQL
 14.24 tests, 37/37 eval cases, 100% branch coverage of the metric reference module, and a passing
 installed-wheel demo. These are prior local results, not a fresh run for this planning exercise.
 All 19 numbered audit findings have implemented fixes. This plan does not reopen them without evidence.

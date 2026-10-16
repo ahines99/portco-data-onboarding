@@ -3,6 +3,13 @@
 The CLI is the human's console: `review` records decisions as a reviewer principal, while
 `run`/`resume` act as the agent principal. Separation of duties is enforced server-side either
 way — the principal that started a run cannot approve it.
+
+Exit codes (see docs/operations.md): workflow-mutating commands (`run`, `resume`, `rerun`) print
+the resulting run and then exit 0 when it completed, paused for review or stopped as requested
+(PENDING); 1 when the workflow FAILED; 4 when the run is CANCELLED. Rejected commands (domain
+errors such as NOT_FOUND, FORBIDDEN, CONFLICT) exit 2, and `audit --verify` exits 3 for a broken
+chain. Inspection commands such as `status` exit 0 whenever they inspect a run successfully,
+including a failed one.
 """
 
 from __future__ import annotations
@@ -16,10 +23,18 @@ import anyio
 import typer
 import yaml
 
-from src.domain.errors import Conflict, DomainError, ValidationFailed
-from src.domain.models import Principal, ReviewDecision, ReviewGate, Role, StepName
+from src.domain.errors import Conflict, DomainError, Forbidden, ValidationFailed
+from src.domain.models import Principal, ReviewDecision, ReviewGate, Role, RunStatus, StepName
 from src.domain.project_models import ItemDecision
 from src.settings import get_settings
+
+EXIT_RUN_FAILED = 1
+EXIT_DOMAIN_ERROR = 2
+EXIT_AUDIT_BROKEN = 3
+EXIT_RUN_CANCELLED = 4
+# Outcomes of a workflow-mutating command that are not successful completions. COMPLETE,
+# NEEDS_REVIEW (a human gate) and PENDING (a requested --stop-after pause) all exit 0.
+MUTATION_EXIT_CODES = {RunStatus.FAILED: EXIT_RUN_FAILED, RunStatus.CANCELLED: EXIT_RUN_CANCELLED}
 
 app = typer.Typer(no_args_is_help=True, add_completion=False, help="Portfolio-company data onboarding.")
 fixtures_app = typer.Typer(no_args_is_help=True, help="Synthetic fixture databases.")
@@ -72,7 +87,19 @@ def _principal(spec: str, default_role: Role) -> Principal:
 
 def _fail(exc: DomainError) -> None:
     typer.secho(f"{exc.code.value}: {exc.message}", fg=typer.colors.RED, err=True)
-    raise typer.Exit(code=2)
+    raise typer.Exit(code=EXIT_DOMAIN_ERROR)
+
+
+def _finish_mutation(run: Any) -> None:
+    """Print a run produced by a workflow-mutating command, then exit nonzero unless it succeeded.
+
+    Only for commands that execute the workflow (`run`, `resume`, `rerun`). Inspection commands
+    print a run without this policy: successfully showing a failed run is not a failed command.
+    """
+    _print_run(run)
+    code = MUTATION_EXIT_CODES.get(RunStatus(run.status))
+    if code is not None:
+        raise typer.Exit(code=code)
 
 
 def _print_run(run: Any) -> None:
@@ -120,7 +147,7 @@ def run(
     except DomainError as exc:
         _fail(exc)
         return
-    _print_run(result)
+    _finish_mutation(result)
 
 
 @app.command()
@@ -243,9 +270,14 @@ def resume(run_id: UUID, as_: Annotated[str, typer.Option("--as")] = "agent:cli"
     """Resume a paused or failed run. Gates re-check approvals; completed steps are not recomputed."""
     svc = _service()
     try:
-        _print_run(anyio.run(lambda: svc.resume(_principal(as_, Role.AGENT), run_id)))
+        result = anyio.run(lambda: svc.resume(_principal(as_, Role.AGENT), run_id))
     except DomainError as exc:
         _fail(exc)
+        return
+    _finish_mutation(result)
+
+
+REOPEN_REASON = "review reopened"  # the engine's revocation reason for rerun_from(reopen_reviews=True)
 
 
 @app.command()
@@ -253,13 +285,55 @@ def rerun(
     run_id: UUID,
     from_: Annotated[StepName, typer.Option("--from")],
     as_: Annotated[str, typer.Option("--as")] = "reviewer:cli",
+    reopen_reviews: Annotated[
+        bool,
+        typer.Option(
+            "--reopen-reviews",
+            help="Reviewer/admin only: also revoke current approvals at review gates from --from onward, "
+            "so those gates must be decided again. Default: keep and re-check existing approvals.",
+        ),
+    ] = False,
 ) -> None:
     """Invalidate a step and everything after it, then run again (reused where inputs are unchanged)."""
     svc = _service()
+    principal = _principal(as_, Role.REVIEWER)
     try:
-        _print_run(anyio.run(lambda: svc.rerun_from(_principal(as_, Role.REVIEWER), run_id, from_)))
+        if reopen_reviews and principal.role not in {Role.REVIEWER, Role.ADMIN}:
+            raise Forbidden("--reopen-reviews requires a reviewer or admin principal")
+        approvals, last_event = _reopen_baseline(svc, principal, run_id) if reopen_reviews else ({}, 0)
+        try:
+            result = anyio.run(lambda: svc.rerun_from(principal, run_id, from_, reopen_reviews=reopen_reviews))
+        finally:  # report revocations even if the rerun itself is then refused or fails
+            if reopen_reviews:
+                _print_revoked(svc, principal, run_id, approvals, last_event)
     except DomainError as exc:
         _fail(exc)
+        return
+    _finish_mutation(result)
+
+
+def _reopen_baseline(svc: Any, principal: Principal, run_id: UUID) -> tuple[dict[str, Any], int]:
+    """Current approvals and the last audit event id, read before a reopening rerun."""
+    events, _ = svc.audit(principal, run_id)  # authorizes the principal's read of this run
+    with svc.store.tx() as tx:
+        approvals = {str(a.approval_id): a for a in tx.approvals.for_run(run_id) if a.revoked_at is None}
+    return approvals, max((e.event_id or 0 for e in events), default=0)
+
+
+def _print_revoked(svc: Any, principal: Principal, run_id: UUID, approvals: dict[str, Any], last_event: int) -> None:
+    events, _ = svc.audit(principal, run_id)
+    revoked = [
+        str(e.payload.get("approval_id"))
+        for e in events
+        if (e.event_id or 0) > last_event
+        and e.event_type == "approval_invalidated"
+        and e.payload.get("reason") == REOPEN_REASON
+    ]
+    typer.secho(f"reopened reviews: revoked {len(revoked)} approval(s)", fg=typer.colors.YELLOW)
+    for approval_id in revoked:
+        a = approvals.get(approval_id)
+        detail = f"gate={a.gate.value}  reviewer={a.reviewer}" if a is not None else "gate=?"
+        typer.echo(f"  revoked approval {approval_id}  {detail}")
 
 
 @app.command()
@@ -293,7 +367,7 @@ def audit(run_id: UUID, verify: bool = False) -> None:
             f"audit chain {'intact' if ok else 'BROKEN'} ({len(events)} events)",
             fg=typer.colors.GREEN if ok else typer.colors.RED,
         )
-        raise typer.Exit(0 if ok else 3)
+        raise typer.Exit(0 if ok else EXIT_AUDIT_BROKEN)
     for e in events:
         typer.echo(
             f"{e.created_at:%H:%M:%S} {e.step:22} {e.event_type:24} {e.actor:16} "
@@ -323,11 +397,14 @@ def report(run_id: UUID, out: Annotated[Path | None, typer.Option(help="write Ma
 
 
 @app.command()
-def demo(out: Annotated[Path, typer.Option(help="where to write demo reports")] = Path("var/demo")) -> None:
+def demo(
+    out: Annotated[Path, typer.Option(help="where to write demo reports")] = Path("var/demo"),
+    verbose: Annotated[bool, typer.Option(help="Show diagnostic logs (saved in diagnostics.log by default)")] = False,
+) -> None:
     """One-command demo: a happy path and a controlled failure/review path."""
     from src.demo import run_demo
 
-    raise typer.Exit(run_demo(out))
+    raise typer.Exit(run_demo(out, verbose=verbose))
 
 
 if __name__ == "__main__":

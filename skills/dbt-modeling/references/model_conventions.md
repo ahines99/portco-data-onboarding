@@ -1,7 +1,8 @@
 # Generated model conventions
 
 - Identifiers from the source are always double-quoted; canonical names are snake_case.
-- Money is `decimal(18, 2)`. `cents_to_major` is `cast(cast(col as decimal(18, 2)) / 100 as decimal(18, 2))`, which is exact.
+- Money is `decimal(18, 2)`. `cents_to_major` is `cast(cast(col as decimal(38, 0)) * 0.01 as decimal(18, 2))`: exact decimal multiplication (DuckDB decimal division goes through floating point). Fractional minor units and sub-cent major amounts are rejected by the value contract, never rounded per row.
+- `normalize_category` is `lower(trim(cast(col as varchar)))`, used only when a reviewer approved it for a closed-domain field whose values are case/whitespace variants of canonical labels.
 - Text dates in mixed formats are parsed with `try_strptime` for `%Y-%m-%d` and then `%m/%d/%Y`.
 - PII is hashed with `sha256(cast(col as varchar))` into `<field>_hash`, or dropped with a comment
   naming the column and the reason.

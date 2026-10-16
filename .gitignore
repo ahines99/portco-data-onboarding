@@ -31,3 +31,6 @@ evals/reports/latest.*
 
 # Secrets
 .env
+
+# Machine-local application configuration is never source or release content.
+/.config/
