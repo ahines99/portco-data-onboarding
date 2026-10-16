@@ -212,6 +212,7 @@ def test_rc4_manifest_and_checksums_cover_only_verified_distribution_files(
 
     def build(*args, **kwargs):
         assert args[:2] == ("uv", "build")
+        (output / ".gitignore").write_bytes(b"*")
         with tarfile.open(output / "portco_data_onboarding-0.2.0rc4.tar.gz", "w:gz") as archive:
             archive.addfile(tarfile.TarInfo("portco_data_onboarding-0.2.0rc4/README.md"))
         with zipfile.ZipFile(output / "portco_data_onboarding-0.2.0rc4-py3-none-any.whl", "w") as archive:

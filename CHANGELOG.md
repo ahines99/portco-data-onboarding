@@ -11,7 +11,7 @@
 - Refresh the demo to 28 review items and 27/27 reconciliation checks. Save diagnostics beside demo reports by default; `portco demo --verbose` displays them.
 - Simplify the public documentation path, add the architecture diagram and audit story, archive process records and update release evidence after committing.
 
-The rc.3 source archive requires a separate packaging-only replacement removing `.config/auth0/config.json`, which contained development metadata and no tokens. Its source tag and retained files remain unchanged. See [release status](docs/RELEASE-STATUS.md) for published verification and asset correction status.
+The release includes a separate packaging-only correction to the rc.3 source archive, removing `.config/auth0/config.json`, which contained development metadata and no tokens. Its source tag and all 429 retained entries remain unchanged. See [release status](docs/RELEASE-STATUS.md) for the verification manifest and current asset checksums.
 
 ## 0.2.0rc3 — automated qualification and PostgreSQL sources (2026-09-28)
 
