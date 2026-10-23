@@ -31,28 +31,28 @@ jobs:
   lint-and-types:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - run: uv run poe lint
       - run: uv run ruff format --check src tests evals scripts
       - run: uv run poe typecheck
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with: {node-version: '22'}
       - run: node --test deploy/auth0/actions.test.js
 
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - run: uv run poe fixtures
       - name: Unit, integration, golden and MCP tests (SQLite)
         run: uv run pytest -q -m "not postgres and not security" --junitxml=var/junit/sqlite.xml
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: junit-sqlite
@@ -63,8 +63,8 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - run: uv run poe fixtures
@@ -87,13 +87,13 @@ jobs:
       PORTCO_TEST_POSTGRES_ALLOW_CREATE: '1'
       PORTCO_POSTGRES_SOURCE_SUMMARY: var/postgres-source-summary.json
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - run: uv run poe fixtures
       - run: uv run pytest -q -m postgres
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: postgres-source-acceptance
@@ -103,8 +103,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - run: uv run poe fixtures
@@ -114,17 +114,17 @@ jobs:
         run: uv run python -m evals.unfamiliar_benchmark --output var/unfamiliar-benchmark.json --enforce-safety
       - name: Agent-authored v2 corpus integrity and review safety
         run: uv run python -m evals.unfamiliar_benchmark --corpus evals/agent_qualification_v2 --manifest-sha256 e21b4cf4a8b2ad802c9cdbfb884c94ab1e42c92a1753b67275d2fd8eac078647 --output var/agent-qualification-v2.json --enforce-safety
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: agent-qualification-v2
           path: var/agent-qualification-v2.json
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: unfamiliar-benchmark
           path: var/unfamiliar-benchmark.json
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: eval-report
@@ -134,8 +134,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - run: uv run poe demo
@@ -146,8 +146,8 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - run: uv run python scripts/smoke_wheel.py
@@ -155,8 +155,8 @@ jobs:
   container-smoke:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - name: Generate an ephemeral test bearer token
@@ -182,7 +182,7 @@ jobs:
           curl -fsS http://127.0.0.1:8123/readyz
       - name: Record and enforce actual container runtime restrictions
         run: docker compose --profile full exec -T mcp python -m src.runtime_evidence --assert-compose > runtime-evidence.json
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: runtime-evidence
@@ -197,7 +197,7 @@ jobs:
           # Keep the complete report above, including accepted unfixed OS findings.
           # Reuse the same vulnerability database for the narrower failing gate.
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/scan" aquasec/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969 --cache-dir /scan/var/trivy-cache image --scanners vuln --skip-db-update --ignore-unfixed --severity HIGH,CRITICAL --exit-code 1 "$image"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: container-audit
@@ -220,8 +220,8 @@ jobs:
     env:
       SMOKE_POSTGRES_IMAGE: postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - name: Start a disposable PostgreSQL that requires TLS-capable connections
@@ -239,7 +239,7 @@ jobs:
           uv run python -m scripts.smoke_production
           --database-url postgresql://portco:portco@127.0.0.1:5433/portco
           --port 18080 --out var/production-smoke.json
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: production-smoke
@@ -256,12 +256,12 @@ jobs:
   dependency-audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - run: uv tool run pip-audit --path .venv/lib/python3.12/site-packages --format json --output dependency-audit.json
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: dependency-audit
@@ -282,14 +282,14 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       CI_JOB_RESULTS: ${{ toJSON(needs) }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: {fetch-depth: 0}
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with: {enable-cache: true, version: "0.12.18"}
       - run: uv sync --all-extras --frozen
       - name: Correct rc.3 archive and publish verified rc.4
         run: uv run python -m scripts.publish_audit_release --publish
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: release-verification
